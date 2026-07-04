@@ -665,6 +665,33 @@ body.dark .pr-av{color:var(--ink)}
 .pay-empty .es-ic svg{width:24px;height:24px}
 .pay-empty .es-cta{margin-top:16px}
 
+/* ---------- PART 2 POLISH ---------- */
+/* KPI icon tile */
+.kpi-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.kpi-top .lbl{margin-bottom:0}
+.kt{width:34px;height:34px;border-radius:9px;background:var(--surface-2);display:grid;place-items:center;color:var(--ink);flex-shrink:0;border:1px solid var(--line)}
+.kt svg{width:17px;height:17px}
+.kpi.accent .kt{background:color-mix(in srgb,var(--on-accent) 15%,transparent);color:var(--on-accent);border-color:transparent}
+/* dark mode: KPI numbers pure white so they don't read dim */
+body.dark .kpi .val{color:#fff}
+body.dark .sr-kpi .sr-kpi-val{color:#fff}
+body.dark .kpi.accent .val{color:var(--on-accent)}
+/* focus-visible ring on nav + account row (buttons already covered) */
+.nav-item:focus-visible,.side-foot .out:focus-visible{box-shadow:var(--ring);outline:none}
+/* tighter, denser KPI cards on phone (2-up, not tall 1-up) */
+@media(max-width:440px){
+ .kpis{grid-template-columns:1fr 1fr!important;gap:10px}
+ .kpi{padding:13px 14px}
+ .kpi .val{font-size:20px!important}
+ .kpi-top{margin-bottom:7px}
+ .kt{width:28px;height:28px}.kt svg{width:15px;height:15px}
+ .kpi .sub{margin-top:5px}
+}
+/* respect reduced motion everywhere */
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+
 /* monochrome on-accent text: dark text on light accent in dark mode */
 .btn-red,.pa.primary,.nav-item.active,.uav,.side-foot .av,.kpi.accent,.kpi.accent .lbl,.kpi.accent .sub,.kpi.accent .sub b{color:var(--on-accent)}
 </style>
@@ -1412,7 +1439,8 @@ function renderEnqList(){
    return '<div class="pay-row"><div class="pr-av">'+init(e.name)+'</div><div class="pr-main"><div class="pr-nm">'+e.name+'</div><div class="pr-mt">'+cohortLabel(e.cohort).replace(' Batch','')+' · '+locLabel(e.loc)+' · via '+e.source+(isOwner()?' · '+staffName(e.owner):'')+'</div></div><div class="pr-act">'+advBtn+'<button class="enq-adv'+(stg==='trial'?' enq-enrol':'')+'" onclick="ENQenrol('+e.id+')">'+I.check+'Enrol</button><button class="btn-wa" style="width:34px;height:34px" title="WhatsApp" aria-label="WhatsApp" onclick="ENQwa('+e.id+')">'+I.wa+'</button><button class="enq-x" title="Not now" aria-label="Not now" onclick="ENQlost('+e.id+')">✕</button></div></div>';
   }).join('');
  });
- if(!open.length)html='<div class="pay-empty"><div class="t">No open enquiries</div><div class="m">New ones from Instagram or WhatsApp go here — tap New Enquiry.</div></div>'+html;
+ if(!open.length&&!lost.length)html=emptyState(_ES.msg,'No enquiries yet','New enquiries from Instagram or WhatsApp show up here.','New enquiry','openEnqModal()');
+ else if(!open.length)html='<div class="pay-empty" style="padding:28px 20px"><div class="t">No open enquiries</div><div class="m">All caught up.</div></div>'+html;
  if(lost.length){
   html+='<div class="lost-row" onclick="ENQ.showLost=!ENQ.showLost;renderEnquiries()">'+(ENQ.showLost?'▾':'▸')+' Not now ('+lost.length+')</div>';
   if(ENQ.showLost)html+=lost.map(e=>'<div class="pay-row" style="opacity:.55"><div class="pr-av">'+init(e.name)+'</div><div class="pr-main"><div class="pr-nm">'+e.name+'</div><div class="pr-mt">'+cohortLabel(e.cohort).replace(' Batch','')+' · via '+e.source+'</div></div><div class="pr-act"><button class="enq-adv" onclick="ENQreopen('+e.id+')">Reopen</button></div></div>').join('');
@@ -1512,7 +1540,8 @@ function monthEnrolments(ym){return DB.get('students').filter(s=>s.status!=='alu
 function monthsBehind(s){let ym=s.joined.slice(0,7),n=0;const now=ymNow();while(ym<now){if(chargedIn(s,ym)&&paidAmt(s.id,ym)<dueFor(s,ym))n++;ym=ymShift(ym,1);}return n;}
 function collectedByStaff(id,ym){const owned=new Set(DB.get('students').filter(s=>s.owner===id).map(s=>s.id));return DB.get('payments').filter(r=>owned.has(r.studentId)&&(!ym||r.month===ym)).reduce((t,r)=>t+r.amount,0);}
 function greetHTML(){const h=new Date().getHours();const g=h<12?'Good morning':h<17?'Good afternoon':'Good evening';let ds='';try{const tp=todayISO().split('-');ds=new Date(+tp[0],+tp[1]-1,+tp[2]).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});}catch(e){ds=fmtD(todayISO());}return '<div class="dash-greet"><h1>'+g+', '+CURRENT.name.split(' ')[0]+'.</h1><p>'+ds+'</p></div>';}
-function kpiC(label,val,sub,accent){return '<div class="kpi'+(accent?' accent':'')+'"><div class="lbl">'+label+'</div><div class="val" style="font-size:23px;white-space:nowrap">'+val+'</div><div class="sub">'+sub+'</div></div>';}
+const KIC={wallet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.2"/><path d="M6 12h.01M18 12h.01"/></svg>',target:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>',clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg>',msg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',people:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>',chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>',coins:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg>'};
+function kpiC(label,val,sub,accent,icon){return '<div class="kpi'+(accent?' accent':'')+'"><div class="kpi-top"><div class="lbl">'+label+'</div>'+(icon?'<div class="kt">'+icon+'</div>':'')+'</div><div class="val" style="font-size:23px;white-space:nowrap">'+val+'</div><div class="sub">'+sub+'</div></div>';}
 
 /* ---- DASHBOARD ---- */
 function renderDashboard(){
@@ -1532,13 +1561,14 @@ function renderDashboard(){
  let flag='';
  if(soft)flag='<div class="soft-flag">'+_warnIc+'<div><b>Soft month.</b> '+(isAug?'August is exam month — enrolments slow around now.':'Only '+enrolThis+' enrolments so far vs about '+Math.round(avg)+' in a typical month. Lean on enquiries and alumni referrals.')+'</div></div>';
  else if(strong)flag='<div class="soft-flag strong-flag">'+_upIc+'<div><b>Strong month.</b> '+enrolThis+' enrolments already, above the ~'+Math.round(avg)+' norm. Keep the momentum.</div></div>';
- const kpis='<div class="kpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">'+kpiC('Collected · '+monthShort(ym).split(' ')[0],lkr(st.collected),pct+'% of expected',true)+kpiC('Expected',lkr(st.expected),st.charged.length+' charged')+kpiC('Outstanding',lkr(st.outstanding),(st.owing.length+st.partial.length)+' to collect')+kpiC('Open enquiries',openEnq,tasksDue+' tasks due')+'</div>';
+ const kpis='<div class="kpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">'+kpiC('Collected · '+monthShort(ym).split(' ')[0],lkr(st.collected),pct+'% of expected',true,KIC.wallet)+kpiC('Expected',lkr(st.expected),st.charged.length+' charged',false,KIC.target)+kpiC('Outstanding',lkr(st.outstanding),(st.owing.length+st.partial.length)+' to collect',false,KIC.clock)+kpiC('Open enquiries',openEnq,tasksDue+' tasks due',false,KIC.msg)+'</div>';
  const maxC=Math.max(1,byC('2027'),byC('2028'),byC('crash'));
- const bar=(n,v)=>'<div class="bb-row"><span class="bb-name">'+n+'</span><div class="bb-track"><div class="bb-fill" style="width:'+Math.round(v/maxC*100)+'%"></div></div><span class="bb-n">'+v+'</span></div>';
+ const _shades=['var(--ink)','color-mix(in srgb,var(--ink) 64%,var(--surface))','color-mix(in srgb,var(--ink) 40%,var(--surface))'];
+ const bar=(n,v,i)=>'<div class="bb-row"><span class="bb-name">'+n+'</span><div class="bb-track"><div class="bb-fill" style="width:'+Math.round(v/maxC*100)+'%;background:'+_shades[i]+'"></div></div><span class="bb-n">'+v+'</span></div>';
  const owers=[...st.owing].map(x=>({x,due:dueFor(x,ym)-paidAmt(x.id,ym)})).sort((a,b)=>b.due-a.due).slice(0,4);
  const owesList=owers.length?owers.map(o=>'<div class="pay-row"><div class="pr-av">'+init(o.x.name)+'</div><div class="pr-main" onclick="openStudent('+o.x.id+')"><div class="pr-nm">'+o.x.name+'</div><div class="pr-mt">'+cohortLabel(o.x.cohort).replace(' Batch','')+' · '+locLabel(o.x.loc)+'</div></div><div class="pr-act"><span class="pr-pill pill-partial">'+lkr(o.due)+'</span></div></div>').join(''):'<div class="tk-empty">Everyone is paid up.</div>';
  wrap.innerHTML=greetHTML()+flag+kpis+
-  '<div class="grid2" style="margin-bottom:20px"><div class="card"><div class="card-h"><h3>Students by batch</h3><span class="lk" onclick="go(\'students\')">View all →</span></div><div class="card-b" style="padding:16px 20px 20px"><div class="batchbars">'+bar('2027',byC('2027'))+bar('2028',byC('2028'))+bar('Crash',byC('crash'))+'</div><div style="margin-top:16px;font-size:12.5px;color:var(--muted)">'+active.length+' active students · '+DB.get('students').filter(s=>s.status==="alumni").length+' alumni</div></div></div>'+
+  '<div class="grid2" style="margin-bottom:20px"><div class="card"><div class="card-h"><h3>Students by batch</h3><span class="lk" onclick="go(\'students\')">View all →</span></div><div class="card-b" style="padding:16px 20px 20px"><div class="batchbars">'+bar('2027',byC('2027'),0)+bar('2028',byC('2028'),1)+bar('Crash',byC('crash'),2)+'</div><div style="margin-top:16px;font-size:12.5px;color:var(--muted)">'+active.length+' active students · '+DB.get('students').filter(s=>s.status==="alumni").length+' alumni</div></div></div>'+
   '<div class="card"><div class="card-h"><h3>Needs collecting</h3><span class="lk" onclick="go(\'payments\')">Payments →</span></div><div class="card-b mini-list">'+owesList+'</div></div></div>';
  animateCounts(wrap);
 }
@@ -1552,7 +1582,7 @@ function renderEmpDashboard(){
  const myTasks=scopeTasks().filter(t=>!t.done).sort((a,b)=>a.due.localeCompare(b.due));
  wrap.innerHTML=greetHTML()+
   '<div class="emp-hero"><div class="eh-l">Your enrolments · '+monthLbl(ym).split(' ')[0]+'</div><div class="eh-v">'+myEnrol+' / '+tgt+'</div><div class="eh-track"><div class="eh-fill" style="width:'+pct+'%"></div></div><div style="font-size:12.5px;opacity:.9">'+(myEnrol>=tgt?'Target hit — great work.':(tgt-myEnrol)+' more to hit your monthly target')+'</div></div>'+
-  '<div class="kpis" style="grid-template-columns:repeat(2,1fr);margin-bottom:20px">'+kpiC('Your students',myStu.length,'active in your care')+kpiC('Open enquiries',myOpen.length,'in your pipeline')+'</div>'+
+  '<div class="kpis" style="grid-template-columns:repeat(2,1fr);margin-bottom:20px">'+kpiC('Your students',myStu.length,'active in your care',false,KIC.people)+kpiC('Open enquiries',myOpen.length,'in your pipeline',false,KIC.msg)+'</div>'+
   '<div class="card"><div class="card-h"><h3>Your tasks</h3><span class="lk" onclick="go(\'taskbook\')">All →</span></div><div class="card-b">'+(myTasks.length?myTasks.slice(0,6).map(taskRowHTML).join(''):'<div class="tk-empty">Nothing due. Nice.</div>')+'</div></div>';
 }
 
@@ -1581,7 +1611,7 @@ function renderRevenue(){
  const ym=ymNow();const months=[];for(let i=7;i>=0;i--)months.push(ymShift(ym,-i));
  const data=months.map(m=>{const st=monthStats(m);return {m,exp:st.expected,col:st.collected,enrol:monthEnrolments(m)};});
  const maxCol=Math.max(1,...data.map(d=>d.col));let totCol=0;
- const rows=data.map(d=>{totCol+=d.col;const pct=d.exp?Math.round(d.col/d.exp*100):0;const tag=pct>=85?['rt-strong','Strong']:pct<65?['rt-soft','Soft']:['rt-steady','Steady'];return '<div class="rev-row"><div class="rev-mo">'+monthShort(d.m)+'<span class="rt '+tag[0]+'">'+tag[1]+'</span></div><div class="rev-track"><div class="rev-fill" style="width:'+Math.round(d.col/maxCol*100)+'%"></div></div><div class="rev-nums"><div class="rc">'+lkr(d.col)+'</div><div class="re">'+d.enrol+' new · '+pct+'%</div></div></div>';}).join('');
+ const rows=data.map(d=>{totCol+=d.col;const pct=d.exp?Math.round(d.col/d.exp*100):0;const tag=pct>=85?['rt-strong','Strong']:pct<65?['rt-soft','Soft']:['rt-steady','Steady'];const shade=pct>=85?'var(--ink)':pct<65?'color-mix(in srgb,var(--ink) 40%,var(--surface))':'color-mix(in srgb,var(--ink) 64%,var(--surface))';return '<div class="rev-row"><div class="rev-mo">'+monthShort(d.m)+'<span class="rt '+tag[0]+'">'+tag[1]+'</span></div><div class="rev-track"><div class="rev-fill" style="width:'+Math.round(d.col/maxCol*100)+'%;background:'+shade+'"></div></div><div class="rev-nums"><div class="rc">'+lkr(d.col)+'</div><div class="re">'+d.enrol+' new · '+pct+'%</div></div></div>';}).join('');
  wrap.innerHTML='<div class="card"><div class="card-h"><h3>Recognised fees, last 8 months</h3><span style="font-size:12px;color:var(--muted)">Collected vs expected</span></div><div class="card-b" style="padding:8px 20px 16px">'+rows+'<div class="rev-tot"><span>8-month total collected</span><span class="amt">'+lkr(totCol)+'</span></div></div></div>';
 }
 
@@ -1596,10 +1626,10 @@ function renderTaskbook(){
   const groups={};tasks.forEach(t=>{(groups[t.assignedTo]=groups[t.assignedTo]||[]).push(t);});
   let html='';
   DB.get('staff').filter(x=>x.active).forEach(x=>{const list=(groups[x.id]||[]).sort((a,b)=>(a.done-b.done)||a.due.localeCompare(b.due));if(!list.length)return;const open=list.filter(t=>!t.done).length;html+='<div class="tg-head">'+x.name+'<span class="tg-count">'+open+' open</span></div>'+list.map(taskRowHTML).join('');});
-  el.innerHTML=html||'<div class="tk-empty">No tasks yet</div>';
+  el.innerHTML=html||emptyState(_ES.check,'No tasks yet','Add a task and assign it to your team.','Add task','openTaskModal()');
  }else{
   const list=tasks.slice().sort((a,b)=>(a.done-b.done)||a.due.localeCompare(b.due));
-  el.innerHTML=list.map(taskRowHTML).join('')||'<div class="tk-empty">No tasks assigned to you</div>';
+  el.innerHTML=list.map(taskRowHTML).join('')||emptyState(_ES.check,'No tasks assigned to you','You are all clear for now.','','');
  }
 }
 function openTaskModal(){const sel=document.getElementById('tk_who');sel.innerHTML=DB.get('staff').filter(x=>x.active).map(x=>'<option value="'+x.id+'">'+x.name+'</option>').join('');document.getElementById('tkAssignWrap').style.display=isOwner()?'':'none';if(!isOwner())sel.value=CURRENT.id;document.getElementById('tk_title').value='';document.getElementById('tk_due').value=todayISO();document.getElementById('tkErr').textContent='';document.getElementById('taskModal').classList.add('open');setTimeout(()=>document.getElementById('tk_title').focus(),60);}
@@ -1629,7 +1659,7 @@ function renderFinance(){
  const partialRemain=st.partial.reduce((t,x)=>t+(dueFor(x,ym)-paidAmt(x.id,ym)),0);
  const oweFull=st.owing.reduce((t,x)=>t+dueFor(x,ym),0);
  const tot=st.expected||1;
- const kpis='<div class="kpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">'+kpiC('Collected · '+monthShort(ym).split(' ')[0],lkr(st.collected),pct+'% of expected',true)+kpiC('Outstanding',lkr(st.outstanding),(st.owing.length+st.partial.length)+' students')+kpiC('Collection rate',pct+'%','this month')+kpiC('Lifetime collected',lkr(lifetime),'all months')+'</div>';
+ const kpis='<div class="kpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">'+kpiC('Collected · '+monthShort(ym).split(' ')[0],lkr(st.collected),pct+'% of expected',true,KIC.wallet)+kpiC('Outstanding',lkr(st.outstanding),(st.owing.length+st.partial.length)+' students',false,KIC.clock)+kpiC('Collection rate',pct+'%','this month',false,KIC.chart)+kpiC('Lifetime collected',lkr(lifetime),'all months',false,KIC.coins)+'</div>';
  const bar='<div class="card" style="margin-bottom:20px"><div class="card-h"><h3>This month</h3><span style="font-size:12px;color:var(--muted)">'+monthLbl(ym)+'</span></div><div class="card-b" style="padding:16px 20px 20px"><div style="display:flex;height:16px;border-radius:99px;overflow:hidden;background:var(--line)">'+(st.collected>0?'<div style="width:'+(st.collected/tot*100)+'%;background:var(--green)"></div>':'')+(partialRemain>0?'<div style="width:'+(partialRemain/tot*100)+'%;background:var(--amber)"></div>':'')+(oweFull>0?'<div style="width:'+(oweFull/tot*100)+'%;background:var(--danger)"></div>':'')+'</div><div style="display:flex;gap:16px;margin-top:14px;flex-wrap:wrap">'+finLegend('Collected','var(--green)',st.collected)+finLegend('Partial remaining','var(--amber)',partialRemain)+finLegend('Owing','var(--danger)',oweFull)+'</div></div></div>';
  const owers=[...st.owing,...st.partial].map(x=>({x,due:dueFor(x,ym)-paidAmt(x.id,ym),behind:monthsBehind(x)})).sort((a,b)=>b.behind-a.behind||b.due-a.due);
  const table='<div class="card"><div class="card-h"><h3>Who owes</h3><span style="font-size:12px;color:var(--muted)">Chase oldest first</span></div><table class="tbl"><thead><tr><th>Student</th><th>Batch</th><th class="tnum">Owes now</th><th>Behind</th></tr></thead><tbody>'+(owers.length?owers.map(o=>'<tr onclick="openStudent('+o.x.id+')"><td class="tn">'+o.x.name+'</td><td class="tm">'+cohortLabel(o.x.cohort).replace(' Batch','')+' · '+locLabel(o.x.loc)+'</td><td class="tnum" style="color:var(--danger)">'+lkr(o.due)+'</td><td class="tm">'+(o.behind>0?o.behind+' mo':'this month')+'</td></tr>').join(''):'<tr><td colspan="4" style="color:var(--faint);padding:14px">Everyone is paid up.</td></tr>')+'</tbody></table></div>';
@@ -1682,7 +1712,8 @@ function renderTeam(tab){if(tab)TEAMTAB.tab=tab;document.querySelectorAll('#page
 const TITLES={dashboard:['Dashboard',''],payments:['Payments','Who paid, what came in, who owes'],enquiries:['Enquiries','From first message to enrolled'],students:['Students','Registry, payments and lifetime fees'],taskbook:['Task Book','Assign and track work'],money:['Money','Revenue, collections and reporting'],team:['Team','Performance, staff and access'],settings:['Settings','Fees, templates and system setup']};
 const RENDERERS={dashboard:renderDashboard,payments:renderPayments,enquiries:renderEnquiries,students:renderStudents,taskbook:renderTaskbook,money:renderMoney,team:renderTeam,settings:renderSettings};
 function go(pg){if(!TITLES[pg])pg='dashboard';if(!isOwner()&&!['dashboard','students','enquiries','taskbook'].includes(pg))pg='dashboard';document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.pg===pg));document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+pg).classList.add('active');document.getElementById('pgTitle').textContent=TITLES[pg][0];document.getElementById('pgSub').textContent=TITLES[pg][1];closePanel();closeSidebar();try{if(RENDERERS[pg])RENDERERS[pg]();}catch(e){console.warn('render '+pg,e);}animateCounts(document.getElementById('page-'+pg));}
-document.querySelectorAll('.nav-item[data-pg]').forEach(n=>n.onclick=()=>go(n.dataset.pg));
+document.querySelectorAll('.nav-item[data-pg]').forEach(n=>{n.onclick=()=>go(n.dataset.pg);n.setAttribute('tabindex','0');n.setAttribute('role','button');n.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go(n.dataset.pg);}};});
+(function(){const o=document.querySelector('.side-foot .out');if(o){o.setAttribute('tabindex','0');o.setAttribute('role','button');o.setAttribute('aria-label','Sign out');o.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();signOut();}};}})();
 
 /* ---------- BOOT ---------- */
 DB.load();_demoToday=(DB.get('meta')&&DB.get('meta').today)||_rawToday();PAY.ym=ymNow();renderLogin();applyRoleNav();renderDashboard();renderBadges();updateClock();setInterval(updateClock,15000);
