@@ -903,7 +903,7 @@ body.dark .kpi.accent,body.dark .kpi.accent .val,body.dark .kpi.accent .lbl,body
     <div class="modal-b">
       <div class="fld"><label>Name</label><input id="stf_name" placeholder="e.g. Nimali"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="fld"><label>Role</label><select id="stf_role"><option value="employee">Employee</option><option value="owner">Owner</option></select></div>
+        <div class="fld"><label>Role</label><select id="stf_role"><option value="employee">Team member</option><option value="owner">Owner</option></select></div>
         <div class="fld"><label>Login PIN</label><input id="stf_pin" inputmode="numeric" maxlength="6" placeholder="4 digits"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -932,17 +932,17 @@ function toggleTheme(){applyTheme(document.body.classList.contains('dark')?'ligh
 /* ---------- AUTH ---------- */
 let PEND=null,CURRENT={id:1,name:'Leon',role:'owner'};
 function isOwner(){return CURRENT.role==='owner';}
-function roleLabel(r){return r==='owner'?'Owner':'Staff';}
+function roleLabel(r){return r==='owner'?'Owner':'Team member';}
 function nowStamp(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
 function renderLogin(){
  const el=document.getElementById('loginUsers');if(!el)return;
  el.innerHTML=DB.get('staff').filter(s=>s.active).map(s=>{
-  const sub=s.role==='owner'?(s.name==='BB Support'?'Business Booster · Support':'Owner · Full access'):'Staff · Sales';
+  const sub=s.role==='owner'?'Owner · Full access':'Team member';
   const av=s.role==='owner'&&s.name!=='BB Support'?'uav':'uav mgr';
   return '<button class="urow" onclick="pickUser('+s.id+')"><div class="'+av+'">'+s.name[0]+'</div><div><div class="uname">'+s.name+'</div><div class="urole">'+sub+'</div></div><span class="uarrow">→</span></button>';
  }).join('');
 }
-function pickUser(id){const s=DB.get('staff').find(x=>x.id===id);if(!s)return;PEND=s;document.getElementById('lgAv').textContent=s.name[0];document.getElementById('lgName').textContent=s.name;document.getElementById('lgRole').textContent=roleLabel(s.role)+(s.role==='employee'?' · Sales':' · Full access');document.getElementById('lgPw').value='';document.getElementById('lgErr').textContent='';document.getElementById('loginStep1').style.display='none';document.getElementById('loginStep2').style.display='block';setTimeout(function(){document.getElementById('lgPw').focus();},60);}
+function pickUser(id){const s=DB.get('staff').find(x=>x.id===id);if(!s)return;PEND=s;document.getElementById('lgAv').textContent=s.name[0];document.getElementById('lgName').textContent=s.name;document.getElementById('lgRole').textContent=roleLabel(s.role)+(s.role==='employee'?'':' · Full access');document.getElementById('lgPw').value='';document.getElementById('lgErr').textContent='';document.getElementById('loginStep1').style.display='none';document.getElementById('loginStep2').style.display='block';setTimeout(function(){document.getElementById('lgPw').focus();},60);}
 function backLogin(){document.getElementById('loginStep2').style.display='none';document.getElementById('loginStep1').style.display='block';}
 function doLogin(){if(!PEND)return;if(document.getElementById('lgPw').value===PEND.pin){signIn(PEND);}else{document.getElementById('lgErr').textContent='Incorrect password. Please try again.';}}
 function applyRoleNav(){
@@ -1004,7 +1004,7 @@ const I={
    to Supabase behind the SAME API so no view code changes.
    Collections: students, payments, enquiries, settings. */
 const DB={
- _d:null,KEY:'bswl_data_v3',
+ _d:null,KEY:'bswl_data_v4',
  load(){let d=null;try{d=JSON.parse(localStorage.getItem(this.KEY))}catch(e){}
   if(d&&d.students&&d.settings&&d.staff&&d.tasks){this._d=d;}
   else{this._d=seedData();this.commit();}},
@@ -1105,41 +1105,40 @@ function seedData(){
  /* ---- STAFF (roles) ---- */
  const staff=[
   {id:1,name:'Leon',role:'owner',pin:'1111',active:true,target:0},
-  {id:2,name:'BB Support',role:'owner',pin:'2222',active:true,target:0},
-  {id:3,name:'Nimali',role:'employee',pin:'3333',active:true,target:15},
-  {id:4,name:'Kasun',role:'employee',pin:'4444',active:true,target:12}
+  {id:2,name:'Bihandu',role:'employee',pin:'2222',active:true,target:15},
+  {id:3,name:'Rhenold',role:'employee',pin:'3333',active:true,target:12}
  ];
  /* assign an owner to every student + enquiry (Leon 15%, Nimali ~43%, Kasun ~42%) */
- const pickOwner=()=>{const r=rnd();return r<.15?1:r<.58?3:4;};
+ const pickOwner=()=>{const r=rnd();return r<.15?1:r<.58?2:3;};
  students.forEach(st=>{st.owner=st.status==='alumni'?pickOwner():pickOwner();});
  enquiries.forEach(e=>{e.owner=pickOwner();});
  /* ---- TASKS ---- */
  const dISO=(back)=>{const d=new Date();d.setDate(d.getDate()-back);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
  const owingNames=students.filter(s=>s.status==='active').slice(0,6).map(s=>s.name);
  const tasks=[
-  {id:1,title:'Call '+owingNames[0]+' about this month’s fee',assignedTo:3,due:dISO(1),done:false,createdBy:1,createdAt:dISO(2)},
-  {id:2,title:'Send trial-class reminder to new enquiries',assignedTo:3,due:dISO(0),done:false,createdBy:1,createdAt:dISO(1)},
-  {id:3,title:'Follow up '+owingNames[1]+' — missed last payment',assignedTo:4,due:dISO(-1),done:false,createdBy:1,createdAt:dISO(1)},
-  {id:4,title:'Confirm Kiribathgoda Saturday batch numbers',assignedTo:4,due:dISO(0),done:false,createdBy:1,createdAt:dISO(3)},
-  {id:5,title:'Prepare 2028 batch welcome pack',assignedTo:3,due:dISO(-2),done:true,createdBy:1,createdAt:dISO(5)},
-  {id:6,title:'Post this week’s Instagram enquiry replies',assignedTo:4,due:dISO(2),done:false,createdBy:1,createdAt:dISO(1)},
+  {id:1,title:'Call '+owingNames[0]+' about this month’s fee',assignedTo:2,due:dISO(1),done:false,createdBy:1,createdAt:dISO(2)},
+  {id:2,title:'Send trial-class reminder to new enquiries',assignedTo:2,due:dISO(0),done:false,createdBy:1,createdAt:dISO(1)},
+  {id:3,title:'Follow up '+owingNames[1]+' — missed last payment',assignedTo:3,due:dISO(-1),done:false,createdBy:1,createdAt:dISO(1)},
+  {id:4,title:'Confirm Kiribathgoda Saturday batch numbers',assignedTo:3,due:dISO(0),done:false,createdBy:1,createdAt:dISO(3)},
+  {id:5,title:'Prepare 2028 batch welcome pack',assignedTo:2,due:dISO(-2),done:true,createdBy:1,createdAt:dISO(5)},
+  {id:6,title:'Post this week’s Instagram enquiry replies',assignedTo:3,due:dISO(2),done:false,createdBy:1,createdAt:dISO(1)},
   {id:7,title:'Reconcile last month collections with Leon',assignedTo:1,due:dISO(1),done:false,createdBy:1,createdAt:dISO(2)},
-  {id:8,title:'Ask 3 alumni for sibling referrals',assignedTo:3,due:dISO(3),done:false,createdBy:1,createdAt:dISO(0)}
+  {id:8,title:'Ask 3 alumni for sibling referrals',assignedTo:2,due:dISO(3),done:false,createdBy:1,createdAt:dISO(0)}
  ];
  /* ---- LOGIN AUDIT (seeded demo) ---- */
  const dev=['iPhone · Safari','Android · Chrome','MacBook · Chrome','iPad · Safari'];
  const at=(back,h,m)=>dISO(back)+' '+String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
  const audit=[
   {id:1,staffId:1,name:'Leon',role:'owner',device:'iPhone · Safari',when:at(0,8,42)},
-  {id:2,staffId:3,name:'Nimali',role:'employee',device:'Android · Chrome',when:at(0,8,15)},
-  {id:3,staffId:4,name:'Kasun',role:'employee',device:'iPhone · Safari',when:at(0,7,58)},
-  {id:4,staffId:2,name:'BB Support',role:'owner',device:'MacBook · Chrome',when:at(1,18,20)},
-  {id:5,staffId:3,name:'Nimali',role:'employee',device:'Android · Chrome',when:at(1,9,3)},
-  {id:6,staffId:1,name:'Leon',role:'owner',device:'iPad · Safari',when:at(1,7,49)},
-  {id:7,staffId:4,name:'Kasun',role:'employee',device:'iPhone · Safari',when:at(2,17,11)},
-  {id:8,staffId:3,name:'Nimali',role:'employee',device:'Android · Chrome',when:at(2,8,30)},
+  {id:2,staffId:2,name:'Bihandu',role:'employee',device:'Android · Chrome',when:at(0,8,15)},
+  {id:3,staffId:3,name:'Rhenold',role:'employee',device:'iPhone · Safari',when:at(0,7,58)},
+  {id:4,staffId:1,name:'Leon',role:'owner',device:'MacBook · Chrome',when:at(1,18,20)},
+  {id:5,staffId:2,name:'Bihandu',role:'employee',device:'Android · Chrome',when:at(1,9,3)},
+  {id:6,staffId:3,name:'Rhenold',role:'employee',device:'iPad · Safari',when:at(1,7,49)},
+  {id:7,staffId:3,name:'Rhenold',role:'employee',device:'iPhone · Safari',when:at(2,17,11)},
+  {id:8,staffId:2,name:'Bihandu',role:'employee',device:'Android · Chrome',when:at(2,8,30)},
   {id:9,staffId:1,name:'Leon',role:'owner',device:'iPhone · Safari',when:at(3,8,55)},
-  {id:10,staffId:4,name:'Kasun',role:'employee',device:'iPhone · Safari',when:at(3,8,2)}
+  {id:10,staffId:2,name:'Bihandu',role:'employee',device:'iPhone · Safari',when:at(3,8,2)}
  ];
  return {
   students:students,payments:payments,enquiries:enquiries,staff:staff,tasks:tasks,audit:audit,
@@ -1670,7 +1669,7 @@ function renderTeamView(){
   const colM=collectedByStaff(st.id,ym),colL=collectedByStaff(st.id);
   const enrolThis=DB.get('students').filter(s=>s.owner===st.id&&s.joined.slice(0,7)===ym).length;
   const tgt=st.target||0,tpct=tgt?Math.min(100,Math.round(enrolThis/tgt*100)):0;
-  return '<div class="tp-card"><div class="tp-head"><div class="tp-av">'+init(st.name)+'</div><div><div class="tp-nm">'+st.name+'</div><div class="tp-rl">'+(st.role==='owner'?'Owner':'Sales')+'</div></div>'+(colM?'<span class="tp-pill">'+lkr(colM)+'</span>':'')+'</div><div class="tp-stats"><div class="tp-stat"><div class="v">'+stu+'</div><div class="l">Students</div></div><div class="tp-stat"><div class="v">'+conv+'</div><div class="l">Enrolled</div></div><div class="tp-stat"><div class="v">'+enrolThis+'</div><div class="l">This mo</div></div><div class="tp-stat"><div class="v">'+(colL/1000).toFixed(0)+'k</div><div class="l">Collected</div></div></div>'+(tgt?'<div class="tp-conv"><span class="cl">Target '+enrolThis+'/'+tgt+'</span><div class="tp-bar"><div class="f" style="width:'+tpct+'%;background:var(--green)"></div></div><span class="cv">'+tpct+'%</span></div>':'')+'</div>';
+  return '<div class="tp-card"><div class="tp-head"><div class="tp-av">'+init(st.name)+'</div><div><div class="tp-nm">'+st.name+'</div><div class="tp-rl">'+(st.role==='owner'?'Owner':'Team member')+'</div></div>'+(colM?'<span class="tp-pill">'+lkr(colM)+'</span>':'')+'</div><div class="tp-stats"><div class="tp-stat"><div class="v">'+stu+'</div><div class="l">Students</div></div><div class="tp-stat"><div class="v">'+conv+'</div><div class="l">Enrolled</div></div><div class="tp-stat"><div class="v">'+enrolThis+'</div><div class="l">This mo</div></div><div class="tp-stat"><div class="v">'+(colL/1000).toFixed(0)+'k</div><div class="l">Collected</div></div></div>'+(tgt?'<div class="tp-conv"><span class="cl">Target '+enrolThis+'/'+tgt+'</span><div class="tp-bar"><div class="f" style="width:'+tpct+'%;background:var(--green)"></div></div><span class="cv">'+tpct+'%</span></div>':'')+'</div>';
  }).join('');
  wrap.innerHTML='<div class="sec-title" style="margin-bottom:14px">Team performance <span style="font-size:11px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--faint)">this month · tap Staff to manage logins</span></div><div class="team-grid">'+cards+'</div>';
 }
@@ -1718,7 +1717,7 @@ function renderAudit(){
 function renderStaff(){
  const wrap=document.getElementById('teamBody');if(!wrap)return;
  const cards=DB.get('staff').map(st=>{const stu=DB.get('students').filter(s=>s.owner===st.id&&s.status==='active').length;
-  return '<div class="staff-card"><div class="staff-av'+(st.role==='owner'?' own':'')+'">'+st.name[0]+'</div><div class="staff-main"><div class="staff-nm">'+st.name+'</div><div class="staff-rl">'+(st.role==='owner'?'Owner · full access':'Employee · '+stu+' students'+(st.target?' · target '+st.target:''))+'</div><div class="target-row"><span class="staff-pill '+(!st.active?'sp-off':st.role==='owner'?'sp-owner':'sp-emp')+'">'+(!st.active?'Inactive':roleLabel(st.role))+'</span><span class="staff-pill sp-off">PIN '+st.pin+'</span></div></div><button class="enq-adv" onclick="openStaffModal('+st.id+')">Edit</button></div>';
+  return '<div class="staff-card"><div class="staff-av'+(st.role==='owner'?' own':'')+'">'+st.name[0]+'</div><div class="staff-main"><div class="staff-nm">'+st.name+'</div><div class="staff-rl">'+(st.role==='owner'?'Owner · full access':'Team member · '+stu+' students'+(st.target?' · target '+st.target:''))+'</div><div class="target-row"><span class="staff-pill '+(!st.active?'sp-off':st.role==='owner'?'sp-owner':'sp-emp')+'">'+(!st.active?'Inactive':roleLabel(st.role))+'</span><span class="staff-pill sp-off">PIN '+st.pin+'</span></div></div><button class="enq-adv" onclick="openStaffModal('+st.id+')">Edit</button></div>';
  }).join('');
  wrap.innerHTML='<div class="exp-actions"><button class="btn-red" onclick="openStaffModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Staff</button></div><div class="staff-grid">'+cards+'</div><div style="font-size:12px;color:var(--faint);margin-top:16px;text-align:center">PINs are shown here for the demo only. On the live version each person gets their own private login.</div>';
 }
