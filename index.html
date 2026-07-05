@@ -694,6 +694,31 @@ body.dark .kpi.accent .val{color:var(--on-accent)}
 
 /* monochrome on-accent text: dark text on light accent in dark mode */
 .btn-red,.pa.primary,.nav-item.active,.uav,.side-foot .av,.kpi.accent,.kpi.accent .lbl,.kpi.accent .sub,.kpi.accent .sub b{color:var(--on-accent)}
+
+/* ============ SINGLE ACCENT = INDIGO (#4f46e5). Everything else stays ink/white. ============ */
+:root{--accent:#4f46e5;--accent-dark:#4338ca;--accent-soft:rgba(79,70,229,.10);--accent-glow:rgba(79,70,229,.32);--accent-grad-i:linear-gradient(180deg,#6366f1,#4f46e5 55%,#4338ca);--ring:0 0 0 3px rgba(79,70,229,.34)}
+body.dark{--ring:0 0 0 3px rgba(99,102,241,.45)}
+::selection{background:rgba(79,70,229,.18)}
+body.dark ::selection{background:rgba(99,102,241,.32)}
+/* 1a. primary buttons -> indigo (remap the button's own vars, keep the gradient recipe) */
+.btn-red,.pa.primary,.btn-mark{--red:var(--accent);--red-dark:var(--accent-dark);--red-glow:var(--accent-glow);color:#fff}
+.btn-red:hover,.pa.primary:hover,.btn-mark:hover{filter:brightness(1.07)}
+/* 1b. active sidebar item -> indigo */
+.nav-item.active{--accent-grad:var(--accent-grad-i);--red-glow:var(--accent-glow);color:#fff;box-shadow:0 4px 14px var(--accent-glow),inset 0 1px 0 rgba(255,255,255,.16)}
+.nav-item.active svg{opacity:1}
+/* 1c. the hero money surfaces (single hero KPI on dashboard, the payments hero, the employee target hero) */
+.kpi.accent{--accent-grad:var(--accent-grad-i)}
+.kpi.accent,.kpi.accent .lbl,.kpi.accent .sub,.kpi.accent .sub b,.kpi.accent .val{color:#fff}
+.kpi.accent .kt{background:rgba(255,255,255,.17);color:#fff;border-color:transparent}
+.pay-hero,.emp-hero{--accent-grad:var(--accent-grad-i);color:#fff}
+.pay-hero .ph-fill,.emp-hero .eh-fill{background:#fff}
+.pay-hero .ph-track,.emp-hero .eh-track{background:rgba(255,255,255,.22)}
+body.dark .pay-hero::before{background:radial-gradient(640px 300px at 82% -30%,rgba(255,255,255,.14),transparent 62%),radial-gradient(420px 260px at 8% 120%,rgba(0,0,0,.16),transparent 60%)}
+/* 1d. detail panel accent bar + tinted header -> indigo (Part 2.3) */
+.pn-head::before{background:var(--accent-grad-i)}
+.pn-head{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 6%,var(--surface)),var(--surface) 80%)}
+/* dark mode: accent hero is indigo in BOTH modes -> force white text (beats the mono body.dark on-accent rule) */
+body.dark .kpi.accent,body.dark .kpi.accent .val,body.dark .kpi.accent .lbl,body.dark .kpi.accent .sub,body.dark .kpi.accent .sub b,body.dark .pay-hero,body.dark .emp-hero{color:#fff}
 </style>
 </head>
 <body>
