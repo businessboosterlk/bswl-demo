@@ -13,6 +13,7 @@
 <meta property="og:description" content="Tuition operating system — fees, students and collections at a glance.">
 <meta name="description" content="Tuition operating system for Academy of Business Studies by Leon Fambeck.">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
 /* ============================================================
    BB DESIGN SYSTEM v1 — master skeleton tokens.
@@ -952,7 +953,7 @@ body.dark .kpi.accent,body.dark .kpi.accent .val,body.dark .kpi.accent .lbl,body
 const SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/></svg>';
 const MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>';
 function applyTheme(t){document.body.classList.toggle('dark',t==='dark');document.getElementById('themeBtn').innerHTML=t==='dark'?SUN:MOON;try{localStorage.setItem('bswl_theme',t)}catch(e){}}
-function toggleTheme(){applyTheme(document.body.classList.contains('dark')?'light':'dark');}
+function toggleTheme(){applyTheme(document.body.classList.contains('dark')?'light':'dark');const app=document.getElementById('app');if(app&&!app.classList.contains('hide')){const act=document.querySelector('.page.active');if(act){const pg=act.id.replace('page-','');try{if(RENDERERS[pg])RENDERERS[pg]();}catch(e){}}}}
 (function(){let t='light';try{t=localStorage.getItem('bswl_theme')||'light'}catch(e){}applyTheme(t);})();
 
 /* ---------- AUTH ---------- */
@@ -1594,6 +1595,20 @@ const KIC={wallet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 function kpiC(label,val,sub,accent,icon){return '<div class="kpi'+(accent?' accent':'')+'"><div class="kpi-top"><div class="lbl">'+label+'</div>'+(icon?'<div class="kt">'+icon+'</div>':'')+'</div><div class="val" style="font-size:23px;white-space:nowrap">'+val+'</div><div class="sub">'+sub+'</div></div>';}
 
 
+
+/* ---------- CHARTS (Chart.js, monochrome + indigo, theme-aware, graceful if CDN fails) ---------- */
+const CHARTS={};
+function _chartInit(){if(typeof Chart!=='undefined'&&!Chart._bswl){Chart.defaults.font.family="Inter,system-ui,sans-serif";Chart.defaults.font.size=11;Chart.defaults.plugins.legend.display=false;Chart._bswl=true;}}
+function chartC(){const d=document.body.classList.contains('dark');return {accent:'#4f46e5',accent2:d?'#6366f1':'#4f46e5',ink:d?'#ecedef':'#141417',muted:d?'#9b9ea6':'#6e7178',grid:d?'rgba(255,255,255,.07)':'rgba(20,20,23,.07)',green:'#16a34a',amber:'#d97706',danger:'#d33a3a'};}
+function makeChart(id,cfg){if(typeof Chart==='undefined')return;const el=document.getElementById(id);if(!el)return;_chartInit();if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];}CHARTS[id]=new Chart(el.getContext('2d'),cfg);}
+function axisOpts(c){return {plugins:{legend:{display:false},tooltip:{backgroundColor:c.ink,padding:9,titleFont:{size:11},bodyFont:{size:12,weight:'600'}}},scales:{x:{grid:{display:false},ticks:{color:c.muted}},y:{grid:{color:c.grid},ticks:{color:c.muted,callback:v=>v>=1000?(v/1000)+'k':v}}},maintainAspectRatio:false,responsive:true,animation:{duration:600}};}
+function drawDashChart(labels,vals){const c=chartC();makeChart('dashTrend',{type:'bar',data:{labels:labels,datasets:[{data:vals,backgroundColor:c.accent,borderRadius:6,maxBarThickness:38}]},options:axisOpts(c)});}
+function drawReportCharts(months,colData,enrolData,st){const c=chartC();
+ makeChart('repRev',{type:'line',data:{labels:months.map(m=>monthShort(m).split(' ')[0]),datasets:[{data:colData,borderColor:c.accent,backgroundColor:'rgba(79,70,229,.10)',fill:true,tension:.35,pointRadius:3,pointBackgroundColor:c.accent,borderWidth:2}]},options:axisOpts(c)});
+ makeChart('repEnrol',{type:'bar',data:{labels:months.map(m=>monthShort(m).split(' ')[0]),datasets:[{data:enrolData,backgroundColor:c.ink,borderRadius:5,maxBarThickness:30}]},options:axisOpts(c)});
+ makeChart('repDonut',{type:'doughnut',data:{labels:['Paid','Partial','Owing'],datasets:[{data:[st.paid.length,st.partial.length,st.owing.length],backgroundColor:[c.green,c.amber,c.danger],borderWidth:0}]},options:{cutout:'64%',maintainAspectRatio:false,responsive:true,plugins:{legend:{display:true,position:'bottom',labels:{color:c.muted,boxWidth:10,padding:12,font:{size:11.5}}}}}});
+}
+
 /* ---------- SMART LAYER (drop-out radar, forecast, source analytics, priorities) ---------- */
 function monthDiff(a,b){const A=a.split('-').map(Number),B=b.split('-').map(Number);return (B[0]*12+B[1])-(A[0]*12+A[1]);}
 function examMonth(cohort){if(cohort==='2027')return '2027-08';if(cohort==='2028')return '2028-08';const p=ymNow().split('-').map(Number);const yr=p[1]<=8?p[0]:p[0]+1;return yr+'-08';}
@@ -1641,11 +1656,14 @@ function renderDashboard(){
  const riskCard='<div class="card" style="margin-bottom:20px"><div class="card-h"><h3>At risk of leaving</h3><span style="font-size:12px;color:var(--muted)">2+ months behind</span></div><div class="card-b mini-list">'+(risk.length?risk.slice(0,5).map(r=>'<div class="pay-row"><div class="pr-av">'+init(r.s.name)+'</div><div class="pr-main" onclick="openStudent('+r.s.id+')"><div class="pr-nm">'+r.s.name+'</div><div class="pr-mt">'+cohortLabel(r.s.cohort).replace(' Batch','')+' · '+r.behind+' months behind</div></div><div class="pr-act"><span class="pr-pill" style="background:var(--danger-soft);color:var(--danger)">'+lkr(r.owed)+'</span><button class="btn-wa" title="WhatsApp reminder" aria-label="WhatsApp reminder" onclick="PAY.remind('+r.s.id+')">'+I.wa+'</button></div></div>').join(''):'<div class="tk-empty">No one is behind. Great retention.</div>')+'</div></div>';
  const fc=cohortForecast();const fcMax=Math.max(1,fc.by['2027']||0,fc.by['2028']||0,fc.by['crash']||0);
  const fcCard='<div class="card" style="margin-bottom:20px"><div class="card-h"><h3>Locked-in income to exam season</h3><span style="font-size:12px;color:var(--muted)">projected fees ahead</span></div><div class="card-b" style="padding:16px 20px 20px"><div style="font-family:Poppins;font-size:26px;font-weight:800;letter-spacing:-.5px;margin-bottom:14px">'+lkr(fc.total)+'</div><div class="fc-bars">'+['2027','2028','crash'].filter(c=>fc.by[c]).map(c=>'<div class="fc-row"><span class="fc-name">'+cohortLabel(c).replace(' Batch','')+'</span><div class="fc-track"><div class="fc-fill" style="width:'+Math.round((fc.by[c]||0)/fcMax*100)+'%"></div></div><span class="fc-val">'+lkr(fc.by[c]||0)+'</span></div>').join('')+'</div></div></div>';
- wrap.innerHTML=greetHTML()+flag+kpis+prioCard+
+ const _m6=[];for(let i=5;i>=0;i--)_m6.push(ymShift(ym,-i));const _trend=_m6.map(m=>monthStats(m).collected);
+ const trendCard='<div class="card" style="margin-bottom:20px"><div class="card-h"><h3>Collections, last 6 months</h3><span style="font-size:12px;color:var(--muted)">LKR collected per month</span></div><div class="card-b" style="padding:16px 20px 18px"><div style="height:190px"><canvas id="dashTrend"></canvas></div></div></div>';
+ wrap.innerHTML=greetHTML()+flag+kpis+prioCard+trendCard+
   '<div class="grid2" style="margin-bottom:20px"><div class="card"><div class="card-h"><h3>Students by batch</h3><span class="lk" onclick="go(\'students\')">View all →</span></div><div class="card-b" style="padding:16px 20px 20px"><div class="batchbars">'+bar('2027',byC('2027'),0)+bar('2028',byC('2028'),1)+bar('Crash',byC('crash'),2)+'</div><div style="margin-top:16px;font-size:12.5px;color:var(--muted)">'+active.length+' active students · '+DB.get('students').filter(s=>s.status==="alumni").length+' alumni</div></div></div>'+
   '<div class="card"><div class="card-h"><h3>Needs collecting</h3><span class="lk" onclick="go(\'payments\')">Payments →</span></div><div class="card-b mini-list">'+owesList+'</div></div></div>'+
   riskCard+fcCard;
  animateCounts(wrap);
+ drawDashChart(_m6.map(m=>monthShort(m).split(' ')[0]),_trend);
 }
 function renderEmpDashboard(){
  const wrap=document.getElementById('dashWrap');const ym=ymNow();
@@ -1755,7 +1773,11 @@ function renderReports(){
  const table='<div class="card" style="margin-top:20px"><div class="card-h"><h3>Monthly performance</h3><span style="font-size:12px;color:var(--muted)">Last 12 months</span></div><table class="tbl"><thead><tr><th>Month</th><th class="tnum">New enrolments</th><th class="tnum">Fees collected</th></tr></thead><tbody>'+data.slice().reverse().map(d=>'<tr><td class="tn">'+monthLbl(d.m)+'</td><td class="tnum">'+d.enrol+'</td><td class="tnum">'+lkr(d.col)+'</td></tr>').join('')+'</tbody></table></div>';
  const ss=sourceStats();const ssMax=Math.max(1,...ss.map(x=>x.count));
  const srcCard='<div class="card" style="margin-top:20px"><div class="card-h"><h3>Where students come from</h3><span style="font-size:12px;color:var(--muted)">paying students by enrolment source</span></div><div class="card-b" style="padding:12px 20px 16px">'+ss.map(x=>'<div class="src-row"><span class="src-name">'+x.src+'</span><div class="src-track"><div class="src-fill" style="width:'+Math.round(x.count/ssMax*100)+'%"></div></div><span class="src-val">'+x.count+' students · '+lkr(x.life)+'</span></div>').join('')+'</div></div>';
- wrap.innerHTML='<div class="exp-actions"><button class="btn-ghost" onclick="exportReportCSV()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export CSV</button><button class="btn-ghost" onclick="window.print()">Print</button></div>'+kpis+table+srcCard;
+ const stNow=monthStats(ym);
+ const chartsRow='<div class="grid2" style="margin-top:20px"><div class="card"><div class="card-h"><h3>Revenue trend</h3><span style="font-size:12px;color:var(--muted)">collected, 12 months</span></div><div class="card-b" style="padding:16px 20px 18px"><div style="height:230px"><canvas id="repRev"></canvas></div></div></div><div class="card"><div class="card-h"><h3>This month</h3><span style="font-size:12px;color:var(--muted)">paid / partial / owing</span></div><div class="card-b" style="padding:16px 20px 18px"><div style="height:230px"><canvas id="repDonut"></canvas></div></div></div></div>';
+ const enrolCard='<div class="card" style="margin-top:20px"><div class="card-h"><h3>New enrolments</h3><span style="font-size:12px;color:var(--muted)">per month, 12 months</span></div><div class="card-b" style="padding:16px 20px 18px"><div style="height:200px"><canvas id="repEnrol"></canvas></div></div></div>';
+ wrap.innerHTML='<div class="exp-actions"><button class="btn-ghost" onclick="exportReportCSV()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export CSV</button><button class="btn-ghost" onclick="window.print()">Print</button></div>'+kpis+chartsRow+enrolCard+table+srcCard;
+ drawReportCharts(months,data.map(d=>d.col),data.map(d=>d.enrol),stNow);
 }
 function exportReportCSV(){const ym=ymNow();const months=[];for(let i=11;i>=0;i--)months.push(ymShift(ym,-i));let csv='Month,New enrolments,Fees collected (LKR)\n';months.forEach(m=>{csv+=monthLbl(m)+','+monthEnrolments(m)+','+monthStats(m).collected+'\n';});const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='bswl-sales-report.csv';a.click();toast(I.check+' CSV exported');}
 
