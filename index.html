@@ -740,6 +740,43 @@ body.dark .kpi.accent .val{color:var(--on-accent)}
 #dashWrap .kpi .val{letter-spacing:-.8px}
 #dashWrap .kt{border-radius:10px}
 
+/* ---------- ATTENDANCE ---------- */
+.att-hint{font-size:12px;color:var(--muted);margin:-4px 2px 12px}
+.att-sum{display:flex;gap:10px;margin-bottom:14px}
+.asx{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--muted);font-weight:600;box-shadow:var(--shadow-xs)}
+.asx b{display:block;font-family:'Poppins';font-size:22px;font-weight:800;color:var(--ink);line-height:1;margin-bottom:4px}
+.asx.as-p b{color:var(--green)}.asx.as-a b{color:var(--danger)}
+.att-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line2)}
+.att-row:last-child{border-bottom:none}
+.att-btn{margin-left:auto;flex-shrink:0;padding:9px 18px;border-radius:99px;font-size:13px;font-weight:700;transition:.15s;min-width:96px}
+.att-btn:active{transform:scale(.96)}
+.att-btn.is-present{background:var(--green-soft);color:var(--green);border:1px solid color-mix(in srgb,var(--green) 24%,transparent)}
+.att-btn.is-absent{background:var(--danger-soft);color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 28%,transparent)}
+#attDate{cursor:pointer}
+.att-grid{display:flex;gap:8px;flex-wrap:wrap}
+.acell{text-align:center}
+.acell .asq{width:34px;height:34px;border-radius:9px;border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.asq.a-pres{background:var(--green-soft);border-color:var(--green);color:var(--green)}
+.asq.a-abs{background:var(--danger-soft);border-color:var(--danger);color:var(--danger)}
+.asq.a-none{background:var(--surface-2);color:var(--faint)}
+.acell .agl{font-size:9.5px;color:var(--faint);font-weight:650;margin-top:4px}
+
+/* ---------- DASHBOARD HERO (Apple-grade hierarchy) ---------- */
+.dash-hero{background:var(--accent-grad);color:var(--on-accent);border-radius:var(--radius);padding:24px 26px;margin-bottom:14px;box-shadow:var(--shadow-md);position:relative;overflow:hidden}
+.dash-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(600px 260px at 88% -40%,color-mix(in srgb,var(--on-accent) 10%,transparent),transparent 60%);pointer-events:none}
+.dash-hero .dh-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:11.5px;text-transform:uppercase;letter-spacing:1.1px;font-weight:650;opacity:.82;position:relative}
+.dh-val{font-family:'Poppins';font-size:clamp(34px,9vw,46px);font-weight:800;letter-spacing:-1.4px;margin-top:8px;font-variant-numeric:tabular-nums;line-height:1;position:relative}
+.dh-bar{height:8px;border-radius:99px;background:color-mix(in srgb,var(--on-accent) 20%,transparent);margin:18px 0 12px;overflow:hidden;position:relative}
+.dh-fill{height:100%;border-radius:99px;background:var(--on-accent);transition:width .7s var(--ease)}
+.dh-foot{display:flex;justify-content:space-between;gap:12px;font-size:12.5px;opacity:.85;flex-wrap:wrap;position:relative}
+.dh-foot b{font-weight:700}
+.dash-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.dchip{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:15px 16px;box-shadow:var(--shadow-xs);transition:transform var(--t-fast) var(--ease),box-shadow var(--t-fast)}
+.dchip:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.dc-v{font-family:'Poppins';font-size:23px;font-weight:800;letter-spacing:-.5px;line-height:1;font-variant-numeric:tabular-nums}
+.dc-l{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:7px}
+@media(max-width:640px){.dash-chips{grid-template-columns:1fr 1fr;gap:10px}.dchip{padding:13px 14px}.dc-v{font-size:20px}}
+
 /* monochrome on-accent text: dark text on light accent in dark mode */
 .btn-red,.pa.primary,.nav-item.active,.uav,.side-foot .av,.kpi.accent,.kpi.accent .lbl,.kpi.accent .sub,.kpi.accent .sub b{color:var(--on-accent)}
 
@@ -784,6 +821,7 @@ body.dark{--accent:#f4f5f7}
       <div class="nav-item" data-pg="enquiries" data-role="all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Enquiries<span class="badge" id="nbEnq"></span></div>
       <div class="nav-item" data-pg="payments" data-role="owner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.2"/><path d="M6 12h.01M18 12h.01"/></svg>Payments<span class="badge" id="nbOwing"></span></div>
       <div class="nav-item" data-pg="students" data-role="all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>Students<span class="badge" id="nbStu"></span></div>
+      <div class="nav-item" data-pg="attendance" data-role="owner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/><path d="M9 15l2 2 4-4"/></svg>Attendance</div>
       <div class="nav-item" data-pg="taskbook" data-role="all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Task Book<span class="badge" id="nbTask"></span></div>
       <div class="nav-label">Manage</div>
       <div class="nav-item" data-pg="money" data-role="owner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Money</div>
@@ -848,6 +886,16 @@ body.dark{--accent:#f4f5f7}
       <div class="page" id="page-taskbook">
         <div class="stu-toolbar"><span style="font-size:12.5px;color:var(--muted)" id="taskHint">Assign and track work across the team.</span><div class="sp" style="flex:1"></div><button class="btn-red" onclick="openTaskModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Task</button></div>
         <div class="card"><div class="card-b" id="taskList" style="padding:6px 20px 14px"></div></div>
+      </div>
+      <div class="page" id="page-attendance">
+        <div class="stu-toolbar">
+          <input type="date" id="attDate" class="filter" onchange="ATT.setDate(this.value)">
+          <select class="filter" id="attBatch" onchange="ATT.set('batch',this.value)"><option value="all">All batches</option><option value="2027">2027</option><option value="2028">2028</option><option value="crash">Crash</option></select>
+          <select class="filter" id="attLoc" onchange="ATT.set('loc',this.value)"><option value="all">All locations</option><option value="nugegoda">Nugegoda</option><option value="kiribathgoda">Kiribathgoda</option><option value="online">Online</option></select>
+        </div>
+        <div id="attSummary"></div>
+        <div class="att-hint">Everyone is Present by default. Tap a student to mark them Absent.</div>
+        <div class="card"><div class="card-b" id="attList" style="padding:2px 18px 10px"></div></div>
       </div>
       <div class="page" id="page-money">
         <div class="tabbar"><button class="tab active" data-mt="revenue" onclick="renderMoney('revenue')">Revenue</button><button class="tab" data-mt="collections" onclick="renderMoney('collections')">Collections</button><button class="tab" data-mt="report" onclick="renderMoney('report')">Report</button></div>
@@ -1032,9 +1080,9 @@ const I={
    to Supabase behind the SAME API so no view code changes.
    Collections: students, payments, enquiries, settings. */
 const DB={
- _d:null,KEY:'bswl_data_v5',
+ _d:null,KEY:'bswl_data_v6',
  load(){let d=null;try{d=JSON.parse(localStorage.getItem(this.KEY))}catch(e){}
-  if(d&&d.students&&d.settings&&d.staff&&d.tasks){this._d=d;}
+  if(d&&d.students&&d.settings&&d.staff&&d.tasks&&d.attendance){this._d=d;}
   else{this._d=seedData();this.commit();}},
  get(k){return this._d[k];},
  commit(){try{localStorage.setItem(this.KEY,JSON.stringify(this._d))}catch(e){console.warn('BSWL: save failed',e);}},
@@ -1168,8 +1216,12 @@ function seedData(){
   {id:9,staffId:1,name:'Leon',role:'owner',device:'iPhone · Safari',when:at(3,8,55)},
   {id:10,staffId:2,name:'Bihandu',role:'employee',device:'iPhone · Safari',when:at(3,8,2)}
  ];
+ /* ---- ATTENDANCE: last 10 weekly sessions, per-student tendency ---- */
+ const sessDates=[];for(let i=0;i<10;i++)sessDates.push(dISO(4+i*7));
+ const attendance=[];let aid=1;
+ students.filter(s=>s.status==='active').forEach(function(s){const tend=0.58+rnd()*0.40;sessDates.forEach(function(d){if(d>=s.joined)attendance.push({id:aid++,studentId:s.id,date:d,present:rnd()<tend});});});
  return {
-  students:students,payments:payments,enquiries:enquiries,staff:staff,tasks:tasks,audit:audit,
+  students:students,payments:payments,enquiries:enquiries,staff:staff,tasks:tasks,audit:audit,attendance:attendance,
   settings:{fee2027:4000,fee2028:4000,feeCrash:4000,crashMode:'monthly',regFee:0,partialAllowed:true,dueDay:1,
    waNumber:'',
    waRemind:'Hi {name}, a gentle reminder that the {month} class fee (LKR {amount}) for the {batch} is due. You can settle it at class. Thank you! - Leon',
@@ -1519,6 +1571,7 @@ function openStudent(id,ymCtx){
   '<div class="sec"><div class="sec-t">'+monthLbl(shYm)+'</div><div class="info-grid"><div class="info"><div class="il">Due</div><div class="iv">'+(due?lkr(due):'not charged')+'</div></div><div class="info"><div class="il">Paid</div><div class="iv" style="color:'+(got>=due&&due>0?'var(--green)':got>0?'var(--amber)':'var(--danger)')+'">'+(got?lkr(got):(due?'nothing yet':'—'))+'</div></div></div></div>'+
   '<div class="sec"><div class="sec-t">Last 12 months</div><div class="grid12">'+cells+'</div></div>'+
   '<div class="sec"><div class="sec-t">Payment history</div>'+(hist.length?hist.map(r=>'<div class="act" style="cursor:pointer" title="Generate receipt" onclick="receiptDoc('+x.id+',\''+r.month+'\')"><div class="act-ic" style="background:'+(r.status==='paid'?'var(--green-soft)':'var(--amber-soft)')+';color:'+(r.status==='paid'?'var(--green)':'var(--amber)')+'">'+(r.status==='paid'?'✓':'½')+'</div><div style="flex:1"><div class="act-s">'+monthLbl(r.month)+'</div><div class="act-m">'+(r.status==='paid'?'Paid in full':'Partial payment')+'</div></div><div style="text-align:right"><div class="act-s" style="font-variant-numeric:tabular-nums">'+lkr(r.amount)+'</div><div class="act-m">'+(r.paidAt?fmtD(r.paidAt):'')+'</div></div></div>').join(''):'<div style="color:var(--faint);font-size:13px">No payments recorded yet.</div>')+'</div>'+
+  '<div class="sec"><div class="sec-t">Attendance'+(attRate(x.id)!=null?' · '+Math.round(attRate(x.id)*100)+'%':'')+'</div><div class="att-grid">'+attSessions().slice(0,8).reverse().map(function(d){const a=attFor(x.id,d);const cls=!a?'a-none':a.present?'a-pres':'a-abs';return '<div class="acell"><div class="asq '+cls+'">'+(a&&!a.present?'✕':a?'✓':'·')+'</div><div class="agl">'+fmtD(d).replace(/ \d{4}$/,'')+'</div></div>';}).join('')+'</div></div>'+
   (x.notes?'<div class="sec"><div class="sec-t">Notes</div><div style="font-size:13px;color:var(--muted)">'+x.notes+'</div></div>':'')+
   '</div>';
  document.getElementById('overlay').classList.add('open');panel.classList.add('open');
@@ -1768,9 +1821,15 @@ function examMonth(cohort){if(cohort==='2027')return '2027-08';if(cohort==='2028
 function monthsToExam(cohort){return Math.max(0,monthDiff(ymNow(),examMonth(cohort)));}
 function totalOwed(s){let ym=s.joined.slice(0,7),t=0;const now=ymNow();while(ym<=now){if(chargedIn(s,ym))t+=Math.max(0,dueFor(s,ym)-paidAmt(s.id,ym));ym=ymShift(ym,1);}return t;}
 function studentReliability(s){let ym=s.joined.slice(0,7),ch=0,pd=0;const now=ymNow();while(ym<now){if(chargedIn(s,ym)){ch++;if(paidAmt(s.id,ym)>=dueFor(s,ym))pd++;}ym=ymShift(ym,1);}return ch?pd/ch:1;}
-function studentStanding(s){const behind=monthsBehind(s);const rel=studentReliability(s);
- if(behind>=2||rel<0.7)return {key:'bad',label:'Needs attention',color:'var(--danger)'};
- if(behind===0&&rel>=0.85)return {key:'good',label:'Good standing',color:'var(--green)'};
+function attRecords(sid){return DB.get('attendance').filter(a=>a.studentId===sid);}
+function attRate(sid){const r=attRecords(sid);if(!r.length)return null;return r.filter(a=>a.present).length/r.length;}
+function attSessions(){return [...new Set(DB.get('attendance').map(a=>a.date))].sort().reverse();}
+function attFor(sid,date){return DB.get('attendance').find(a=>a.studentId===sid&&a.date===date);}
+function setAttendance(sid,date,present){const a=attFor(sid,date);if(a){a.present=present;}else{DB.get('attendance').push({id:DB.nextId('attendance'),studentId:sid,date:date,present:present});}DB.commit();}
+function missedLast(sid){const ses=attSessions();if(!ses.length)return false;const a=attFor(sid,ses[0]);return a?!a.present:false;}
+function studentStanding(s){const behind=monthsBehind(s);const rel=studentReliability(s);const att=attRate(s.id);
+ if(behind>=2||rel<0.7||(att!=null&&att<0.6))return {key:'bad',label:'Needs attention',color:'var(--danger)'};
+ if(behind===0&&rel>=0.85&&(att==null||att>=0.85))return {key:'good',label:'Good standing',color:'var(--green)'};
  return {key:'okay',label:'Okay',color:'var(--amber)'};}
 function atRiskStudents(){return DB.get('students').filter(s=>s.status==='active').map(s=>({s,behind:monthsBehind(s),owed:totalOwed(s)})).filter(x=>x.behind>=2).sort((a,b)=>b.behind-a.behind||b.owed-a.owed);}
 function cohortForecast(){const active=DB.get('students').filter(s=>s.status==='active');const st=settings();const by={};let total=0;active.forEach(s=>{let months=monthsToExam(s.cohort);if(s.cohort==='crash'&&st.crashMode==='onetime')months=0;const inc=effectiveFee(s)*months;by[s.cohort]=(by[s.cohort]||0)+inc;total+=inc;});return {by,total};}
@@ -1780,6 +1839,7 @@ function weeklyPriorities(){const out=[];const risk=atRiskStudents();
  const trial=DB.get('enquiries').filter(e=>e.stage==='trial').length; if(trial)out.push({ic:I.check,cls:'',t:trial+' trial student'+(trial>1?'s':'')+' ready to enrol',go:"go('enquiries')"});
  const fresh=DB.get('enquiries').filter(e=>e.stage==='enquiry').length; if(fresh)out.push({ic:I.wa,cls:'',t:fresh+' new enquir'+(fresh>1?'ies':'y')+' to reply to',go:"go('enquiries')"});
  const overdue=DB.get('tasks').filter(t=>!t.done&&t.due<todayISO()).length; if(overdue)out.push({ic:I.clock,cls:'amber',t:overdue+' task'+(overdue>1?'s':'')+' overdue',go:"go('taskbook')"});
+ const missed=DB.get('students').filter(s=>s.status==='active'&&missedLast(s.id)).length; if(missed)out.push({ic:I.clock,cls:'amber',t:missed+' student'+(missed>1?'s':'')+' missed the last class',go:"go('attendance')"});
  const st=monthStats(ymNow());const pct=st.expected?Math.round(st.collected/st.expected*100):100; const left=st.owing.length+st.partial.length;
  if(left>0)out.push({ic:KIC.wallet,cls:'',t:left+' student'+(left>1?'s':'')+' still to pay this month ('+pct+'% collected)',go:"go('payments')"});
  return out.slice(0,5);}
@@ -1802,7 +1862,10 @@ function renderDashboard(){
  let flag='';
  if(soft)flag='<div class="soft-flag">'+_warnIc+'<div><b>Soft month.</b> '+(isAug?'August is exam month — enrolments slow around now.':'Only '+enrolThis+' enrolments so far vs about '+Math.round(avg)+' in a typical month. Lean on enquiries and alumni referrals.')+'</div></div>';
  else if(strong)flag='<div class="soft-flag strong-flag">'+_upIc+'<div><b>Strong month.</b> '+enrolThis+' enrolments already, above the ~'+Math.round(avg)+' norm. Keep the momentum.</div></div>';
- const kpis='<div class="kpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">'+kpiC('Collected · '+monthShort(ym).split(' ')[0],lkr(st.collected),pct+'% of expected',true,KIC.wallet)+kpiC('Expected',lkr(st.expected),st.charged.length+' charged',false,KIC.target)+kpiC('Outstanding',lkr(st.outstanding),(st.owing.length+st.partial.length)+' to collect',false,KIC.clock)+kpiC('Open enquiries',openEnq,tasksDue+' tasks due',false,KIC.msg)+'</div>';
+ const _lastSes=attSessions()[0];let _turnout='—';if(_lastSes){const _ss=active.filter(z=>z.joined<=_lastSes);const _pr=_ss.filter(z=>{const a=attFor(z.id,_lastSes);return !a||a.present;}).length;_turnout=_ss.length?Math.round(_pr/_ss.length*100)+'%':'—';}
+ const hero='<div class="dash-hero"><div class="dh-top"><span class="dh-lbl">Collected · '+monthShort(ym).split(' ')[0]+'</span><span class="dh-pct">'+pct+'% of expected</span></div><div class="dh-val"><span data-to="'+st.collected+'" data-fmt="lkr">'+lkr(st.collected)+'</span></div><div class="dh-bar"><div class="dh-fill" style="width:'+pct+'%"></div></div><div class="dh-foot"><span>of '+lkr(st.expected)+' expected</span><span><b>'+lkr(st.outstanding)+'</b> outstanding · '+(st.owing.length+st.partial.length)+' to collect</span></div></div>';
+ const dchip=function(v,l){return '<div class="dchip"><div class="dc-v">'+v+'</div><div class="dc-l">'+l+'</div></div>';};
+ const chips='<div class="dash-chips">'+dchip(active.length,'Active students')+dchip(enrolThis,'Enrolled this month')+dchip(openEnq,'Open enquiries')+dchip(_turnout,'Last class turnout')+'</div>';
  const maxC=Math.max(1,byC('2027'),byC('2028'),byC('crash'));
  const _shades=['var(--ink)','color-mix(in srgb,var(--ink) 64%,var(--surface))','color-mix(in srgb,var(--ink) 40%,var(--surface))'];
  const bar=(n,v,i)=>'<div class="bb-row"><span class="bb-name">'+n+'</span><div class="bb-track"><div class="bb-fill" style="width:'+Math.round(v/maxC*100)+'%;background:'+_shades[i]+'"></div></div><span class="bb-n">'+v+'</span></div>';
@@ -1816,7 +1879,7 @@ function renderDashboard(){
  const fcCard='<div class="card" style="margin-bottom:20px"><div class="card-h"><h3>Locked-in income to exam season</h3><span style="font-size:12px;color:var(--muted)">projected fees ahead</span></div><div class="card-b" style="padding:16px 20px 20px"><div style="font-family:Poppins;font-size:26px;font-weight:800;letter-spacing:-.5px;margin-bottom:14px">'+lkr(fc.total)+'</div><div class="fc-bars">'+['2027','2028','crash'].filter(c=>fc.by[c]).map(c=>'<div class="fc-row"><span class="fc-name">'+cohortLabel(c).replace(' Batch','')+'</span><div class="fc-track"><div class="fc-fill" style="width:'+Math.round((fc.by[c]||0)/fcMax*100)+'%"></div></div><span class="fc-val">'+lkr(fc.by[c]||0)+'</span></div>').join('')+'</div></div></div>';
  const _m6=[];for(let i=5;i>=0;i--)_m6.push(ymShift(ym,-i));const _trend=_m6.map(m=>monthStats(m).collected);
  const trendCard='<div class="card" style="margin-bottom:20px"><div class="card-h"><h3>Collections, last 6 months</h3><span style="font-size:12px;color:var(--muted)">LKR collected per month</span></div><div class="card-b" style="padding:16px 20px 18px"><div style="height:190px"><canvas id="dashTrend"></canvas></div></div></div>';
- wrap.innerHTML=greetHTML()+flag+kpis+prioCard+trendCard+
+ wrap.innerHTML=greetHTML()+flag+hero+chips+prioCard+trendCard+
   '<div class="grid2" style="margin-bottom:20px"><div class="card"><div class="card-h"><h3>Students by batch</h3><span class="lk" onclick="go(\'students\')">View all →</span></div><div class="card-b" style="padding:16px 20px 20px"><div class="batchbars">'+bar('2027',byC('2027'),0)+bar('2028',byC('2028'),1)+bar('Crash',byC('crash'),2)+'</div><div style="margin-top:16px;font-size:12.5px;color:var(--muted)">'+active.length+' active students · '+DB.get('students').filter(s=>s.status==="alumni").length+' alumni</div></div></div>'+
   '<div class="card"><div class="card-h"><h3>Needs collecting</h3><span class="lk" onclick="go(\'payments\')">Payments →</span></div><div class="card-b mini-list">'+owesList+'</div></div></div>'+
   riskCard+fcCard;
@@ -1965,9 +2028,29 @@ function renderMoney(tab){if(tab)MONEY.tab=tab;document.querySelectorAll('#page-
 const TEAMTAB={tab:'perf'};
 function renderTeam(tab){if(tab)TEAMTAB.tab=tab;document.querySelectorAll('#page-team .tab').forEach(b=>b.classList.toggle('active',b.dataset.tt===TEAMTAB.tab));const t=TEAMTAB.tab;if(t==='perf')renderTeamView();else if(t==='staff')renderStaff();else renderAudit();}
 
+
+/* ---------- ATTENDANCE VIEW ---------- */
+const ATT={date:null,batch:'all',loc:'all',
+ setDate(v){this.date=v;renderAttendance();},
+ set(k,v){this[k]=v;renderAttendance();},
+ toggle(sid){const cur=attFor(sid,this.date);if(!cur)setAttendance(sid,this.date,false);else setAttendance(sid,this.date,!cur.present);renderAttendance();renderBadges();}
+};
+function renderAttendance(){
+ const el=document.getElementById('attList');if(!el)return;
+ if(!ATT.date)ATT.date=attSessions()[0]||todayISO();
+ const dp=document.getElementById('attDate');if(dp)dp.value=ATT.date;
+ const studs=DB.get('students').filter(s=>s.status==='active'&&s.joined<=ATT.date&&(ATT.batch==='all'||s.cohort===ATT.batch)&&(ATT.loc==='all'||s.loc===ATT.loc)).sort((a,b)=>a.name.localeCompare(b.name));
+ let present=0,absent=0;
+ el.innerHTML=studs.map(function(s){const a=attFor(s.id,ATT.date);const isAbsent=a&&!a.present;if(isAbsent)absent++;else present++;const r=attRate(s.id);const rp=r!=null?Math.round(r*100)+'% attendance':'new';
+  return '<div class="att-row"><div class="pr-av">'+init(s.name)+'</div><div class="pr-main"><div class="pr-nm">'+s.name+'</div><div class="pr-mt">'+cohortLabel(s.cohort).replace(' Batch','')+' · '+locLabel(s.loc)+' · '+rp+'</div></div><button class="att-btn '+(isAbsent?'is-absent':'is-present')+'" onclick="ATT.toggle('+s.id+')">'+(isAbsent?'Absent':'Present')+'</button></div>';
+ }).join('')||emptyState(_ES.people,'No students for this class','Nobody had joined by this date, or the filter is empty.','','');
+ const sum=document.getElementById('attSummary');
+ if(sum)sum.innerHTML=studs.length?'<div class="att-sum"><div class="asx as-p"><b>'+present+'</b> present</div><div class="asx as-a"><b>'+absent+'</b> absent</div><div class="asx as-r"><b>'+Math.round(present/studs.length*100)+'%</b> turnout</div></div>':'';
+}
+
 /* ---------- NAV ---------- */
-const TITLES={dashboard:['Dashboard',''],payments:['Payments','Who paid, what came in, who owes'],enquiries:['Enquiries','From first message to enrolled'],students:['Students','Registry, payments and lifetime fees'],taskbook:['Task Book','Assign and track work'],money:['Money','Revenue, collections and reporting'],team:['Team','Performance, staff and access'],settings:['Settings','Fees, templates and system setup']};
-const RENDERERS={dashboard:renderDashboard,payments:renderPayments,enquiries:renderEnquiries,students:renderStudents,taskbook:renderTaskbook,money:renderMoney,team:renderTeam,settings:renderSettings};
+const TITLES={dashboard:['Dashboard',''],payments:['Payments','Who paid, what came in, who owes'],enquiries:['Enquiries','From first message to enrolled'],students:['Students','Registry, payments and lifetime fees'],taskbook:['Task Book','Assign and track work'],attendance:['Attendance','Mark who came to class'],money:['Money','Revenue, collections and reporting'],team:['Team','Performance, staff and access'],settings:['Settings','Fees, templates and system setup']};
+const RENDERERS={dashboard:renderDashboard,payments:renderPayments,enquiries:renderEnquiries,students:renderStudents,taskbook:renderTaskbook,attendance:renderAttendance,money:renderMoney,team:renderTeam,settings:renderSettings};
 function go(pg){if(!TITLES[pg])pg='dashboard';if(!isOwner()&&!['dashboard','students','enquiries','taskbook'].includes(pg))pg='dashboard';document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.pg===pg));document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+pg).classList.add('active');document.getElementById('pgTitle').textContent=TITLES[pg][0];document.getElementById('pgSub').textContent=TITLES[pg][1];closePanel();closeSidebar();try{if(RENDERERS[pg])RENDERERS[pg]();}catch(e){console.warn('render '+pg,e);}animateCounts(document.getElementById('page-'+pg));}
 document.querySelectorAll('.nav-item[data-pg]').forEach(n=>{n.onclick=()=>go(n.dataset.pg);n.setAttribute('tabindex','0');n.setAttribute('role','button');n.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go(n.dataset.pg);}};});
 (function(){const o=document.querySelector('.side-foot .out');if(o){o.setAttribute('tabindex','0');o.setAttribute('role','button');o.setAttribute('aria-label','Sign out');o.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();signOut();}};}})();
