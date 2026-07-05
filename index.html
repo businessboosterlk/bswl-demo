@@ -1383,59 +1383,77 @@ function receiptDoc(id,ym){
 function onboardingDoc(id){
  const x=DB.get('students').find(s=>s.id===id);if(!x)return;
  const st=settings();const fee=effectiveFee(x);const due=st.dueDay||1;
- const waNum=(st.waNumber||'').replace(/\s/g,'');
  const ordinal=n=>n+(([1,21,31].includes(n))?'st':([2,22].includes(n))?'nd':([3,23].includes(n))?'rd':'th');
- const A='#141417';
+ const bulb='<svg viewBox="0 0 24 24" width="42" height="42" fill="#141417"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>';
+ const bulbSm='<svg viewBox="0 0 24 24" width="24" height="24" fill="#141417"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>';
+ const secs=[
+  [1,'Start here — the one idea','Business Studies is not a memorising subject. Marks come from applying theory to a real business in the question, not from repeating definitions.',['Understand the question.','Apply your knowledge.','Write with sense.']],
+  [2,'What the exam actually rewards','The exam rewards application and evaluation, not how much you can remember.',['State / Define — a quick, correct point.','Explain / Analyse — build a chain: point, because, therefore, effect on the business.','Evaluate / Justify / Discuss — argue both sides, then give a clear, reasoned judgement.']],
+  [3,'Your weekly rhythm','Consistency is more powerful than last-minute cramming.',['Attend the class fully present.','Review the same day — rewrite key points in your own words.','Practise 2 to 3 application questions on that topic.','Flag what you could not answer and bring it to class.']],
+  [4,'How to revise (the right way)','Smart revision makes your learning stick and your answers stronger.',['Active recall over re-reading.','One-page summary per unit. If it does not fit on a page, you have not understood it yet.','Teach it aloud. Explain a concept as if to a friend.','Close the book and write everything you remember.']],
+  [5,'Past papers — how and when','Past papers train your mind to think like the examiner.',['Start early. Do not wait to "finish the syllabus".','Do questions topic-by-topic first, full papers later.','Mark against the scheme. Study what a full-mark answer contains, not just the final answer.','Time yourself. Running out of time on the high-mark questions is a grade-killer.']],
+  [6,'Common mistakes in the BS paper','Avoiding errors is as important as knowing the content.',['Writing textbook definitions without applying them.','Ignoring the command word — describing when asked to evaluate.','Listing points instead of developing them into a chain of analysis.','Weak conclusions with no clear, justified judgement.','Poor time management — over-writing early, running dry on the big questions.']],
+  [7,'How to get the most out of this class','Use the class, Leon, and every resource to your advantage.',['The class works best as a back-and-forth, not a lecture.','Come with your flagged questions and ask them.','Tell Leon early if you are falling behind. Early is easy to fix, late is not.','Be active. Ask. Clarify. Engage. Improve.']],
+  [8,'Your first week','Set the right habits from the very beginning.',['Get all your notes and materials organised in one place.','Set a fixed same-day review slot after each class.','Write a one-page summary of your first topic.','Do one past-paper application question and mark it.','Note one thing you are unsure about, and ask Leon.']]
+ ];
+ const secHTML=secs.map(function(v){return '<div class="srow"><div class="num">'+String(v[0]).padStart(2,'0')+'</div><div class="sc"><h3>'+v[1]+'</h3><p class="in">'+v[2]+'</p><ul>'+v[3].map(function(li){return '<li>'+li+'</li>';}).join('')+'</ul></div></div>';}).join('');
+ const road=[['01','Set your goal','Decide that an A is your standard, not your dream.'],['02','Attend every class','Never miss the explanations that are not in the textbook.'],['03','Review within 24 hours','Rewrite today’s lesson using your own words.'],['04','Build summary notes','Create one-page notes after every topic.'],['05','Practise topic questions','Apply theory instead of memorising definitions.'],['06','Mark using the scheme','Learn exactly how examiners award marks.'],['07','Fix every mistake','Turn every wrong answer into a learning opportunity.'],['08','Timed past papers','Train under real exam conditions.'],['09','Improve weak topics','Spend extra time where you lose marks.'],['10','Ask questions early','Never leave confusion until the week before exams.'],['11','Weekly progress check','Track marks and celebrate improvement.'],['12','Repeat the process','Consistency creates confidence.'],['13','Exam ready','Walk into the examination fully prepared.'],['14','Achieve an A','Confidence. Application. Success.']];
+ const roadHTML=road.map(function(v){return '<div class="rd"><div class="rn">'+v[0]+'</div><div><div class="rt">'+v[1]+'</div><div class="rp">'+v[2]+'</div></div></div>';}).join('');
+ const oath=['Attend every class, on time and fully present.','Review each lesson the same day, in my own words.','Attempt the questions set for me each week.','Ask when I do not understand — early, not late.','Keep my fees up to date so my seat stays mine.','Aim for an A, and put in the consistent work it takes.'];
+ const oathHTML=oath.map(function(li){return '<li>'+li+'</li>';}).join('');
  const css="*{margin:0;box-sizing:border-box;font-family:'Inter',Arial,sans-serif}"+
   "body{background:#eceef3;color:#141417;-webkit-print-color-adjust:exact;print-color-adjust:exact}"+
-  ".page{max-width:820px;margin:22px auto;background:#fff;box-shadow:0 8px 34px rgba(0,0,0,.14)}"+
-  ".pad{padding:44px 52px 40px}"+
-  ".print{position:fixed;top:16px;right:16px;background:"+A+";color:#fff;border:none;padding:12px 22px;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;z-index:9;box-shadow:0 6px 16px rgba(20,20,23,.3)}"+
-  ".top{display:flex;align-items:center;gap:14px;border-bottom:3px solid "+A+";padding-bottom:20px}"+
-  ".mark{width:44px;height:44px;flex:none}"+
-  ".bn{font-family:'Poppins',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.3px;line-height:1.15}"+
-  ".bt{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:#8a8a95;margin-top:3px}"+
-  ".tag{margin-left:auto;text-align:right}.tag .t1{font-family:'Poppins';font-weight:800;font-size:15px;color:"+A+"}.tag .t2{font-size:11px;color:#8a8a95;margin-top:2px}"+
-  "h1{font-family:'Poppins';font-size:26px;font-weight:800;letter-spacing:-.5px;margin:26px 0 8px}"+
-  ".lead{font-size:13.5px;color:#44454d;line-height:1.6;max-width:62ch}"+
-  ".grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:22px 0}"+
-  ".box{border:1px solid #e6e6ea;border-radius:11px;padding:14px 16px}"+
-  ".box .l{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#8a8a95;font-weight:700}"+
-  ".box .v{font-size:15px;font-weight:700;margin-top:5px}"+
-  ".sec{margin-top:26px}.sec h3{font-family:'Poppins';font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:"+A+";margin-bottom:11px}"+
-  ".sec ul{list-style:none;display:grid;gap:8px}.sec li{font-size:13px;color:#333;padding-left:22px;position:relative;line-height:1.5}"+
-  ".sec li:before{content:'';position:absolute;left:0;top:7px;width:8px;height:8px;border-radius:2px;background:"+A+"}"+
-  ".feebar{background:#f5f5f8;border-radius:11px;padding:16px 18px;margin-top:12px;font-size:13px;color:#333;line-height:1.6}"+
-  ".feebar b{color:#141417}"+
-  ".foot{margin-top:34px;border-top:1px solid #e6e6ea;padding-top:16px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}"+
-  ".sign .nm{font-family:'Poppins';font-weight:800;font-size:14px}.sign .rl{font-size:11.5px;color:#8a8a95;margin-top:2px}"+
-  ".foot .co{font-size:11px;color:#8a8a95;text-align:right}"+
-  "@page{size:auto;margin:0}@media print{.print{display:none}body{background:#fff}.page{box-shadow:none;margin:0;max-width:100%}}";
- const bulb='<svg class="mark" viewBox="0 0 24 24" fill="none" stroke="#141417" stroke-width="1.5"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1v.2h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>';
- const contact = waNum ? ('WhatsApp <b>'+st.waNumber+'</b>') : 'WhatsApp (number shared at your first class)';
- const w=window.open('','_blank');if(!w){toast('Allow pop-ups to open the onboarding doc');return;}
+  ".page{max-width:820px;margin:22px auto;background:#fff;border:1px solid #e6e6ea;box-shadow:0 8px 34px rgba(0,0,0,.12);padding:46px 54px 42px}"+
+  ".print{position:fixed;top:16px;right:16px;background:#141417;color:#fff;border:none;padding:12px 22px;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;z-index:9}"+
+  ".top{display:flex;align-items:center;gap:14px;border-bottom:2px solid #141417;padding-bottom:20px}.top .bar{width:2px;height:44px;background:#141417}"+
+  ".bn{font-family:'Poppins';font-weight:800;font-size:15px;line-height:1.25}.bn small{display:block}"+
+  ".tag{margin-left:auto;text-align:right}.tag .t1{font-family:'Poppins';font-weight:800;font-size:14px}.tag .t2{font-size:11px;color:#8a8a95;margin-top:2px}"+
+  "h1{font-family:'Poppins';font-size:30px;font-weight:800;letter-spacing:-.6px;margin:26px 0 8px}"+
+  ".lead{font-size:13.5px;color:#44454d;line-height:1.6;max-width:64ch}"+
+  ".grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:22px 0 6px}"+
+  ".box{border:1px solid #e6e6ea;border-radius:11px;padding:13px 15px}.box .l{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#8a8a95;font-weight:700}.box .v{font-size:15px;font-weight:700;margin-top:4px}"+
+  ".feebar{background:#f5f5f8;border-radius:11px;padding:15px 18px;font-size:13px;color:#333;line-height:1.6;margin:4px 0 8px}.feebar b{color:#141417}"+
+  ".gt{font-family:'Poppins';font-size:22px;font-weight:800;letter-spacing:-.4px;margin:34px 0 4px;border-top:2px solid #141417;padding-top:20px}"+
+  ".gsub{font-size:12.5px;color:#8a8a95;margin-bottom:10px}"+
+  ".srow{display:flex;gap:20px;padding:18px 0;border-bottom:1px solid #eee;page-break-inside:avoid}"+
+  ".num{font-family:'Poppins';font-weight:800;font-size:34px;color:#141417;width:56px;flex:none;line-height:1}"+
+  ".sc h3{font-family:'Poppins';font-size:15px;font-weight:800;margin-bottom:5px}.sc .in{font-size:12.5px;color:#555;margin-bottom:9px}"+
+  ".sc ul{list-style:none;display:grid;gap:6px}.sc li{font-size:12.5px;color:#333;padding-left:18px;position:relative;line-height:1.45}.sc li:before{content:'';position:absolute;left:0;top:6px;width:6px;height:6px;border-radius:2px;background:#141417}"+
+  ".quote{border:1px solid #e6e6ea;border-left:4px solid #141417;border-radius:0 10px 10px 0;padding:16px 20px;margin:22px 0 4px;font-style:italic;font-size:14px;color:#222;line-height:1.5}"+
+  ".chk{border:1px solid #e6e6ea;border-radius:11px;padding:18px 20px;margin-top:16px}.chk h4{font-family:'Poppins';font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}.chk ul{list-style:none;display:grid;gap:10px}.chk li{font-size:13px;padding-left:28px;position:relative;color:#333}.chk li:before{content:'';position:absolute;left:0;top:-1px;width:16px;height:16px;border:1.6px solid #141417;border-radius:4px}"+
+  ".roadwrap{display:grid;grid-template-columns:1fr 1fr;gap:12px 26px;margin-top:8px}"+
+  ".rd{display:flex;gap:12px;padding:9px 0;page-break-inside:avoid}.rn{font-family:'Poppins';font-weight:800;font-size:15px;width:30px;height:30px;border:1.6px solid #141417;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;font-size:12px}"+
+  ".rt{font-family:'Poppins';font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px}.rp{font-size:12px;color:#555;margin-top:2px;line-height:1.4}"+
+  ".oath{border:2px solid #141417;border-radius:14px;padding:24px 26px;margin-top:16px}.oath h4{font-family:'Poppins';font-size:16px;font-weight:800;margin-bottom:6px}.oath .oi{font-size:12.5px;color:#555;margin-bottom:14px}.oath ul{list-style:none;display:grid;gap:9px}.oath li{font-size:13px;color:#222;padding-left:20px;position:relative;line-height:1.5}.oath li:before{content:'✓';position:absolute;left:0;top:0;font-weight:800}"+
+  ".osign{display:flex;gap:40px;margin-top:22px}.osign .c{flex:1}.osign .ln{border-top:1px solid #141417;margin-top:34px;padding-top:6px;font-size:11.5px;color:#8a8a95}"+
+  ".pgbreak{page-break-before:always}"+
+  ".foot{margin-top:30px;border-top:1px solid #e6e6ea;padding-top:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}.foot .fn{font-size:11px;font-weight:700;line-height:1.3}.foot .loc{font-size:11px;color:#8a8a95;border-left:1px solid #e6e6ea;padding-left:14px}"+
+  "@page{size:auto;margin:14mm}@media print{.print{display:none}body{background:#fff}.page{box-shadow:none;margin:0;max-width:100%;border:none;padding:0}}";
+ const w=window.open('','_blank');if(!w){toast('Allow pop-ups to open the starter guide');return;}
  w.document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+
   '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@700;800&display=swap" rel="stylesheet">'+
-  '<title>Onboarding — '+x.name+'</title><style>'+css+'</style></head><body>'+
+  '<title>Student Starter Guide — '+x.name+'</title><style>'+css+'</style></head><body>'+
   '<button class="print" onclick="window.print()">Print / Save as PDF</button>'+
-  '<div class="page"><div class="pad">'+
-   '<div class="top">'+bulb+'<div><div class="bn">Academy of Business Studies</div><div class="bt">by Leon Fambeck</div></div><div class="tag"><div class="t1">WELCOME</div><div class="t2">'+fmtD(todayISO())+'</div></div></div>'+
+  '<div class="page">'+
+   '<div class="top">'+bulb+'<div class="bar"></div><div class="bn">ACADEMY OF BUSINESS STUDIES<br><small>by Leon Fambeck</small></div><div class="tag"><div class="t1">STUDENT STARTER GUIDE</div><div class="t2">'+fmtD(todayISO())+'</div></div></div>'+
    '<h1>Welcome to the class, '+x.name.split(' ')[0]+'.</h1>'+
-   '<p class="lead">You are now enrolled in A/L Business Studies with Leon. This sheet has everything you need to start well — your class details, how fees work, and what to bring. Keep it handy for your first week.</p>'+
-   '<div class="grid">'+
-    '<div class="box"><div class="l">Student</div><div class="v">'+x.name+'</div></div>'+
-    '<div class="box"><div class="l">Batch</div><div class="v">'+cohortLabel(x.cohort)+'</div></div>'+
-    '<div class="box"><div class="l">Location</div><div class="v">'+locLabel(x.loc)+'</div></div>'+
-    '<div class="box"><div class="l">Start date</div><div class="v">'+fmtD(x.joined)+'</div></div>'+
-   '</div>'+
-   '<div class="sec"><h3>How fees work</h3><div class="feebar">Your fee is <b>LKR '+fee.toLocaleString('en-LK')+' per month</b>, due by the <b>'+ordinal(due)+'</b> of each month. You can pay at class or by transfer. If a payment slips, you\'ll get a friendly reminder on WhatsApp — no awkwardness.</div></div>'+
-   '<div class="sec"><h3>What to bring</h3><ul><li>A dedicated Business Studies notebook and a folder for handouts</li><li>Your A/L Business Studies textbook</li><li>Past papers (we work through them together)</li><li>A calculator and the usual stationery</li></ul></div>'+
-   '<div class="sec"><h3>What we expect</h3><ul><li>Come on time and attend regularly — consistency is how marks are built</li><li>Attempt the past-paper questions set each week</li><li>Ask questions. No question is too small in this class</li><li>Keep your fee up to date so your seat stays yours</li></ul></div>'+
-   '<div class="sec"><h3>Stay in touch</h3><ul><li>Class updates and reminders come through '+contact+'</li><li>Tell us early if you\'ll miss a class so we can help you catch up</li></ul></div>'+
-   '<div class="foot"><div class="sign"><div class="nm">Leon Fambeck</div><div class="rl">Academy of Business Studies</div></div><div class="co">Academy of Business Studies<br>by Leon Fambeck</div></div>'+
-  '</div></div></body></html>');
+   '<p class="lead">You are now enrolled in A/L Business Studies with Leon. This guide is your short path to studying the right way from day one — how the exam actually rewards you, your weekly rhythm, and the road to an A. Read it before your first class and keep it close.</p>'+
+   '<div class="grid"><div class="box"><div class="l">Student</div><div class="v">'+x.name+'</div></div><div class="box"><div class="l">Batch</div><div class="v">'+cohortLabel(x.cohort)+'</div></div><div class="box"><div class="l">Location</div><div class="v">'+locLabel(x.loc)+'</div></div><div class="box"><div class="l">Start date</div><div class="v">'+fmtD(x.joined)+'</div></div></div>'+
+   '<div class="feebar">Your fee is <b>LKR '+fee.toLocaleString('en-LK')+' per month</b>, due by the <b>'+ordinal(due)+'</b> of each month. Pay at class or by transfer; if a payment slips you will get a friendly reminder on WhatsApp.</div>'+
+   '<div class="gt">Studying it the right way</div><div class="gsub">A short path to studying A/L Business Studies well, from day one.</div>'+
+   secHTML+
+   '<div class="quote">"Success in Business Studies doesn’t come from memorising. It comes from understanding and applying."</div>'+
+   '<div class="chk"><h4>Your first-week checklist</h4><ul><li>Get all your notes and materials organised in one place.</li><li>Set a fixed same-day review slot after each class.</li><li>Write a one-page summary of your first topic.</li><li>Do one past-paper application question and mark it.</li><li>Note one thing you’re unsure about, and ask Leon.</li></ul></div>'+
+   '<div class="pgbreak"></div>'+
+   '<div class="gt">The road to an A</div><div class="gsub">Your Business Studies success blueprint.</div>'+
+   '<div class="roadwrap">'+roadHTML+'</div>'+
+   '<div class="quote">"The students who earn A grades aren’t always the smartest. They’re simply the most consistent."</div>'+
+   '<div class="oath"><h4>My commitment</h4><div class="oi">I, <b>'+x.name+'</b>, am joining this class to earn a top grade. I commit to:</div><ul>'+oathHTML+'</ul>'+
+    '<div class="osign"><div class="c"><div class="ln">Student signature</div></div><div class="c"><div class="ln">Date</div></div></div></div>'+
+   '<div class="foot">'+bulbSm+'<div class="fn">ACADEMY OF BUSINESS STUDIES BY LEON FAMBECK</div><div class="loc">BS With Leon · A/L Business Studies<br>Nugegoda · Kiribathgoda · Online</div></div>'+
+  '</div></body></html>');
  w.document.close();
- toast(I.check+' Onboarding doc ready for '+x.name.split(' ')[0]);
+ toast(I.check+' Starter guide ready for '+x.name.split(' ')[0]);
 }
 
 /* ----- the student sheet ----- */
@@ -1467,7 +1485,7 @@ function openStudent(id,ymCtx){
  if(got>0)acts.push('<button class="pa" onclick="unpayMonth()">Undo '+monthShort(shYm).split(' ')[0]+' payment</button>');
  acts.push('<button class="pa" onclick="PAY.remind('+x.id+')" >'+I.wa+' Remind</button>');
  acts.push('<button class="pa" onclick="openStuModal('+x.id+')">Edit</button>');
- acts.push('<button class="pa" onclick="onboardingDoc('+x.id+')">Onboarding doc</button>');
+ acts.push('<button class="pa" onclick="onboardingDoc('+x.id+')">Starter guide</button>');
  const panel=document.getElementById('panel');
  panel.innerHTML='<div class="pn-head"><button class="pn-close" onclick="closePanel()">✕</button><div class="pn-nm">'+x.name+'</div><div class="pn-co">'+cohortLabel(x.cohort)+' · '+locLabel(x.loc)+'</div>'+
   '<div class="pn-badges">'+statusPill+'<span class="bdg bdg-grey">joined '+fmtD(x.joined)+'</span><span class="bdg bdg-grey">fee '+effectiveFee(x).toLocaleString('en-LK')+(x.fee!=null?' (custom)':'')+'</span><span class="bdg bdg-green">'+lkr(lifetimePaid(x.id))+' paid to date</span>'+(isOwner()?'<span class="bdg bdg-grey">'+staffName(x.owner)+'</span>':'')+'</div>'+
