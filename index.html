@@ -722,30 +722,9 @@ body.dark .kpi.accent .val{color:var(--on-accent)}
 /* monochrome on-accent text: dark text on light accent in dark mode */
 .btn-red,.pa.primary,.nav-item.active,.uav,.side-foot .av,.kpi.accent,.kpi.accent .lbl,.kpi.accent .sub,.kpi.accent .sub b{color:var(--on-accent)}
 
-/* ============ SINGLE ACCENT = INDIGO (#4f46e5). Everything else stays ink/white. ============ */
-:root{--accent:#4f46e5;--accent-dark:#4338ca;--accent-soft:rgba(79,70,229,.10);--accent-glow:rgba(79,70,229,.32);--accent-grad-i:linear-gradient(180deg,#6366f1,#4f46e5 55%,#4338ca);--ring:0 0 0 3px rgba(79,70,229,.34)}
-body.dark{--ring:0 0 0 3px rgba(99,102,241,.45)}
-::selection{background:rgba(79,70,229,.18)}
-body.dark ::selection{background:rgba(99,102,241,.32)}
-/* 1a. primary buttons -> indigo (remap the button's own vars, keep the gradient recipe) */
-.btn-red,.pa.primary,.btn-mark{--red:var(--accent);--red-dark:var(--accent-dark);--red-glow:var(--accent-glow);color:#fff}
-.btn-red:hover,.pa.primary:hover,.btn-mark:hover{filter:brightness(1.07)}
-/* 1b. active sidebar item -> indigo */
-.nav-item.active{--accent-grad:var(--accent-grad-i);--red-glow:var(--accent-glow);color:#fff;box-shadow:0 4px 14px var(--accent-glow),inset 0 1px 0 rgba(255,255,255,.16)}
-.nav-item.active svg{opacity:1}
-/* 1c. the hero money surfaces (single hero KPI on dashboard, the payments hero, the employee target hero) */
-.kpi.accent{--accent-grad:var(--accent-grad-i)}
-.kpi.accent,.kpi.accent .lbl,.kpi.accent .sub,.kpi.accent .sub b,.kpi.accent .val{color:#fff}
-.kpi.accent .kt{background:rgba(255,255,255,.17);color:#fff;border-color:transparent}
-.pay-hero,.emp-hero{--accent-grad:var(--accent-grad-i);color:#fff}
-.pay-hero .ph-fill,.emp-hero .eh-fill{background:#fff}
-.pay-hero .ph-track,.emp-hero .eh-track{background:rgba(255,255,255,.22)}
-body.dark .pay-hero::before{background:radial-gradient(640px 300px at 82% -30%,rgba(255,255,255,.14),transparent 62%),radial-gradient(420px 260px at 8% 120%,rgba(0,0,0,.16),transparent 60%)}
-/* 1d. detail panel accent bar + tinted header -> indigo (Part 2.3) */
-.pn-head::before{background:var(--accent-grad-i)}
-.pn-head{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 6%,var(--surface)),var(--surface) 80%)}
-/* dark mode: accent hero is indigo in BOTH modes -> force white text (beats the mono body.dark on-accent rule) */
-body.dark .kpi.accent,body.dark .kpi.accent .val,body.dark .kpi.accent .lbl,body.dark .kpi.accent .sub,body.dark .kpi.accent .sub b,body.dark .pay-hero,body.dark .emp-hero{color:#fff}
+/* Monochrome restored — indigo removed (Thulaib). --accent kept = ink/white so smart-layer bars invert cleanly; buttons/nav/hero/focus/panel all revert to --red / --accent-grad / --on-accent (pure black & white). */
+:root{--accent:#141417;--accent-soft:rgba(20,20,23,.06)}
+body.dark{--accent:#f4f5f7}
 </style>
 </head>
 <body>
@@ -1336,12 +1315,12 @@ function onboardingDoc(id){
  const st=settings();const fee=effectiveFee(x);const due=st.dueDay||1;
  const waNum=(st.waNumber||'').replace(/\s/g,'');
  const ordinal=n=>n+(([1,21,31].includes(n))?'st':([2,22].includes(n))?'nd':([3,23].includes(n))?'rd':'th');
- const A='#4f46e5';
+ const A='#141417';
  const css="*{margin:0;box-sizing:border-box;font-family:'Inter',Arial,sans-serif}"+
   "body{background:#eceef3;color:#141417;-webkit-print-color-adjust:exact;print-color-adjust:exact}"+
   ".page{max-width:820px;margin:22px auto;background:#fff;box-shadow:0 8px 34px rgba(0,0,0,.14)}"+
   ".pad{padding:44px 52px 40px}"+
-  ".print{position:fixed;top:16px;right:16px;background:"+A+";color:#fff;border:none;padding:12px 22px;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;z-index:9;box-shadow:0 8px 20px rgba(79,70,229,.4)}"+
+  ".print{position:fixed;top:16px;right:16px;background:"+A+";color:#fff;border:none;padding:12px 22px;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;z-index:9;box-shadow:0 6px 16px rgba(20,20,23,.3)}"+
   ".top{display:flex;align-items:center;gap:14px;border-bottom:3px solid "+A+";padding-bottom:20px}"+
   ".mark{width:44px;height:44px;flex:none}"+
   ".bn{font-family:'Poppins',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.3px;line-height:1.15}"+
@@ -1660,12 +1639,12 @@ function kpiC(label,val,sub,accent,icon){return '<div class="kpi'+(accent?' acce
 /* ---------- CHARTS (Chart.js, monochrome + indigo, theme-aware, graceful if CDN fails) ---------- */
 const CHARTS={};
 function _chartInit(){if(typeof Chart!=='undefined'&&!Chart._bswl){Chart.defaults.font.family="Inter,system-ui,sans-serif";Chart.defaults.font.size=11;Chart.defaults.plugins.legend.display=false;Chart._bswl=true;}}
-function chartC(){const d=document.body.classList.contains('dark');return {accent:'#4f46e5',accent2:d?'#6366f1':'#4f46e5',ink:d?'#ecedef':'#141417',muted:d?'#9b9ea6':'#6e7178',grid:d?'rgba(255,255,255,.07)':'rgba(20,20,23,.07)',green:'#16a34a',amber:'#d97706',danger:'#d33a3a'};}
+function chartC(){const d=document.body.classList.contains('dark');const ink=d?'#ecedef':'#141417';return {accent:ink,accent2:d?'#c9cbd1':'#33343a',fill:d?'rgba(255,255,255,.06)':'rgba(20,20,23,.05)',ink:ink,muted:d?'#9b9ea6':'#6e7178',grid:d?'rgba(255,255,255,.07)':'rgba(20,20,23,.07)',green:'#16a34a',amber:'#d97706',danger:'#d33a3a'};}
 function makeChart(id,cfg){if(typeof Chart==='undefined')return;const el=document.getElementById(id);if(!el)return;_chartInit();if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];}CHARTS[id]=new Chart(el.getContext('2d'),cfg);}
 function axisOpts(c){return {plugins:{legend:{display:false},tooltip:{backgroundColor:c.ink,padding:9,titleFont:{size:11},bodyFont:{size:12,weight:'600'}}},scales:{x:{grid:{display:false},ticks:{color:c.muted}},y:{grid:{color:c.grid},ticks:{color:c.muted,callback:v=>v>=1000?(v/1000)+'k':v}}},maintainAspectRatio:false,responsive:true,animation:{duration:600}};}
 function drawDashChart(labels,vals){const c=chartC();makeChart('dashTrend',{type:'bar',data:{labels:labels,datasets:[{data:vals,backgroundColor:c.accent,borderRadius:6,maxBarThickness:38}]},options:axisOpts(c)});}
 function drawReportCharts(months,colData,enrolData,st){const c=chartC();
- makeChart('repRev',{type:'line',data:{labels:months.map(m=>monthShort(m).split(' ')[0]),datasets:[{data:colData,borderColor:c.accent,backgroundColor:'rgba(79,70,229,.10)',fill:true,tension:.35,pointRadius:3,pointBackgroundColor:c.accent,borderWidth:2}]},options:axisOpts(c)});
+ makeChart('repRev',{type:'line',data:{labels:months.map(m=>monthShort(m).split(' ')[0]),datasets:[{data:colData,borderColor:c.accent,backgroundColor:c.fill,fill:true,tension:.35,pointRadius:3,pointBackgroundColor:c.accent,borderWidth:2}]},options:axisOpts(c)});
  makeChart('repEnrol',{type:'bar',data:{labels:months.map(m=>monthShort(m).split(' ')[0]),datasets:[{data:enrolData,backgroundColor:c.ink,borderRadius:5,maxBarThickness:30}]},options:axisOpts(c)});
  makeChart('repDonut',{type:'doughnut',data:{labels:['Paid','Partial','Owing'],datasets:[{data:[st.paid.length,st.partial.length,st.owing.length],backgroundColor:[c.green,c.amber,c.danger],borderWidth:0}]},options:{cutout:'64%',maintainAspectRatio:false,responsive:true,plugins:{legend:{display:true,position:'bottom',labels:{color:c.muted,boxWidth:10,padding:12,font:{size:11.5}}}}}});
 }
