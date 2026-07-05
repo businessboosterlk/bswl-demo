@@ -115,7 +115,7 @@ input{font-family:inherit;color:var(--ink)}
 .app{display:flex;min-height:100vh}
 .app.hide{display:none}
 .sidebar{width:248px;background:var(--sidebar);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:40}
-.logo-wrap{padding:26px 18px 24px;border-bottom:1px solid var(--sidebar-line);text-align:center}
+.logo-wrap{padding:32px 18px 28px;border-bottom:1px solid var(--sidebar-line);text-align:center}
 .tb-clock{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1;margin-right:6px}
 .tb-clock .t{font-family:'Poppins',sans-serif;font-size:15px;font-weight:700;color:var(--ink)}
 .tb-clock .d{font-size:10px;color:var(--muted);letter-spacing:1px;font-weight:600;margin-top:3px;text-transform:uppercase}
@@ -272,7 +272,7 @@ input{font-family:inherit;color:var(--ink)}
 #login .fld label{color:#6b7280}
 #login .fld input{background:#f4f5f7;border-color:#e7e9ee}
 #login .fld input:focus{border-color:#141417}
-.side-logo{height:46px;width:auto;max-width:88%;display:block;margin:0 auto;object-fit:contain}
+.side-logo{height:64px;width:auto;max-width:94%;display:block;margin:0 auto;object-fit:contain}
 /* team / performance */
 .team-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:22px}
 .tp-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow)}
@@ -692,6 +692,32 @@ body.dark .kpi.accent .val{color:var(--on-accent)}
  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 }
 
+/* ---------- SMART LAYER CSS ---------- */
+.prio-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line2);cursor:pointer;transition:background .12s}
+.prio-row:last-child{border-bottom:none}
+.prio-row:hover{background:var(--surface-2);margin:0 -12px;padding-left:12px;padding-right:12px;border-radius:9px}
+.prio-ic{width:34px;height:34px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line);display:grid;place-items:center;color:var(--ink);flex-shrink:0}
+.prio-ic svg{width:16px;height:16px}
+.prio-ic.warn{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+.prio-ic.amber{background:var(--amber-soft);color:var(--amber);border-color:transparent}
+.prio-main{flex:1;min-width:0}
+.prio-t{font-size:13.5px;font-weight:600;line-height:1.35}
+.prio-row:hover .prio-t{color:var(--accent)}
+.prio-chev{color:var(--faint);flex-shrink:0;font-size:15px}
+.fc-bars{display:flex;flex-direction:column;gap:12px}
+.fc-row{display:flex;align-items:center;gap:12px}
+.fc-name{width:66px;font-size:12.5px;font-weight:650;flex-shrink:0}
+.fc-track{flex:1;height:9px;background:var(--bg);border-radius:99px;overflow:hidden}
+.fc-fill{height:100%;border-radius:99px;background:var(--accent)}
+.fc-val{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;width:104px;flex-shrink:0}
+.src-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line2)}
+.src-row:last-child{border-bottom:none}
+.src-name{width:92px;font-size:13px;font-weight:600;flex-shrink:0}
+.src-track{flex:1;height:9px;background:var(--bg);border-radius:99px;overflow:hidden}
+.src-fill{height:100%;border-radius:99px;background:var(--ink)}
+.src-val{font-size:12px;color:var(--muted);width:128px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
+@media(max-width:440px){.fc-val{width:88px}.src-val{width:104px;font-size:11px}}
+
 /* monochrome on-accent text: dark text on light accent in dark mode */
 .btn-red,.pa.primary,.nav-item.active,.uav,.side-foot .av,.kpi.accent,.kpi.accent .lbl,.kpi.accent .sub,.kpi.accent .sub b{color:var(--on-accent)}
 
@@ -1004,7 +1030,7 @@ const I={
    to Supabase behind the SAME API so no view code changes.
    Collections: students, payments, enquiries, settings. */
 const DB={
- _d:null,KEY:'bswl_data_v4',
+ _d:null,KEY:'bswl_data_v5',
  load(){let d=null;try{d=JSON.parse(localStorage.getItem(this.KEY))}catch(e){}
   if(d&&d.students&&d.settings&&d.staff&&d.tasks){this._d=d;}
   else{this._d=seedData();this.commit();}},
@@ -1080,7 +1106,7 @@ function seedData(){
  plan.forEach(g=>{for(let i=0;i<g.n;i++){
   const name=pick(F)+' '+pick(L);
   const loc=rnd()<.4?'nugegoda':rnd()<.55?'kiribathgoda':'online';
-  students.push({id:id,name:name,wa:phone(),cohort:g.cohort,loc:loc,fee:null,joined:mkJoin(g.lo,g.hi),status:'active',referredBy:null,notes:'',reminded:null});
+  students.push({id:id,name:name,wa:phone(),cohort:g.cohort,loc:loc,fee:null,joined:mkJoin(g.lo,g.hi),status:'active',referredBy:null,source:pick(['Instagram','Instagram','Instagram','Instagram','Referral','Referral','Referral','Walk-in','Walk-in','TikTok','TikTok','Facebook']),notes:'',reminded:null});
   id++;}});
  /* payment history: every charged month from join → now. Past months ~94% paid;
     current month ~60% paid, ~5% partial, rest owing (a real mid-month state). */
@@ -1096,7 +1122,7 @@ function seedData(){
  });
  /* 15 alumni (2026 batch, finished) — the referral pool */
  const SRC=['Sibling enrolled','Friend referral','Instagram','School friend','Parent referral'];
- for(let i=0;i<15;i++){students.push({id:id,name:pick(F)+' '+pick(L),wa:phone(),cohort:'2026',loc:pick(['nugegoda','kiribathgoda','online']),fee:null,joined:'2024-'+String(9+Math.floor(rnd()*3)).padStart(2,'0')+'-10',status:'alumni',referredBy:null,refSource:pick(SRC),notes:'',reminded:null});id++;}
+ for(let i=0;i<15;i++){students.push({id:id,name:pick(F)+' '+pick(L),wa:phone(),cohort:'2026',loc:pick(['nugegoda','kiribathgoda','online']),fee:null,joined:'2024-'+String(9+Math.floor(rnd()*3)).padStart(2,'0')+'-10',status:'alumni',referredBy:null,refSource:pick(SRC),source:pick(['Instagram','Referral','Walk-in','TikTok','Facebook']),notes:'',reminded:null});id++;}
  /* enquiries across the funnel */
  const ENQ_SRC=['Instagram','TikTok','Facebook','WhatsApp','Friend referral','Walk-in'];
  const stages=['enquiry','enquiry','enquiry','contacted','contacted','trial','trial','enrolled','lost','enquiry'];
@@ -1477,7 +1503,7 @@ function ENQreopen(id){const e=DB.get('enquiries').find(x=>x.id===id);if(!e)retu
 function ENQwa(id){const e=DB.get('enquiries').find(x=>x.id===id);if(!e)return;const ph=(e.wa||'').replace(/\D/g,'').replace(/^0/,'94');if(!ph){toast('No WhatsApp number saved');return;}window.open('https://wa.me/'+ph,'_blank');}
 function ENQenrol(id){
  const e=DB.get('enquiries').find(x=>x.id===id);if(!e)return;
- const stu={id:DB.nextId('students'),name:e.name,wa:e.wa||'',cohort:e.cohort,loc:e.loc,fee:null,joined:todayISO(),status:'active',referredBy:null,notes:'Enrolled from enquiry ('+e.source+')',reminded:null};
+ const stu={id:DB.nextId('students'),name:e.name,wa:e.wa||'',cohort:e.cohort,loc:e.loc,fee:null,joined:todayISO(),status:'active',referredBy:null,source:e.source,notes:'Enrolled from enquiry ('+e.source+')',reminded:null};
  DB.get('students').push(stu);
  e.stage='enrolled';DB.commit();
  renderApp();renderEnquiries();
@@ -1567,6 +1593,24 @@ function greetHTML(){const h=new Date().getHours();const g=h<12?'Good morning':h
 const KIC={wallet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.2"/><path d="M6 12h.01M18 12h.01"/></svg>',target:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>',clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg>',msg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',people:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>',chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>',coins:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg>'};
 function kpiC(label,val,sub,accent,icon){return '<div class="kpi'+(accent?' accent':'')+'"><div class="kpi-top"><div class="lbl">'+label+'</div>'+(icon?'<div class="kt">'+icon+'</div>':'')+'</div><div class="val" style="font-size:23px;white-space:nowrap">'+val+'</div><div class="sub">'+sub+'</div></div>';}
 
+
+/* ---------- SMART LAYER (drop-out radar, forecast, source analytics, priorities) ---------- */
+function monthDiff(a,b){const A=a.split('-').map(Number),B=b.split('-').map(Number);return (B[0]*12+B[1])-(A[0]*12+A[1]);}
+function examMonth(cohort){if(cohort==='2027')return '2027-08';if(cohort==='2028')return '2028-08';const p=ymNow().split('-').map(Number);const yr=p[1]<=8?p[0]:p[0]+1;return yr+'-08';}
+function monthsToExam(cohort){return Math.max(0,monthDiff(ymNow(),examMonth(cohort)));}
+function totalOwed(s){let ym=s.joined.slice(0,7),t=0;const now=ymNow();while(ym<=now){if(chargedIn(s,ym))t+=Math.max(0,dueFor(s,ym)-paidAmt(s.id,ym));ym=ymShift(ym,1);}return t;}
+function atRiskStudents(){return DB.get('students').filter(s=>s.status==='active').map(s=>({s,behind:monthsBehind(s),owed:totalOwed(s)})).filter(x=>x.behind>=2).sort((a,b)=>b.behind-a.behind||b.owed-a.owed);}
+function cohortForecast(){const active=DB.get('students').filter(s=>s.status==='active');const st=settings();const by={};let total=0;active.forEach(s=>{let months=monthsToExam(s.cohort);if(s.cohort==='crash'&&st.crashMode==='onetime')months=0;const inc=effectiveFee(s)*months;by[s.cohort]=(by[s.cohort]||0)+inc;total+=inc;});return {by,total};}
+function sourceStats(){const active=DB.get('students').filter(s=>s.status==='active');const g={};active.forEach(s=>{const src=s.source||'Unknown';g[src]=g[src]||{count:0,paying:0,life:0};g[src].count++;if(monthsBehind(s)===0)g[src].paying++;g[src].life+=lifetimePaid(s.id);});return Object.entries(g).map(function(e){return {src:e[0],count:e[1].count,paying:e[1].paying,life:e[1].life};}).sort((a,b)=>b.count-a.count);}
+function weeklyPriorities(){const out=[];const risk=atRiskStudents();
+ if(risk.length)out.push({ic:_warnIc,cls:'warn',t:risk.length+' student'+(risk.length>1?'s are':' is')+' 2+ months behind — chase before they drop',go:"go('payments')"});
+ const trial=DB.get('enquiries').filter(e=>e.stage==='trial').length; if(trial)out.push({ic:I.check,cls:'',t:trial+' trial student'+(trial>1?'s':'')+' ready to enrol',go:"go('enquiries')"});
+ const fresh=DB.get('enquiries').filter(e=>e.stage==='enquiry').length; if(fresh)out.push({ic:I.wa,cls:'',t:fresh+' new enquir'+(fresh>1?'ies':'y')+' to reply to',go:"go('enquiries')"});
+ const overdue=DB.get('tasks').filter(t=>!t.done&&t.due<todayISO()).length; if(overdue)out.push({ic:I.clock,cls:'amber',t:overdue+' task'+(overdue>1?'s':'')+' overdue',go:"go('taskbook')"});
+ const st=monthStats(ymNow());const pct=st.expected?Math.round(st.collected/st.expected*100):100; const left=st.owing.length+st.partial.length;
+ if(left>0)out.push({ic:KIC.wallet,cls:'',t:left+' student'+(left>1?'s':'')+' still to pay this month ('+pct+'% collected)',go:"go('payments')"});
+ return out.slice(0,5);}
+
 /* ---- DASHBOARD ---- */
 function renderDashboard(){
  const wrap=document.getElementById('dashWrap');if(!wrap)return;
@@ -1591,9 +1635,16 @@ function renderDashboard(){
  const bar=(n,v,i)=>'<div class="bb-row"><span class="bb-name">'+n+'</span><div class="bb-track"><div class="bb-fill" style="width:'+Math.round(v/maxC*100)+'%;background:'+_shades[i]+'"></div></div><span class="bb-n">'+v+'</span></div>';
  const owers=[...st.owing].map(x=>({x,due:dueFor(x,ym)-paidAmt(x.id,ym)})).sort((a,b)=>b.due-a.due).slice(0,4);
  const owesList=owers.length?owers.map(o=>'<div class="pay-row"><div class="pr-av">'+init(o.x.name)+'</div><div class="pr-main" onclick="openStudent('+o.x.id+')"><div class="pr-nm">'+o.x.name+'</div><div class="pr-mt">'+cohortLabel(o.x.cohort).replace(' Batch','')+' · '+locLabel(o.x.loc)+'</div></div><div class="pr-act"><span class="pr-pill pill-partial">'+lkr(o.due)+'</span></div></div>').join(''):'<div class="tk-empty">Everyone is paid up.</div>';
- wrap.innerHTML=greetHTML()+flag+kpis+
+ const prio=weeklyPriorities();
+ const prioCard='<div class="card" style="margin-bottom:20px"><div class="card-h"><h3>Priorities this week</h3></div><div class="card-b">'+(prio.length?prio.map(p=>'<div class="prio-row" onclick="'+p.go+'"><div class="prio-ic '+p.cls+'">'+p.ic+'</div><div class="prio-main"><div class="prio-t">'+p.t+'</div></div><span class="prio-chev">→</span></div>').join(''):'<div class="tk-empty">You are on top of everything. Nice.</div>')+'</div></div>';
+ const risk=atRiskStudents();
+ const riskCard='<div class="card" style="margin-bottom:20px"><div class="card-h"><h3>At risk of leaving</h3><span style="font-size:12px;color:var(--muted)">2+ months behind</span></div><div class="card-b mini-list">'+(risk.length?risk.slice(0,5).map(r=>'<div class="pay-row"><div class="pr-av">'+init(r.s.name)+'</div><div class="pr-main" onclick="openStudent('+r.s.id+')"><div class="pr-nm">'+r.s.name+'</div><div class="pr-mt">'+cohortLabel(r.s.cohort).replace(' Batch','')+' · '+r.behind+' months behind</div></div><div class="pr-act"><span class="pr-pill" style="background:var(--danger-soft);color:var(--danger)">'+lkr(r.owed)+'</span><button class="btn-wa" title="WhatsApp reminder" aria-label="WhatsApp reminder" onclick="PAY.remind('+r.s.id+')">'+I.wa+'</button></div></div>').join(''):'<div class="tk-empty">No one is behind. Great retention.</div>')+'</div></div>';
+ const fc=cohortForecast();const fcMax=Math.max(1,fc.by['2027']||0,fc.by['2028']||0,fc.by['crash']||0);
+ const fcCard='<div class="card" style="margin-bottom:20px"><div class="card-h"><h3>Locked-in income to exam season</h3><span style="font-size:12px;color:var(--muted)">projected fees ahead</span></div><div class="card-b" style="padding:16px 20px 20px"><div style="font-family:Poppins;font-size:26px;font-weight:800;letter-spacing:-.5px;margin-bottom:14px">'+lkr(fc.total)+'</div><div class="fc-bars">'+['2027','2028','crash'].filter(c=>fc.by[c]).map(c=>'<div class="fc-row"><span class="fc-name">'+cohortLabel(c).replace(' Batch','')+'</span><div class="fc-track"><div class="fc-fill" style="width:'+Math.round((fc.by[c]||0)/fcMax*100)+'%"></div></div><span class="fc-val">'+lkr(fc.by[c]||0)+'</span></div>').join('')+'</div></div></div>';
+ wrap.innerHTML=greetHTML()+flag+kpis+prioCard+
   '<div class="grid2" style="margin-bottom:20px"><div class="card"><div class="card-h"><h3>Students by batch</h3><span class="lk" onclick="go(\'students\')">View all →</span></div><div class="card-b" style="padding:16px 20px 20px"><div class="batchbars">'+bar('2027',byC('2027'),0)+bar('2028',byC('2028'),1)+bar('Crash',byC('crash'),2)+'</div><div style="margin-top:16px;font-size:12.5px;color:var(--muted)">'+active.length+' active students · '+DB.get('students').filter(s=>s.status==="alumni").length+' alumni</div></div></div>'+
-  '<div class="card"><div class="card-h"><h3>Needs collecting</h3><span class="lk" onclick="go(\'payments\')">Payments →</span></div><div class="card-b mini-list">'+owesList+'</div></div></div>';
+  '<div class="card"><div class="card-h"><h3>Needs collecting</h3><span class="lk" onclick="go(\'payments\')">Payments →</span></div><div class="card-b mini-list">'+owesList+'</div></div></div>'+
+  riskCard+fcCard;
  animateCounts(wrap);
 }
 function renderEmpDashboard(){
@@ -1702,7 +1753,9 @@ function renderReports(){
  const avg=Math.round(data.reduce((t,d)=>t+d.col,0)/data.length);
  const kpis='<div class="sr-kpis">'+srk('Active students',active.filter(s=>s.status==='active').length)+srk('Enrolments '+yr,enrolYear)+srk('Lifetime collected',lkr(lifetime))+srk('Avg / month',lkr(avg))+'</div>';
  const table='<div class="card" style="margin-top:20px"><div class="card-h"><h3>Monthly performance</h3><span style="font-size:12px;color:var(--muted)">Last 12 months</span></div><table class="tbl"><thead><tr><th>Month</th><th class="tnum">New enrolments</th><th class="tnum">Fees collected</th></tr></thead><tbody>'+data.slice().reverse().map(d=>'<tr><td class="tn">'+monthLbl(d.m)+'</td><td class="tnum">'+d.enrol+'</td><td class="tnum">'+lkr(d.col)+'</td></tr>').join('')+'</tbody></table></div>';
- wrap.innerHTML='<div class="exp-actions"><button class="btn-ghost" onclick="exportReportCSV()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export CSV</button><button class="btn-ghost" onclick="window.print()">Print</button></div>'+kpis+table;
+ const ss=sourceStats();const ssMax=Math.max(1,...ss.map(x=>x.count));
+ const srcCard='<div class="card" style="margin-top:20px"><div class="card-h"><h3>Where students come from</h3><span style="font-size:12px;color:var(--muted)">paying students by enrolment source</span></div><div class="card-b" style="padding:12px 20px 16px">'+ss.map(x=>'<div class="src-row"><span class="src-name">'+x.src+'</span><div class="src-track"><div class="src-fill" style="width:'+Math.round(x.count/ssMax*100)+'%"></div></div><span class="src-val">'+x.count+' students · '+lkr(x.life)+'</span></div>').join('')+'</div></div>';
+ wrap.innerHTML='<div class="exp-actions"><button class="btn-ghost" onclick="exportReportCSV()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export CSV</button><button class="btn-ghost" onclick="window.print()">Print</button></div>'+kpis+table+srcCard;
 }
 function exportReportCSV(){const ym=ymNow();const months=[];for(let i=11;i>=0;i--)months.push(ymShift(ym,-i));let csv='Month,New enrolments,Fees collected (LKR)\n';months.forEach(m=>{csv+=monthLbl(m)+','+monthEnrolments(m)+','+monthStats(m).collected+'\n';});const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='bswl-sales-report.csv';a.click();toast(I.check+' CSV exported');}
 
