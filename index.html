@@ -116,7 +116,7 @@ input{font-family:inherit;color:var(--ink)}
 .app{display:flex;min-height:100vh}
 .app.hide{display:none}
 .sidebar{width:248px;background:var(--sidebar);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:40}
-.logo-wrap{padding:32px 18px 28px;border-bottom:1px solid var(--sidebar-line);text-align:center}
+.logo-wrap{padding:34px 14px 30px;border-bottom:1px solid var(--sidebar-line);text-align:center;display:flex;align-items:center;justify-content:center}
 .tb-clock{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1;margin-right:6px}
 .tb-clock .t{font-family:'Poppins',sans-serif;font-size:15px;font-weight:700;color:var(--ink)}
 .tb-clock .d{font-size:10px;color:var(--muted);letter-spacing:1px;font-weight:600;margin-top:3px;text-transform:uppercase}
@@ -273,7 +273,7 @@ input{font-family:inherit;color:var(--ink)}
 #login .fld label{color:#6b7280}
 #login .fld input{background:#f4f5f7;border-color:#e7e9ee}
 #login .fld input:focus{border-color:#141417}
-.side-logo{height:64px;width:auto;max-width:94%;display:block;margin:0 auto;object-fit:contain}
+.side-logo{height:84px;width:auto;max-width:100%;display:block;margin:0 auto;object-fit:contain}
 /* team / performance */
 .team-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:22px}
 .tp-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow)}
@@ -777,6 +777,14 @@ body.dark .kpi.accent .val{color:var(--on-accent)}
 .dc-l{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:7px}
 @media(max-width:640px){.dash-chips{grid-template-columns:1fr 1fr;gap:10px}.dchip{padding:13px 14px}.dc-v{font-size:20px}}
 
+/* editable knowledge level */
+.lvl-set{display:flex;gap:8px}
+.lvl-btn{flex:1;padding:11px 8px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:13px;font-weight:700;color:var(--muted);transition:.15s}
+.lvl-btn:hover{border-color:var(--faint);color:var(--ink)}
+.lvl-btn.on.lv-good{background:var(--green-soft);border-color:var(--green);color:var(--green)}
+.lvl-btn.on.lv-okay{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
+.lvl-btn.on.lv-bad{background:var(--danger-soft);border-color:var(--danger);color:var(--danger)}
+
 /* monochrome on-accent text: dark text on light accent in dark mode */
 .btn-red,.pa.primary,.nav-item.active,.uav,.side-foot .av,.kpi.accent,.kpi.accent .lbl,.kpi.accent .sub,.kpi.accent .sub b{color:var(--on-accent)}
 
@@ -868,7 +876,7 @@ body.dark{--accent:#f4f5f7}
           <input class="pay-search" id="stuSearch" placeholder="Search…" oninput="STU.set('q',this.value)">
           <button class="btn-red" onclick="openStuModal()" style="flex-shrink:0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Student</button>
         </div>
-        <div class="stand-legend"><span><span class="sdot s-good"></span>Good</span><span><span class="sdot s-okay"></span>Okay</span><span><span class="sdot s-bad"></span>Needs attention</span><span class="sl-note">standing is based on fee reliability</span></div>
+        <div class="stand-legend"><span><span class="sdot s-good"></span>Good</span><span><span class="sdot s-okay"></span>Okay</span><span><span class="sdot s-bad"></span>Needs work</span><span class="sl-note">how each student is doing in the subject · open a student to change</span></div>
         <div class="card"><div class="card-b" id="stuList" style="padding:2px 18px 10px"></div></div>
       </div>
       <div class="page" id="page-enquiries">
@@ -1080,7 +1088,7 @@ const I={
    to Supabase behind the SAME API so no view code changes.
    Collections: students, payments, enquiries, settings. */
 const DB={
- _d:null,KEY:'bswl_data_v6',
+ _d:null,KEY:'bswl_data_v7',
  load(){let d=null;try{d=JSON.parse(localStorage.getItem(this.KEY))}catch(e){}
   if(d&&d.students&&d.settings&&d.staff&&d.tasks&&d.attendance){this._d=d;}
   else{this._d=seedData();this.commit();}},
@@ -1156,7 +1164,7 @@ function seedData(){
  plan.forEach(g=>{for(let i=0;i<g.n;i++){
   const name=pick(F)+' '+pick(L);
   const loc=rnd()<.4?'nugegoda':rnd()<.55?'kiribathgoda':'online';
-  students.push({id:id,name:name,wa:phone(),cohort:g.cohort,loc:loc,fee:null,joined:mkJoin(g.lo,g.hi),status:'active',referredBy:null,source:pick(['Instagram','Instagram','Instagram','Instagram','Referral','Referral','Referral','Walk-in','Walk-in','TikTok','TikTok','Facebook']),notes:'',reminded:null});
+  students.push({id:id,name:name,wa:phone(),cohort:g.cohort,loc:loc,fee:null,joined:mkJoin(g.lo,g.hi),status:'active',referredBy:null,source:pick(['Instagram','Instagram','Instagram','Instagram','Referral','Referral','Referral','Walk-in','Walk-in','TikTok','TikTok','Facebook']),level:pick(['good','good','good','okay','okay','okay','okay','bad','bad']),notes:'',reminded:null});
   id++;}});
  /* payment history: every charged month from join → now. Past months ~94% paid;
     current month ~60% paid, ~5% partial, rest owing (a real mid-month state). */
@@ -1172,7 +1180,7 @@ function seedData(){
  });
  /* 15 alumni (2026 batch, finished) — the referral pool */
  const SRC=['Sibling enrolled','Friend referral','Instagram','School friend','Parent referral'];
- for(let i=0;i<15;i++){students.push({id:id,name:pick(F)+' '+pick(L),wa:phone(),cohort:'2026',loc:pick(['nugegoda','kiribathgoda','online']),fee:null,joined:'2024-'+String(9+Math.floor(rnd()*3)).padStart(2,'0')+'-10',status:'alumni',referredBy:null,refSource:pick(SRC),source:pick(['Instagram','Referral','Walk-in','TikTok','Facebook']),notes:'',reminded:null});id++;}
+ for(let i=0;i<15;i++){students.push({id:id,name:pick(F)+' '+pick(L),wa:phone(),cohort:'2026',loc:pick(['nugegoda','kiribathgoda','online']),fee:null,joined:'2024-'+String(9+Math.floor(rnd()*3)).padStart(2,'0')+'-10',status:'alumni',referredBy:null,refSource:pick(SRC),source:pick(['Instagram','Referral','Walk-in','TikTok','Facebook']),level:pick(['good','good','okay','bad']),notes:'',reminded:null});id++;}
  /* enquiries across the funnel */
  const ENQ_SRC=['Instagram','TikTok','Facebook','WhatsApp','Friend referral','Walk-in'];
  const stages=['enquiry','enquiry','enquiry','contacted','contacted','trial','trial','enrolled','lost','enquiry'];
@@ -1568,6 +1576,7 @@ function openStudent(id,ymCtx){
   '<div class="pn-contact"><span>'+I.phone+' <a href="tel:'+(x.wa||'').replace(/\s/g,'')+'">'+(x.wa||'no number')+'</a></span></div></div>'+
   '<div class="pn-actions">'+acts.join('')+'</div>'+
   '<div class="pn-body">'+
+  '<div class="sec"><div class="sec-t">Knowledge level</div><div class="lvl-set"><button class="lvl-btn lv-good'+(x.level==='good'?' on':'')+'" onclick="setLevel('+x.id+',\'good\')">Strong</button><button class="lvl-btn lv-okay'+((x.level||'okay')==='okay'?' on':'')+'" onclick="setLevel('+x.id+',\'okay\')">Okay</button><button class="lvl-btn lv-bad'+(x.level==='bad'?' on':'')+'" onclick="setLevel('+x.id+',\'bad\')">Needs work</button></div></div>'+
   '<div class="sec"><div class="sec-t">'+monthLbl(shYm)+'</div><div class="info-grid"><div class="info"><div class="il">Due</div><div class="iv">'+(due?lkr(due):'not charged')+'</div></div><div class="info"><div class="il">Paid</div><div class="iv" style="color:'+(got>=due&&due>0?'var(--green)':got>0?'var(--amber)':'var(--danger)')+'">'+(got?lkr(got):(due?'nothing yet':'—'))+'</div></div></div></div>'+
   '<div class="sec"><div class="sec-t">Last 12 months</div><div class="grid12">'+cells+'</div></div>'+
   '<div class="sec"><div class="sec-t">Payment history</div>'+(hist.length?hist.map(r=>'<div class="act" style="cursor:pointer" title="Generate receipt" onclick="receiptDoc('+x.id+',\''+r.month+'\')"><div class="act-ic" style="background:'+(r.status==='paid'?'var(--green-soft)':'var(--amber-soft)')+';color:'+(r.status==='paid'?'var(--green)':'var(--amber)')+'">'+(r.status==='paid'?'✓':'½')+'</div><div style="flex:1"><div class="act-s">'+monthLbl(r.month)+'</div><div class="act-m">'+(r.status==='paid'?'Paid in full':'Partial payment')+'</div></div><div style="text-align:right"><div class="act-s" style="font-variant-numeric:tabular-nums">'+lkr(r.amount)+'</div><div class="act-m">'+(r.paidAt?fmtD(r.paidAt):'')+'</div></div></div>').join(''):'<div style="color:var(--faint);font-size:13px">No payments recorded yet.</div>')+'</div>'+
@@ -1710,7 +1719,7 @@ function ENQreopen(id){const e=DB.get('enquiries').find(x=>x.id===id);if(!e)retu
 function ENQwa(id){const e=DB.get('enquiries').find(x=>x.id===id);if(!e)return;const ph=(e.wa||'').replace(/\D/g,'').replace(/^0/,'94');if(!ph){toast('No WhatsApp number saved');return;}window.open('https://wa.me/'+ph,'_blank');}
 function ENQenrol(id){
  const e=DB.get('enquiries').find(x=>x.id===id);if(!e)return;
- const stu={id:DB.nextId('students'),name:e.name,wa:e.wa||'',cohort:e.cohort,loc:e.loc,fee:null,joined:todayISO(),status:'active',referredBy:null,source:e.source,notes:'Enrolled from enquiry ('+e.source+')',reminded:null};
+ const stu={id:DB.nextId('students'),name:e.name,wa:e.wa||'',cohort:e.cohort,loc:e.loc,fee:null,joined:todayISO(),status:'active',referredBy:null,source:e.source,level:'okay',notes:'Enrolled from enquiry ('+e.source+')',reminded:null};
  DB.get('students').push(stu);
  e.stage='enrolled';DB.commit();
  renderApp();renderEnquiries();
@@ -1827,10 +1836,11 @@ function attSessions(){return [...new Set(DB.get('attendance').map(a=>a.date))].
 function attFor(sid,date){return DB.get('attendance').find(a=>a.studentId===sid&&a.date===date);}
 function setAttendance(sid,date,present){const a=attFor(sid,date);if(a){a.present=present;}else{DB.get('attendance').push({id:DB.nextId('attendance'),studentId:sid,date:date,present:present});}DB.commit();}
 function missedLast(sid){const ses=attSessions();if(!ses.length)return false;const a=attFor(sid,ses[0]);return a?!a.present:false;}
-function studentStanding(s){const behind=monthsBehind(s);const rel=studentReliability(s);const att=attRate(s.id);
- if(behind>=2||rel<0.7||(att!=null&&att<0.6))return {key:'bad',label:'Needs attention',color:'var(--danger)'};
- if(behind===0&&rel>=0.85&&(att==null||att>=0.85))return {key:'good',label:'Good standing',color:'var(--green)'};
+function studentStanding(s){const lv=s.level||'okay';
+ if(lv==='good')return {key:'good',label:'Strong',color:'var(--green)'};
+ if(lv==='bad')return {key:'bad',label:'Needs work',color:'var(--danger)'};
  return {key:'okay',label:'Okay',color:'var(--amber)'};}
+function setLevel(id,lv){const s=DB.get('students').find(x=>x.id===id);if(!s)return;s.level=lv;DB.commit();renderStudents(true);if(document.getElementById('panel').classList.contains('open'))openStudent(id,STU._sheetYm);toast(I.check+' '+s.name.split(' ')[0]+' set to '+studentStanding(s).label);}
 function atRiskStudents(){return DB.get('students').filter(s=>s.status==='active').map(s=>({s,behind:monthsBehind(s),owed:totalOwed(s)})).filter(x=>x.behind>=2).sort((a,b)=>b.behind-a.behind||b.owed-a.owed);}
 function cohortForecast(){const active=DB.get('students').filter(s=>s.status==='active');const st=settings();const by={};let total=0;active.forEach(s=>{let months=monthsToExam(s.cohort);if(s.cohort==='crash'&&st.crashMode==='onetime')months=0;const inc=effectiveFee(s)*months;by[s.cohort]=(by[s.cohort]||0)+inc;total+=inc;});return {by,total};}
 function sourceStats(){const active=DB.get('students').filter(s=>s.status==='active');const g={};active.forEach(s=>{const src=s.source||'Unknown';g[src]=g[src]||{count:0,paying:0,life:0};g[src].count++;if(monthsBehind(s)===0)g[src].paying++;g[src].life+=lifetimePaid(s.id);});return Object.entries(g).map(function(e){return {src:e[0],count:e[1].count,paying:e[1].paying,life:e[1].life};}).sort((a,b)=>b.count-a.count);}
