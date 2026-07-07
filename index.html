@@ -332,6 +332,31 @@ select.filter,select.ivl,.fld select{appearance:none;-webkit-appearance:none;bac
 .fld input,.fld select{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--ink);outline:none}
 .fld input:focus,.fld select:focus{border-color:var(--red)}
 .modal-f{padding:14px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
+/* ---- bulk import module (ported from master-skeleton 9D) ---- */
+.imp-modal{width:560px}
+.imp-steps{display:flex;gap:6px;margin-bottom:16px}
+.imp-step{flex:1;height:4px;border-radius:99px;background:var(--line)}
+.imp-step.on{background:var(--ink)}
+.imp-drop{border:2px dashed var(--line);border-radius:var(--r-md);padding:30px 18px;text-align:center;background:var(--surface-2);cursor:pointer;transition:border-color .15s,background .15s}
+.imp-drop.drag{border-color:var(--ink);background:var(--red-soft)}
+.imp-drop svg{width:34px;height:34px;color:var(--faint);margin-bottom:10px}
+.imp-drop .id-t{font-size:14px;font-weight:700}
+.imp-drop .id-s{font-size:12px;color:var(--muted);margin-top:4px}
+.imp-lk{color:var(--ink);font-weight:700;background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:2px;font-size:12.5px}
+.imp-map{display:grid;gap:8px}
+.imp-map-row{display:grid;grid-template-columns:1fr 20px 1.1fr;gap:8px;align-items:center}
+.imp-map-row .imf{font-size:12.5px;font-weight:600}
+.imp-map-row .imf .req{color:var(--danger);margin-left:2px}
+.imp-map-row .arw{color:var(--faint);text-align:center}
+.imp-map-row .filter{width:100%}
+.imp-prev{border:1px solid var(--line);border-radius:var(--r-md);overflow:auto;max-height:230px;margin-top:12px}
+.imp-prev table{width:100%;border-collapse:collapse;font-size:12px;min-width:420px}
+.imp-prev th{background:var(--surface-2);color:var(--faint);font-size:10px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;padding:8px 10px;text-align:left;position:sticky;top:0}
+.imp-prev td{padding:7px 10px;border-top:1px solid var(--line2);white-space:nowrap}
+.imp-prev tr.bad td{background:var(--danger-soft);color:var(--danger)}
+.imp-summary{text-align:center;padding:18px 8px}
+.imp-summary .is-big{font-family:'Poppins';font-size:34px;font-weight:800;color:var(--green)}
+.imp-summary .is-sub{font-size:13px;color:var(--muted);margin-top:4px}
 /* tasks */
 .task{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line2)}.task:last-child{border:none}
 .task .cb{width:20px;height:20px;border:2px solid var(--line);border-radius:6px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.15s;color:transparent}
@@ -905,6 +930,7 @@ body.dark{--accent:#f4f5f7}
           <select class="filter" id="stuOwner" onchange="STU.set('owner',this.value)" style="display:none"><option value="all">All staff</option></select>
           <select class="filter" id="stuLoc" onchange="STU.set('loc',this.value)"><option value="all">All locations</option><option value="nugegoda">Nugegoda</option><option value="kiribathgoda">Kiribathgoda</option><option value="online">Online</option></select>
           <input class="pay-search" id="stuSearch" placeholder="Search…" oninput="STU.set('q',this.value)">
+          <button class="btn-ghost" onclick="openImport('students')" style="flex-shrink:0"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import</button>
           <button class="btn-red" onclick="openStuModal()" style="flex-shrink:0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Student</button>
         </div>
         <div class="stand-legend"><span><span class="sdot s-good"></span>Good</span><span><span class="sdot s-okay"></span>Okay</span><span><span class="sdot s-bad"></span>Needs work</span><span class="sl-note">how each student is doing in the subject · open a student to change</span></div>
@@ -917,6 +943,7 @@ body.dark{--accent:#f4f5f7}
           <select class="filter" id="enqLoc" onchange="ENQ.setF('loc',this.value)"><option value="all">All locations</option><option value="nugegoda">Nugegoda</option><option value="kiribathgoda">Kiribathgoda</option><option value="online">Online</option></select>
           <select class="filter" id="enqOwner" onchange="ENQ.setF('owner',this.value)" style="display:none"><option value="all">All staff</option></select>
           <div class="sp" style="flex:1"></div>
+          <button class="btn-ghost" onclick="openImport('enquiries')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import</button>
           <button class="btn-red" onclick="openEnqModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Enquiry</button>
         </div>
         <div class="card" id="enqListCard"><div class="card-b" id="enqList" style="padding:2px 18px 10px"></div></div>
@@ -985,6 +1012,36 @@ body.dark{--accent:#f4f5f7}
       <div id="eqErr" style="color:var(--danger);font-size:12.5px;font-weight:600;min-height:16px"></div>
     </div>
     <div class="modal-f"><button class="btn-ghost" onclick="closeEnqModal()">Cancel</button><button class="btn-red" onclick="saveEnquiry()">Add Enquiry</button></div>
+  </div>
+</div>
+<!-- IMPORT modal (bulk Excel/CSV) — ported from master-skeleton Section 9D -->
+<div class="modal-ov" id="importModal">
+  <div class="modal imp-modal">
+    <div class="modal-h"><div><h3 id="impTitle">Import</h3><div id="impSub" style="font-size:12px;color:var(--muted);margin-top:2px"></div></div><button class="pn-close" onclick="closeImport()" style="position:static;width:30px;height:30px">✕</button></div>
+    <div class="modal-b">
+      <div class="imp-steps"><div class="imp-step on" id="impStep1"></div><div class="imp-step" id="impStep2"></div><div class="imp-step" id="impStep3"></div></div>
+      <div id="impPane1">
+        <div class="imp-drop" id="impDrop" onclick="document.getElementById('impFile').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="event.preventDefault();this.classList.remove('drag');impFileChosen(event.dataTransfer.files[0])">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div class="id-t">Drop a .csv or .xlsx here, or tap to choose</div>
+          <div class="id-s">First row must be column headers</div>
+        </div>
+        <input id="impFile" type="file" accept=".csv,.xlsx,.xls" style="display:none" onchange="impFileChosen(this.files[0])">
+        <div style="text-align:center;margin-top:14px;font-size:12.5px;color:var(--muted)">Not sure of the format? <button class="imp-lk" onclick="downloadImportTemplate()">Download the import template</button></div>
+      </div>
+      <div id="impPane2" style="display:none">
+        <div style="font-size:12.5px;color:var(--muted);margin-bottom:12px">Match your columns to the system fields. Required fields are marked.</div>
+        <div class="imp-map" id="impMap"></div>
+        <div class="imp-prev" id="impPrev"></div>
+      </div>
+      <div id="impPane3" style="display:none">
+        <div class="imp-summary" id="impSummary"></div>
+      </div>
+    </div>
+    <div class="modal-f" id="impFooter">
+      <button class="btn-ghost" onclick="closeImport()">Cancel</button>
+      <button class="btn-red" id="impNext" onclick="impDoImport()" style="display:none">Import</button>
+    </div>
   </div>
 </div>
 <div class="modal-ov" id="partModal">
@@ -1772,6 +1829,124 @@ function saveEnquiry(){
  DB.commit();closeEnqModal();renderEnquiries();renderBadges();
  toast(I.check+' Enquiry added for '+name.split(' ')[0]);
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   BULK EXCEL/CSV IMPORT  (ported from master-skeleton Section 9D)
+   Drop .csv/.xlsx → map columns to BSWL fields → preview → import (skip
+   rows missing the required name). CSV parses offline; .xlsx lazy-loads
+   SheetJS with a save-as-CSV fallback. Imported rows go through the same
+   DB.nextId()/DB.commit() save path as the normal add forms.
+   ════════════════════════════════════════════════════════════════════ */
+const IMPORT_SCHEMAS={
+ students:{coll:'students',label:'students',page:'students',fields:[
+  {k:'name',l:'Full name',req:true},
+  {k:'wa',l:'WhatsApp number'},
+  {k:'cohort',l:'Batch (2027 / 2028 / Crash)'},
+  {k:'loc',l:'Location (Nugegoda / Kiribathgoda / Online)'},
+  {k:'joined',l:'Joined date (YYYY-MM-DD)'},
+  {k:'fee',l:'Custom monthly fee (optional)',num:true}
+ ]},
+ enquiries:{coll:'enquiries',label:'enquiries',page:'enquiries',fields:[
+  {k:'name',l:'Name',req:true},
+  {k:'wa',l:'WhatsApp number'},
+  {k:'cohort',l:'Batch interest (2027 / 2028 / Crash)'},
+  {k:'loc',l:'Location (Nugegoda / Kiribathgoda / Online)'},
+  {k:'stage',l:'Stage (New / Contacted / Trial)'},
+  {k:'source',l:'Source (Instagram / Referral / …)'}
+ ]}
+};
+const IMPORT={type:null,headers:[],rows:[],map:{},fileName:''};
+/* value → BSWL key mappers (match on key or human label, sensible default) */
+function impMatchCohort(v){v=String(v||'').toLowerCase().trim();if(!v)return '2027';for(const k in COHORTS){if(k===v||COHORTS[k].label.toLowerCase()===v)return k;}if(v.indexOf('crash')>=0)return 'crash';if(v.indexOf('2028')>=0)return '2028';return '2027';}
+function impMatchLoc(v){v=String(v||'').toLowerCase().trim();if(!v)return 'nugegoda';for(const k in LOCS){if(k===v||LOCS[k].toLowerCase()===v)return k;}if(v.indexOf('kiri')>=0)return 'kiribathgoda';if(v.indexOf('online')>=0||v.indexOf('zoom')>=0)return 'online';return 'nugegoda';}
+function impMatchStage(v){v=String(v||'').toLowerCase().trim();if(!v)return 'enquiry';for(const k in ENQ_STAGES){if(k===v||ENQ_STAGES[k].label.toLowerCase()===v)return k;}if(v.indexOf('contact')>=0)return 'contacted';if(v.indexOf('trial')>=0)return 'trial';if(v.indexOf('new')>=0||v.indexOf('enq')>=0)return 'enquiry';return 'enquiry';}
+function impNormDate(v){v=String(v||'').trim();if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;const m=v.match(/^(\d{4})[\/.](\d{1,2})[\/.](\d{1,2})$/);if(m)return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');return todayISO();}
+function openImport(type){
+ if(!IMPORT_SCHEMAS[type]){toast('Import not available here');return;}
+ IMPORT.type=type;IMPORT.headers=[];IMPORT.rows=[];IMPORT.map={};IMPORT.fileName='';
+ const sc=IMPORT_SCHEMAS[type];
+ document.getElementById('impTitle').textContent='Import '+sc.label;
+ document.getElementById('impSub').textContent='Upload a spreadsheet, then map the columns';
+ document.getElementById('impFile').value='';
+ impGoStep(1);
+ document.getElementById('importModal').classList.add('open');
+}
+function closeImport(){document.getElementById('importModal').classList.remove('open');}
+function impGoStep(n){[1,2,3].forEach(i=>{document.getElementById('impPane'+i).style.display=i===n?'':'none';document.getElementById('impStep'+i).classList.toggle('on',i<=n);});
+ document.getElementById('impNext').style.display=n===2?'':'none';
+ document.getElementById('impFooter').style.display=n===3?'none':'';}
+function impFileChosen(file){if(!file)return;IMPORT.fileName=file.name;const ext=(file.name.split('.').pop()||'').toLowerCase();
+ if(ext==='csv'){const rd=new FileReader();rd.onload=e=>impParsed(parseCSV(e.target.result));rd.readAsText(file);}
+ else if(ext==='xlsx'||ext==='xls')impParseXLSX(file);
+ else toast('Please choose a .csv or .xlsx file');}
+function parseCSV(text){
+ const rows=[];let row=[],cur='',q=false;text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+ for(let i=0;i<text.length;i++){const c=text[i];
+  if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}
+  else{if(c==='"')q=true;else if(c===','){row.push(cur);cur='';}else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}else cur+=c;}}
+ if(cur!==''||row.length){row.push(cur);rows.push(row);}
+ const nonEmpty=rows.filter(r=>r.some(c=>String(c).trim()!==''));
+ return {headers:(nonEmpty.shift()||[]).map(h=>String(h).trim()),rows:nonEmpty};
+}
+let _sheetjs=null;
+function loadSheetJS(cb){if(window.XLSX)return cb(true);if(_sheetjs==='fail')return cb(false);
+ const s=document.createElement('script');s.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+ s.onload=function(){cb(!!window.XLSX);};s.onerror=function(){_sheetjs='fail';cb(false);};document.head.appendChild(s);}
+function impParseXLSX(file){toast('Reading spreadsheet…');loadSheetJS(function(ok){
+ if(!ok){toast('For .xlsx, connect to the internet or save the file as .csv');return;}
+ const rd=new FileReader();rd.onload=function(e){try{const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const arr=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  impParsed({headers:(arr.shift()||[]).map(h=>String(h).trim()),rows:arr.filter(r=>r.some(c=>String(c).trim()!==''))});}catch(err){toast('Could not read that spreadsheet');}};
+ rd.readAsArrayBuffer(file);});}
+function impParsed(d){
+ if(!d.headers.length){toast('No columns found — is the first row a header?');return;}
+ IMPORT.headers=d.headers;IMPORT.rows=d.rows;
+ const sc=IMPORT_SCHEMAS[IMPORT.type];IMPORT.map={};
+ sc.fields.forEach(f=>{const norm=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');const short=norm(f.l.split('(')[0]);const gi=d.headers.findIndex(h=>{const nh=norm(h);return nh===norm(f.k)||nh===norm(f.l)||nh===short||nh.indexOf(norm(f.k))===0||short.indexOf(nh)===0;});IMPORT.map[f.k]=gi;});
+ renderImpMap();impGoStep(2);
+}
+function renderImpMap(){
+ const sc=IMPORT_SCHEMAS[IMPORT.type];
+ document.getElementById('impMap').innerHTML=sc.fields.map(f=>'<div class="imp-map-row"><div class="imf">'+f.l+(f.req?'<span class="req">*</span>':'')+'</div><div class="arw">→</div><select class="filter" onchange="IMPORT.map[\''+f.k+'\']=+this.value;impPreview()"><option value="-1">— skip —</option>'+IMPORT.headers.map((h,i)=>'<option value="'+i+'"'+(IMPORT.map[f.k]===i?' selected':'')+'>'+h+'</option>').join('')+'</select></div>').join('');
+ impPreview();
+}
+function impRowValid(r,sc){return sc.fields.every(f=>{if(!f.req)return true;const i=IMPORT.map[f.k];return i>=0&&String(r[i]!=null?r[i]:'').trim()!=='';});}
+function impPreview(){
+ const sc=IMPORT_SCHEMAS[IMPORT.type];const mapped=sc.fields.filter(f=>IMPORT.map[f.k]>=0);
+ const head='<tr>'+mapped.map(f=>'<th>'+f.l+'</th>').join('')+'</tr>';
+ const body=IMPORT.rows.slice(0,6).map(r=>{const bad=!impRowValid(r,sc);return '<tr'+(bad?' class="bad"':'')+'>'+mapped.map(f=>'<td>'+(String(r[IMPORT.map[f.k]]!=null?r[IMPORT.map[f.k]]:'').trim()||'—')+'</td>').join('')+'</tr>';}).join('');
+ const okN=IMPORT.rows.filter(r=>impRowValid(r,sc)).length;
+ document.getElementById('impPrev').innerHTML=mapped.length?'<table>'+head+body+'</table>':'<div style="padding:14px;color:var(--faint);font-size:12.5px">Map at least one column to preview.</div>';
+ const btn=document.getElementById('impNext');btn.textContent='Import '+okN+' row'+(okN===1?'':'s');btn.disabled=okN===0;
+}
+function impDoImport(){
+ const sc=IMPORT_SCHEMAS[IMPORT.type],coll=sc.coll;let imported=0,skipped=0;
+ const g=(r,k)=>{const i=IMPORT.map[k];return i>=0?String(r[i]!=null?r[i]:'').trim():'';};
+ IMPORT.rows.forEach(r=>{
+  if(!impRowValid(r,sc)){skipped++;return;}
+  if(coll==='students'){
+   const feeRaw=g(r,'fee').replace(/[^0-9]/g,'');
+   /* same shape + defaults as saveStudent()'s new-student path */
+   const x=Object.assign({id:DB.nextId('students'),status:'active',owner:CURRENT.id,referredBy:null,notes:'',reminded:null,level:'okay',source:'Import'},{
+    name:g(r,'name'),wa:g(r,'wa')?fmtPhone(g(r,'wa')):'',cohort:impMatchCohort(g(r,'cohort')),loc:impMatchLoc(g(r,'loc')),joined:impNormDate(g(r,'joined')),fee:feeRaw?parseInt(feeRaw,10):null});
+   DB.get('students').push(x);imported++;
+  }else{
+   /* same shape as saveEnquiry()'s push */
+   DB.get('enquiries').push({id:DB.nextId('enquiries'),owner:CURRENT.id,name:g(r,'name'),wa:g(r,'wa')?fmtPhone(g(r,'wa')):'',cohort:impMatchCohort(g(r,'cohort')),loc:impMatchLoc(g(r,'loc')),stage:impMatchStage(g(r,'stage')),source:g(r,'source')||'Other',created:todayISO(),notes:''});imported++;
+  }
+ });
+ DB.commit();
+ impGoStep(3);
+ document.getElementById('impSummary').innerHTML='<div class="is-big">'+imported+'</div><div class="is-sub">'+sc.label+' imported'+(skipped?' · '+skipped+' skipped (missing name)':'')+'</div><button class="btn-red" style="margin-top:18px" onclick="closeImport();go(\''+sc.page+'\')">View '+sc.label+'</button>';
+ renderBadges();renderApp();
+}
+function downloadImportTemplate(){
+ const sc=IMPORT_SCHEMAS[IMPORT.type];
+ const ex={name:sc.coll==='students'?'Senuki Perera':'Amaya Fernando',wa:'077 123 4567',cohort:'2027',loc:'Nugegoda',joined:todayISO(),fee:'',stage:'New',source:'Instagram'};
+ const row=sc.fields.map(f=>ex[f.k]!=null?ex[f.k]:'');
+ impExportCSV('bswl-'+sc.label+'-import-template.csv',sc.fields.map(f=>f.l),[row]);
+}
+function impExportCSV(name,headers,rows){const esc=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';const csv=[headers.map(esc).join(','),...rows.map(r=>r.map(esc).join(','))].join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=name;a.click();toast(I.check+' Template downloaded');}
+
 function renderAlumni(){
  const alum=DB.get('students').filter(s=>s.status==='alumni').sort((a,b)=>a.name.localeCompare(b.name));
  const referred=id=>DB.get('students').filter(s=>s.referredBy===id).length;
