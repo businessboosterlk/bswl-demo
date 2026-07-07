@@ -132,7 +132,7 @@ input,select,textarea{font-family:inherit;color:var(--ink)}
    ============================================================ */
 .sidebar{width:248px;background:var(--sidebar);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:40}
 .logo-wrap{padding:24px 18px 22px;border-bottom:1px solid var(--sidebar-line);text-align:center}
-.side-logo{height:44px;width:auto;max-width:88%;display:block;margin:0 auto;object-fit:contain}
+.side-logo{height:72px;width:auto;max-width:94%;display:block;margin:2px auto 4px;object-fit:contain}
 .side-appname{font-family:'Poppins';font-weight:800;font-size:17px;color:#fff;letter-spacing:-.3px}
 .side-appsub{font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--sidebar-faint);margin-top:4px;font-weight:600}
 .nav{padding:14px 12px;flex:1;overflow-y:auto}
@@ -287,6 +287,13 @@ select.filter{appearance:none;-webkit-appearance:none;background-image:url("data
 .mo-switch button[disabled]{opacity:.3;cursor:default}
 .mo-switch button svg{width:15px;height:15px}
 .mo-switch .mo-lbl{font-size:13px;font-weight:700;min-width:110px;text-align:center;font-variant-numeric:tabular-nums}
+.rp-cmp-ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rp-cmp-ctl .filter{padding:7px 11px;font-size:12.5px;font-weight:600}
+.rp-cmp-ctl .rp-cmp-vs{font-size:12.5px;color:var(--muted);font-weight:600}
+.rp-quick{font-size:12px;font-weight:600;padding:7px 11px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;transition:.15s}
+.rp-quick:hover{border-color:var(--ink);color:var(--ink)}
+.rp-quick.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+@media(max-width:560px){.rp-cmp-ctl{width:100%}.rp-cmp-ctl .filter{flex:1 1 130px;min-width:120px}}
 
 /* ============================================================
    KANBAN BOARD (pipeline module)
@@ -857,7 +864,7 @@ body.dark .stat-kpi .val{color:#fff}
           <button class="btn-ghost" onclick="exportReport()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
         </div>
         <div class="stat-kpis" id="rpKpis"></div>
-        <div class="card" style="margin-bottom:20px" id="rpCmpCard"><div class="card-h"><h3>This month vs last</h3><span class="hint" id="rpCmpHint"></span></div><div class="card-b" style="padding:16px 20px"><div class="cmp-grid" id="rpCmp"></div></div></div>
+        <div class="card" style="margin-bottom:20px" id="rpCmpCard"><div class="card-h" style="flex-wrap:wrap;gap:10px"><h3 id="rpCmpHint">Compare months</h3><div class="rp-cmp-ctl"><span class="rp-cmp-vs">compare with</span><select id="rpCmpSel" class="filter" onchange="rpSetCmp(this.value)"></select><button class="rp-quick" id="rpqPrev" onclick="rpQuick('prev')">Previous month</button><button class="rp-quick" id="rpqYear" onclick="rpQuick('year')">Same month last year</button></div></div><div class="card-b" style="padding:16px 20px"><div class="cmp-grid" id="rpCmp"></div></div></div>
         <div class="card" style="margin-bottom:20px"><div class="card-h"><h3>Revenue trend</h3><span class="hint">Won revenue, last 6 months</span></div><div class="card-b" id="rpTrend" style="padding:18px 22px 14px"></div></div>
         <div class="grid2" style="margin-bottom:20px">
           <div class="card"><div class="card-h"><h3>Where revenue comes from</h3><span class="hint">By owner, this month</span></div><div class="card-b" id="rpByOwner"></div></div>
@@ -2203,12 +2210,19 @@ function openCustomer(id){
 function exportCustomers(){exportCSV('customers.csv',['Customer','Detail','Type','First order','Last contact','Cadence','Lifetime value ('+CFG.currency+')'],scopeCustomers().map(c=>[c.name,c.co,c.type,custFirst(c),c.last,c.sent>=3?'Complete':cadLabel(c.sent),custLTV(c)]));}
 
 /* ════════ REPORTS — month-over-month analytics + trends (always-on) ════════ */
-let RP_YM=null;
+let RP_YM=null,RP_CMP=null;
 function rpShift(n){if(!RP_YM)RP_YM=ymNow();const t=ymShift(RP_YM,n);if(t>ymNow())return;RP_YM=t;renderReports();}
+function rpSetCmp(v){RP_CMP=v;renderReports();}
+function rpQuick(kind){if(!RP_YM)RP_YM=ymNow();RP_CMP=kind==='year'?ymShift(RP_YM,-12):ymShift(RP_YM,-1);renderReports();}
+function rpBuildCmpSel(ym,prev){const sel=document.getElementById('rpCmpSel');if(sel){let o='';for(let i=1;i<=18;i++){const m=ymShift(ym,-i);o+='<option value="'+m+'"'+(m===prev?' selected':'')+'>'+monthLbl(m)+'</option>';}sel.innerHTML=o;}
+ const qp=document.getElementById('rpqPrev'),qy=document.getElementById('rpqYear');if(qp)qp.classList.toggle('on',prev===ymShift(ym,-1));if(qy)qy.classList.toggle('on',prev===ymShift(ym,-12));}
 function monthWon(ym){return DB.get('records').filter(r=>isWon(r)&&r.created.slice(0,7)===ym);}
 function renderReports(){
  if(!RP_YM)RP_YM=ymNow();
- const ym=RP_YM,prev=ymShift(ym,-1);
+ const ym=RP_YM;
+ let prev=RP_CMP||ymShift(ym,-1);if(prev>=ym)prev=ymShift(ym,-1);
+ const bLbl=monthShort(prev).split(' ')[0];
+ rpBuildCmpSel(ym,prev);
  document.getElementById('rpLbl').textContent=monthLbl(ym);
  document.getElementById('rpNext').disabled=ym>=ymNow();
  const won=monthWon(ym),pwon=monthWon(prev);
@@ -2221,10 +2235,10 @@ function renderReports(){
  const pct=(a,b)=>b?Math.round((a-b)/b*100):(a?100:0);
  const dir=v=>v>0?'up':(v<0?'down':'flat');
  document.getElementById('rpKpis').innerHTML=
-  statKpi('Revenue',lkr(rev),Math.abs(pct(rev,prevRev))+'% vs last',dir(pct(rev,prevRev)),'var(--brand)')
-  +statKpi('Deals won',won.length,Math.abs(pct(won.length,pwon.length))+'% vs last',dir(pct(won.length,pwon.length)),'var(--green)')
-  +statKpi('Avg deal',lkr(aov),Math.abs(pct(aov,paov))+'% vs last',dir(pct(aov,paov)),'var(--amber)')
-  +statKpi('Win rate',winRate+'%',Math.abs(winRate-pWin)+'pp vs last',dir(winRate-pWin),'var(--blue)');
+  statKpi('Revenue',lkr(rev),Math.abs(pct(rev,prevRev))+'% vs '+bLbl,dir(pct(rev,prevRev)),'var(--brand)')
+  +statKpi('Deals won',won.length,Math.abs(pct(won.length,pwon.length))+'% vs '+bLbl,dir(pct(won.length,pwon.length)),'var(--green)')
+  +statKpi('Avg deal',lkr(aov),Math.abs(pct(aov,paov))+'% vs '+bLbl,dir(pct(aov,paov)),'var(--amber)')
+  +statKpi('Win rate',winRate+'%',Math.abs(winRate-pWin)+'pp vs '+bLbl,dir(winRate-pWin),'var(--blue)');
  const cmp=[['Revenue',lkr(rev),lkr(prevRev),pct(rev,prevRev),'%'],['Deals',won.length,pwon.length,pct(won.length,pwon.length),'%'],['Avg deal',lkr(aov),lkr(paov),pct(aov,paov),'%'],['Win rate',winRate+'%',pWin+'%',winRate-pWin,'pp']];
  document.getElementById('rpCmp').innerHTML=cmp.map(c=>{const up=c[3]>=0;return '<div class="cmp-item '+(up?'up':'down')+'"><div class="cl">'+c[0]+'</div><div class="cv">'+c[1]+'</div><div class="cvs">vs '+c[2]+'</div><div class="cd '+(up?'up':'down')+'">'+(up?'▲':'▼')+' '+Math.abs(c[3])+c[4]+'</div></div>';}).join('');
  document.getElementById('rpCmpHint').textContent=monthLbl(ym)+' vs '+monthLbl(prev);
