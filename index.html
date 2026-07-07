@@ -785,6 +785,26 @@ body.dark .kpi.accent .val{color:var(--on-accent)}
 .lvl-btn.on.lv-okay{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
 .lvl-btn.on.lv-bad{background:var(--danger-soft);border-color:var(--danger);color:var(--danger)}
 
+/* ---------- ANALYTICS ---------- */
+.an-head{font-size:12.5px;color:var(--muted);font-weight:600;margin:-2px 2px 12px}
+.an-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+.an-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow-xs)}
+.an-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:650}
+.an-val{font-family:'Poppins';font-size:22px;font-weight:800;letter-spacing:-.6px;margin:8px 0 6px;font-variant-numeric:tabular-nums;line-height:1;white-space:nowrap}
+.an-chg{font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:4px}
+.an-chg span{font-weight:500;color:var(--faint);font-size:11px}
+.dir-good{color:var(--green)}.dir-bad{color:var(--danger)}.dir-flat{color:var(--muted)}
+.an-yr{font-size:11px;color:var(--faint);margin-top:8px}
+.ag-buckets{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.agb{background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:12px 14px}
+.agb-hot{border-color:color-mix(in srgb,var(--danger) 32%,var(--line));background:var(--danger-soft)}
+.agb-v{font-family:'Poppins';font-size:20px;font-weight:800;line-height:1}
+.agb-hot .agb-v{color:var(--danger)}
+.agb-l{font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:650;margin-top:5px}
+.agb-a{font-size:12px;color:var(--muted);font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums}
+@media(max-width:860px){.an-cards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:440px){.an-cards{grid-template-columns:repeat(2,1fr);gap:10px}.an-val{font-size:19px}.ag-buckets{grid-template-columns:repeat(2,1fr)}}
+
 /* monochrome on-accent text: dark text on light accent in dark mode */
 .btn-red,.pa.primary,.nav-item.active,.uav,.side-foot .av,.kpi.accent,.kpi.accent .lbl,.kpi.accent .sub,.kpi.accent .sub b{color:var(--on-accent)}
 
@@ -833,6 +853,7 @@ body.dark{--accent:#f4f5f7}
       <div class="nav-item" data-pg="taskbook" data-role="all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Task Book<span class="badge" id="nbTask"></span></div>
       <div class="nav-label">Manage</div>
       <div class="nav-item" data-pg="money" data-role="owner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Money</div>
+      <div class="nav-item" data-pg="analytics" data-role="owner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 5-7"/></svg>Analytics</div>
       <div class="nav-item" data-pg="team" data-role="owner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>Team</div>
       <div class="nav-item" data-pg="settings" data-role="owner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>Settings</div>
     </nav>
@@ -905,6 +926,7 @@ body.dark{--accent:#f4f5f7}
         <div class="att-hint">Everyone is Present by default. Tap a student to mark them Absent.</div>
         <div class="card"><div class="card-b" id="attList" style="padding:2px 18px 10px"></div></div>
       </div>
+      <div class="page" id="page-analytics"><div id="anWrap"></div></div>
       <div class="page" id="page-money">
         <div class="tabbar"><button class="tab active" data-mt="revenue" onclick="renderMoney('revenue')">Revenue</button><button class="tab" data-mt="collections" onclick="renderMoney('collections')">Collections</button><button class="tab" data-mt="report" onclick="renderMoney('report')">Report</button></div>
         <div id="moneyBody"></div>
@@ -1088,7 +1110,7 @@ const I={
    to Supabase behind the SAME API so no view code changes.
    Collections: students, payments, enquiries, settings. */
 const DB={
- _d:null,KEY:'bswl_data_v7',
+ _d:null,KEY:'bswl_data_v8',
  load(){let d=null;try{d=JSON.parse(localStorage.getItem(this.KEY))}catch(e){}
   if(d&&d.students&&d.settings&&d.staff&&d.tasks&&d.attendance){this._d=d;}
   else{this._d=seedData();this.commit();}},
@@ -1116,7 +1138,8 @@ function settings(){return DB.get('settings');}
 function effectiveFee(s){if(s.fee!=null)return s.fee;const st=settings();return s.cohort==='2027'?st.fee2027:s.cohort==='2028'?st.fee2028:st.feeCrash;}
 /* is this student charged for month ym? */
 function chargedIn(s,ym){
- if(s.status!=='active')return false;
+ if(s.status==='alumni')return false;
+ if(s.status==='left'){if(!s.leftDate||ym>s.leftDate.slice(0,7))return false;}
  const joinYm=s.joined.slice(0,7);
  if(joinYm>ym)return false;
  if(s.cohort==='crash'&&settings().crashMode==='onetime')return joinYm===ym;
@@ -1181,6 +1204,8 @@ function seedData(){
  /* 15 alumni (2026 batch, finished) — the referral pool */
  const SRC=['Sibling enrolled','Friend referral','Instagram','School friend','Parent referral'];
  for(let i=0;i<15;i++){students.push({id:id,name:pick(F)+' '+pick(L),wa:phone(),cohort:'2026',loc:pick(['nugegoda','kiribathgoda','online']),fee:null,joined:'2024-'+String(9+Math.floor(rnd()*3)).padStart(2,'0')+'-10',status:'alumni',referredBy:null,refSource:pick(SRC),source:pick(['Instagram','Referral','Walk-in','TikTok','Facebook']),level:pick(['good','good','okay','bad']),notes:'',reminded:null});id++;}
+ /* students who left over the past year (real churn for analytics) */
+ for(let i=0;i<11;i++){const jm=mkJoin('2025-09','2026-02');let lv=mkJoin('2025-12',ymShift(NOW,-1));if(lv<=jm)lv=mkJoin(ymShift(jm.slice(0,7),3),ymShift(NOW,-1));const st={id:id,name:pick(F)+' '+pick(L),wa:phone(),cohort:pick(['2027','2028']),loc:pick(['nugegoda','kiribathgoda','online']),fee:null,joined:jm,status:'left',leftDate:lv,referredBy:null,source:pick(['Instagram','Referral','Walk-in','TikTok']),level:pick(['okay','bad','bad']),notes:'',reminded:null};students.push(st);let ym=st.joined.slice(0,7);const lym=st.leftDate.slice(0,7);while(ym<=lym){if(rnd()<0.9)payments.push({id:pid++,studentId:st.id,month:ym,status:'paid',amount:4000,paidAt:ym+'-'+String(3+Math.floor(rnd()*20)).padStart(2,'0'),note:''});ym=ymShift(ym,1);}id++;}
  /* enquiries across the funnel */
  const ENQ_SRC=['Instagram','TikTok','Facebook','WhatsApp','Friend referral','Walk-in'];
  const stages=['enquiry','enquiry','enquiry','contacted','contacted','trial','trial','enrolled','lost','enquiry'];
@@ -1661,7 +1686,7 @@ function saveStudent(){
  };
  if(STU._edit){
   const x=DB.get('students').find(s=>s.id===STU._edit);if(!x)return;
-  Object.assign(x,rec);x.status=document.getElementById('sm_status').value;
+  Object.assign(x,rec);x.status=document.getElementById('sm_status').value;if(x.status==='left'){if(!x.leftDate)x.leftDate=todayISO();}else{x.leftDate=null;}
   DB.commit();closeStuModal();refreshAfterPayChange();renderStudents();
   if(document.getElementById('panel').classList.contains('open'))openStudent(x.id,STU._sheetYm);
   toast(I.check+' '+x.name.split(' ')[0]+' updated');
@@ -1841,6 +1866,10 @@ function studentStanding(s){const lv=s.level||'okay';
  if(lv==='bad')return {key:'bad',label:'Needs work',color:'var(--danger)'};
  return {key:'okay',label:'Okay',color:'var(--amber)'};}
 function setLevel(id,lv){const s=DB.get('students').find(x=>x.id===id);if(!s)return;s.level=lv;DB.commit();renderStudents(true);if(document.getElementById('panel').classList.contains('open'))openStudent(id,STU._sheetYm);toast(I.check+' '+s.name.split(' ')[0]+' set to '+studentStanding(s).label);}
+function activeInMonth(ym){return DB.get('students').filter(s=>s.status!=='alumni'&&s.joined.slice(0,7)<=ym&&(!s.leftDate||s.leftDate.slice(0,7)>ym)).length;}
+function leftInMonth(ym){return DB.get('students').filter(s=>s.leftDate&&s.leftDate.slice(0,7)===ym).length;}
+function collectedByGroup(ym,field,val){const ids=new Set(DB.get('students').filter(s=>s[field]===val).map(s=>s.id));return DB.get('payments').filter(r=>r.month===ym&&ids.has(r.studentId)).reduce((t,r)=>t+r.amount,0);}
+function agingList(){const ym=ymNow();return DB.get('students').filter(s=>s.status==='active').map(s=>({s,owed:totalOwed(s),behind:monthsBehind(s)})).filter(x=>x.owed>0).sort((a,b)=>b.behind-a.behind||b.owed-a.owed);}
 function atRiskStudents(){return DB.get('students').filter(s=>s.status==='active').map(s=>({s,behind:monthsBehind(s),owed:totalOwed(s)})).filter(x=>x.behind>=2).sort((a,b)=>b.behind-a.behind||b.owed-a.owed);}
 function cohortForecast(){const active=DB.get('students').filter(s=>s.status==='active');const st=settings();const by={};let total=0;active.forEach(s=>{let months=monthsToExam(s.cohort);if(s.cohort==='crash'&&st.crashMode==='onetime')months=0;const inc=effectiveFee(s)*months;by[s.cohort]=(by[s.cohort]||0)+inc;total+=inc;});return {by,total};}
 function sourceStats(){const active=DB.get('students').filter(s=>s.status==='active');const g={};active.forEach(s=>{const src=s.source||'Unknown';g[src]=g[src]||{count:0,paying:0,life:0};g[src].count++;if(monthsBehind(s)===0)g[src].paying++;g[src].life+=lifetimePaid(s.id);});return Object.entries(g).map(function(e){return {src:e[0],count:e[1].count,paying:e[1].paying,life:e[1].life};}).sort((a,b)=>b.count-a.count);}
@@ -2058,9 +2087,51 @@ function renderAttendance(){
  if(sum)sum.innerHTML=studs.length?'<div class="att-sum"><div class="asx as-p"><b>'+present+'</b> present</div><div class="asx as-a"><b>'+absent+'</b> absent</div><div class="asx as-r"><b>'+Math.round(present/studs.length*100)+'%</b> turnout</div></div>':'';
 }
 
+
+/* ---------- ANALYTICS ---------- */
+function anChange(cur,prev,upGood){if(prev===0)return {txt:cur>0?'new':'—',cls:'dir-flat'};const d=Math.round((cur-prev)/prev*100);const arrow=d>0?'▲':d<0?'▼':'—';const good=upGood?d>0:d<0;return {txt:arrow+' '+Math.abs(d)+'%',cls:d===0?'dir-flat':(good?'dir-good':'dir-bad')};}
+function renderAnalytics(){
+ const wrap=document.getElementById('anWrap');if(!wrap)return;
+ const cur=ymNow();const now=ymShift(cur,-1),last=ymShift(now,-1),yr=ymShift(now,-12);
+ const rate=m=>{const st=monthStats(m);return st.expected?Math.round(st.collected/st.expected*100):0;};
+ const METR=[
+  {l:'Collected',cur:monthStats(now).collected,prev:monthStats(last).collected,ya:monthStats(yr).collected,f:lkr,up:true},
+  {l:'Expected',cur:monthStats(now).expected,prev:monthStats(last).expected,ya:monthStats(yr).expected,f:lkr,up:true},
+  {l:'Outstanding',cur:monthStats(now).outstanding,prev:monthStats(last).outstanding,ya:monthStats(yr).outstanding,f:lkr,up:false},
+  {l:'Collection rate',cur:rate(now),prev:rate(last),ya:rate(yr),f:v=>v+'%',up:true},
+  {l:'Active students',cur:activeInMonth(now),prev:activeInMonth(last),ya:activeInMonth(yr),f:v=>v,up:true}
+ ];
+ const cards='<div class="an-head">Through '+monthLbl(now)+' · your last completed month</div><div class="an-cards">'+METR.map(function(m){const ch=anChange(m.cur,m.prev,m.up);return '<div class="an-card"><div class="an-lbl">'+m.l+'</div><div class="an-val">'+m.f(m.cur)+'</div><div class="an-chg '+ch.cls+'">'+ch.txt+' <span>vs last month</span></div><div class="an-yr">'+(m.ya>0?m.f(m.ya)+' a year ago':'no data a year ago')+'</div></div>';}).join('')+'</div>';
+ const chartCard=(t,sub,id,h)=>'<div class="card"><div class="card-h"><h3>'+t+'</h3><span style="font-size:12px;color:var(--muted)">'+sub+'</span></div><div class="card-b" style="padding:16px 20px 18px"><div style="height:'+(h||210)+'px"><canvas id="'+id+'"></canvas></div></div></div>';
+ // aging
+ const ag=agingList();const buck=[0,0,0,0];const bamt=[0,0,0,0];ag.forEach(function(x){const b=x.behind>=3?3:x.behind;buck[b]++;bamt[b]+=x.owed;});
+ const bl=['This month','1 month','2 months','3+ months'];
+ const agingHTML='<div class="card" style="margin-top:20px"><div class="card-h"><h3>Outstanding aging</h3><span style="font-size:12px;color:var(--muted)">chase the oldest first</span></div><div class="card-b" style="padding:14px 20px 8px"><div class="ag-buckets">'+bl.map(function(l,i){return '<div class="agb'+(i>=2?' agb-hot':'')+'"><div class="agb-v">'+buck[i]+'</div><div class="agb-l">'+l+'</div><div class="agb-a">'+lkr(bamt[i])+'</div></div>';}).join('')+'</div></div><table class="tbl"><thead><tr><th>Student</th><th>Batch</th><th class="tnum">Owed</th><th>Behind</th></tr></thead><tbody>'+(ag.length?ag.slice(0,12).map(function(x){return '<tr onclick="openStudent('+x.s.id+')"><td class="tn">'+x.s.name+'</td><td class="tm">'+cohortLabel(x.s.cohort).replace(' Batch','')+' · '+locLabel(x.s.loc)+'</td><td class="tnum" style="color:var(--danger)">'+lkr(x.owed)+'</td><td class="tm">'+(x.behind>0?x.behind+' mo':'this month')+'</td></tr>';}).join(''):'<tr><td colspan="4" style="color:var(--faint);padding:14px">Everyone is paid up.</td></tr>')+'</tbody></table></div>';
+ wrap.innerHTML=cards+
+  '<div class="grid2" style="margin-top:4px">'+chartCard('Collected vs expected','last 12 months','anColExp')+chartCard('Collection rate','% collected per month','anRate')+'</div>'+
+  '<div class="grid2" style="margin-top:20px">'+chartCard('Outstanding','owed at month end','anOut')+chartCard('Growth & churn','active · enrolled · left','anGrow')+'</div>'+
+  '<div class="grid2" style="margin-top:20px">'+chartCard('Revenue by batch','collected per month','anCohort')+chartCard('Revenue by location','share of fees collected','anLoc',230)+'</div>'+
+  agingHTML;
+ animateCounts(wrap);
+ drawAnalytics(now);
+}
+function drawAnalytics(now){
+ if(typeof Chart==='undefined')return;const c=chartC();
+ const M=[];for(let i=11;i>=0;i--)M.push(ymShift(now,-i));const lab=M.map(m=>monthShort(m).split(' ')[0]);
+ const col=M.map(m=>monthStats(m).collected),exp=M.map(m=>monthStats(m).expected);
+ makeChart('anColExp',{data:{labels:lab,datasets:[{type:'bar',label:'Collected',data:col,backgroundColor:c.ink,borderRadius:4,maxBarThickness:16},{type:'bar',label:'Expected',data:exp,backgroundColor:c.grid,borderRadius:4,maxBarThickness:16}]},options:Object.assign(axisOpts(c),{plugins:{legend:{display:true,position:'bottom',labels:{color:c.muted,boxWidth:10,font:{size:11}}}}})});
+ makeChart('anRate',{type:'line',data:{labels:lab,datasets:[{data:M.map(m=>{const st=monthStats(m);return st.expected?Math.round(st.collected/st.expected*100):0;}),borderColor:c.ink,backgroundColor:c.fill,fill:true,tension:.35,pointRadius:3,pointBackgroundColor:c.ink,borderWidth:2}]},options:Object.assign(axisOpts(c),{scales:{x:{grid:{display:false},ticks:{color:c.muted}},y:{grid:{color:c.grid},ticks:{color:c.muted,callback:v=>v+'%'},suggestedMax:100}}})});
+ makeChart('anOut',{type:'bar',data:{labels:lab,datasets:[{data:M.map(m=>monthStats(m).outstanding),backgroundColor:c.accent2||c.ink,borderRadius:4,maxBarThickness:22}]},options:axisOpts(c)});
+ makeChart('anGrow',{data:{labels:lab,datasets:[{type:'line',label:'Active',data:M.map(m=>activeInMonth(m)),borderColor:c.ink,backgroundColor:'transparent',tension:.35,pointRadius:2,borderWidth:2,yAxisID:'y'},{type:'bar',label:'Enrolled',data:M.map(m=>monthEnrolments(m)),backgroundColor:c.green,borderRadius:3,maxBarThickness:14,yAxisID:'y1'},{type:'bar',label:'Left',data:M.map(m=>leftInMonth(m)),backgroundColor:c.danger,borderRadius:3,maxBarThickness:14,yAxisID:'y1'}]},options:{maintainAspectRatio:false,responsive:true,plugins:{legend:{display:true,position:'bottom',labels:{color:c.muted,boxWidth:10,font:{size:11}}}},scales:{x:{grid:{display:false},ticks:{color:c.muted}},y:{grid:{color:c.grid},ticks:{color:c.muted},position:'left'},y1:{grid:{display:false},ticks:{color:c.muted},position:'right'}}}});
+ const tints=[c.ink,c.muted,(document.body.classList.contains('dark')?'#55575f':'#c2c4ca')];
+ makeChart('anCohort',{type:'bar',data:{labels:lab,datasets:[{label:'2027',data:M.map(m=>collectedByGroup(m,'cohort','2027')),backgroundColor:tints[0],maxBarThickness:22},{label:'2028',data:M.map(m=>collectedByGroup(m,'cohort','2028')),backgroundColor:tints[1],maxBarThickness:22},{label:'Crash',data:M.map(m=>collectedByGroup(m,'cohort','crash')),backgroundColor:tints[2],maxBarThickness:22}]},options:Object.assign(axisOpts(c),{plugins:{legend:{display:true,position:'bottom',labels:{color:c.muted,boxWidth:10,font:{size:11}}}},scales:{x:{stacked:true,grid:{display:false},ticks:{color:c.muted}},y:{stacked:true,grid:{color:c.grid},ticks:{color:c.muted,callback:v=>v>=1000?(v/1000)+'k':v}}}})});
+ const locs=['nugegoda','kiribathgoda','online'];const locVals=locs.map(l=>DB.get('payments').filter(r=>{const st=DB.get('students').find(x=>x.id===r.studentId);return st&&st.loc===l;}).reduce((t,r)=>t+r.amount,0));
+ makeChart('anLoc',{type:'doughnut',data:{labels:['Nugegoda','Kiribathgoda','Online'],datasets:[{data:locVals,backgroundColor:tints,borderWidth:0}]},options:{cutout:'62%',maintainAspectRatio:false,responsive:true,plugins:{legend:{display:true,position:'bottom',labels:{color:c.muted,boxWidth:10,padding:12,font:{size:11.5}}}}}});
+}
+
 /* ---------- NAV ---------- */
-const TITLES={dashboard:['Dashboard',''],payments:['Payments','Who paid, what came in, who owes'],enquiries:['Enquiries','From first message to enrolled'],students:['Students','Registry, payments and lifetime fees'],taskbook:['Task Book','Assign and track work'],attendance:['Attendance','Mark who came to class'],money:['Money','Revenue, collections and reporting'],team:['Team','Performance, staff and access'],settings:['Settings','Fees, templates and system setup']};
-const RENDERERS={dashboard:renderDashboard,payments:renderPayments,enquiries:renderEnquiries,students:renderStudents,taskbook:renderTaskbook,attendance:renderAttendance,money:renderMoney,team:renderTeam,settings:renderSettings};
+const TITLES={dashboard:['Dashboard',''],payments:['Payments','Who paid, what came in, who owes'],enquiries:['Enquiries','From first message to enrolled'],students:['Students','Registry, payments and lifetime fees'],taskbook:['Task Book','Assign and track work'],attendance:['Attendance','Mark who came to class'],analytics:['Analytics','Growth, collections and trends'],money:['Money','Revenue, collections and reporting'],team:['Team','Performance, staff and access'],settings:['Settings','Fees, templates and system setup']};
+const RENDERERS={dashboard:renderDashboard,payments:renderPayments,enquiries:renderEnquiries,students:renderStudents,taskbook:renderTaskbook,attendance:renderAttendance,analytics:renderAnalytics,money:renderMoney,team:renderTeam,settings:renderSettings};
 function go(pg){if(!TITLES[pg])pg='dashboard';if(!isOwner()&&!['dashboard','students','enquiries','taskbook'].includes(pg))pg='dashboard';document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.pg===pg));document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+pg).classList.add('active');document.getElementById('pgTitle').textContent=TITLES[pg][0];document.getElementById('pgSub').textContent=TITLES[pg][1];closePanel();closeSidebar();try{if(RENDERERS[pg])RENDERERS[pg]();}catch(e){console.warn('render '+pg,e);}animateCounts(document.getElementById('page-'+pg));}
 document.querySelectorAll('.nav-item[data-pg]').forEach(n=>{n.onclick=()=>go(n.dataset.pg);n.setAttribute('tabindex','0');n.setAttribute('role','button');n.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go(n.dataset.pg);}};});
 (function(){const o=document.querySelector('.side-foot .out');if(o){o.setAttribute('tabindex','0');o.setAttribute('role','button');o.setAttribute('aria-label','Sign out');o.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();signOut();}};}})();
