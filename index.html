@@ -833,7 +833,7 @@ body.dark .stat-kpi .val{color:#fff}
         <div class="kpis" id="dashKpis"></div>
         <div class="card" style="margin-bottom:20px"><div class="card-h"><h3 id="chartTitle">Won revenue, last 6 months</h3><span class="hint" id="chartHint"></span></div><div class="card-b" id="dashChart" style="padding:18px 22px 14px"></div></div>
         <div class="grid2">
-          <div class="card"><div class="card-h"><h3 style="display:flex;align-items:center;gap:8px"><svg class="ic" style="color:var(--brand);width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Needs attention today</h3><span class="hint">Follow-ups due first</span></div><div class="card-b" id="actionQueue"></div></div>
+          <div class="card"><div class="card-h"><h3 style="display:flex;align-items:center;gap:8px"><svg class="ic" style="color:var(--brand);width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Needs attention today</h3><span class="hint">Students who owe, then follow-ups</span></div><div class="card-b" id="actionQueue"></div></div>
           <div class="card"><div class="card-h"><h3>Tasks</h3><button class="btn-ghost" onclick="openTaskModal()" style="padding:6px 12px"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</button></div><div class="card-b" id="dashTasks"></div></div>
         </div>
       </div>
@@ -877,10 +877,10 @@ body.dark .stat-kpi .val{color:#fff}
         </div>
         <div class="stat-kpis" id="rpKpis"></div>
         <div class="card" style="margin-bottom:20px" id="rpCmpCard"><div class="card-h" style="flex-wrap:wrap;gap:10px"><h3 id="rpCmpHint">Compare months</h3><div class="rp-cmp-ctl"><span class="rp-cmp-vs">compare with</span><select id="rpCmpSel" class="filter" onchange="rpSetCmp(this.value)"></select><button class="rp-quick" id="rpqPrev" onclick="rpQuick('prev')">Previous month</button><button class="rp-quick" id="rpqYear" onclick="rpQuick('year')">Same month last year</button></div></div><div class="card-b" style="padding:16px 20px"><div class="cmp-grid" id="rpCmp"></div></div></div>
-        <div class="card" style="margin-bottom:20px"><div class="card-h"><h3>Revenue trend</h3><span class="hint">Won revenue, last 6 months</span></div><div class="card-b" id="rpTrend" style="padding:18px 22px 14px"></div></div>
+        <div class="card" style="margin-bottom:20px"><div class="card-h"><h3>Enrolment trend</h3><span class="hint">Fees collected, last 6 months</span></div><div class="card-b" id="rpTrend" style="padding:18px 22px 14px"></div></div>
         <div class="grid2" style="margin-bottom:20px">
-          <div class="card"><div class="card-h"><h3>Where revenue comes from</h3><span class="hint">By owner, this month</span></div><div class="card-b" id="rpByOwner"></div></div>
-          <div class="card"><div class="card-h"><h3>Top deals</h3><span class="hint" id="rpTopHint"></span></div><div class="card-b" id="rpTop"></div></div>
+          <div class="card"><div class="card-h"><h3>Who enrolled them</h3><span class="hint">By team member, this month</span></div><div class="card-b" id="rpByOwner"></div></div>
+          <div class="card"><div class="card-h"><h3>Top enrolments</h3><span class="hint" id="rpTopHint"></span></div><div class="card-b" id="rpTop"></div></div>
         </div>
         <div class="card"><div class="card-h"><h3>What the numbers say</h3></div><div class="card-b" id="rpInsights" style="padding:14px 20px;font-size:13.5px;line-height:1.7"></div></div>
       </div>
@@ -2249,10 +2249,10 @@ function renderReports(){
  const dir=v=>v>0?'up':(v<0?'down':'flat');
  document.getElementById('rpKpis').innerHTML=
   statKpi('Revenue',lkr(rev),Math.abs(pct(rev,prevRev))+'% vs '+bLbl,dir(pct(rev,prevRev)),'var(--brand)')
-  +statKpi('Deals won',won.length,Math.abs(pct(won.length,pwon.length))+'% vs '+bLbl,dir(pct(won.length,pwon.length)),'var(--green)')
-  +statKpi('Avg deal',lkr(aov),Math.abs(pct(aov,paov))+'% vs '+bLbl,dir(pct(aov,paov)),'var(--amber)')
-  +statKpi('Win rate',winRate+'%',Math.abs(winRate-pWin)+'pp vs '+bLbl,dir(winRate-pWin),'var(--blue)');
- const cmp=[['Revenue',lkr(rev),lkr(prevRev),pct(rev,prevRev),'%'],['Deals',won.length,pwon.length,pct(won.length,pwon.length),'%'],['Avg deal',lkr(aov),lkr(paov),pct(aov,paov),'%'],['Win rate',winRate+'%',pWin+'%',winRate-pWin,'pp']];
+  +statKpi('Enrolled',won.length,Math.abs(pct(won.length,pwon.length))+'% vs '+bLbl,dir(pct(won.length,pwon.length)),'var(--green)')
+  +statKpi('Avg enrolment',lkr(aov),Math.abs(pct(aov,paov))+'% vs '+bLbl,dir(pct(aov,paov)),'var(--amber)')
+  +statKpi('Enrol rate',winRate+'%',Math.abs(winRate-pWin)+'pp vs '+bLbl,dir(winRate-pWin),'var(--blue)');
+ const cmp=[['Revenue',lkr(rev),lkr(prevRev),pct(rev,prevRev),'%'],['Enrolled',won.length,pwon.length,pct(won.length,pwon.length),'%'],['Avg',lkr(aov),lkr(paov),pct(aov,paov),'%'],['Enrol rate',winRate+'%',pWin+'%',winRate-pWin,'pp']];
  document.getElementById('rpCmp').innerHTML=cmp.map(c=>{const up=c[3]>=0;return '<div class="cmp-item '+(up?'up':'down')+'"><div class="cl">'+c[0]+'</div><div class="cv">'+c[1]+'</div><div class="cvs">vs '+c[2]+'</div><div class="cd '+(up?'up':'down')+'">'+(up?'▲':'▼')+' '+Math.abs(c[3])+c[4]+'</div></div>';}).join('');
  document.getElementById('rpCmpHint').textContent=monthLbl(ym)+' vs '+monthLbl(prev);
  const data=[];for(let i=5;i>=0;i--){const m=ymShift(ym,-i);const v=monthWon(m).reduce((s,r)=>s+r.value,0);data.push({label:MN[+m.split('-')[1]-1],v:v,hi:m===ym,top:(v/1e6).toFixed(1)+'M'});}
@@ -2265,11 +2265,11 @@ function renderReports(){
  const top=[...won].sort((a,b)=>b.value-a.value).slice(0,5);
  document.getElementById('rpTop').innerHTML=top.length?top.map(r=>'<div class="eq-row" onclick="openRecord('+r.id+')"><div class="eq-av">'+init2(r.name)+'</div><div class="eq-main"><div class="eq-nm">'+r.name+'</div><div class="eq-mt">'+(r.co||'')+'</div></div><div class="eq-val">'+lkr(r.value)+'</div></div>').join(''):emptyC(I.trend,'No deals','Wins this month show here.');
  const ins=[];
- ins.push(pct(rev,prevRev)>=0?'Revenue is up '+pct(rev,prevRev)+'% versus '+monthLbl(prev)+'.':'Revenue dipped '+Math.abs(pct(rev,prevRev))+'% versus '+monthLbl(prev)+' — push the open quotes.');
+ ins.push(pct(rev,prevRev)>=0?'Revenue is up '+pct(rev,prevRev)+'% versus '+monthLbl(prev)+'.':'Revenue dipped '+Math.abs(pct(rev,prevRev))+'% versus '+monthLbl(prev)+' — chase the open enquiries.');
  if(byOwner.length)ins.push(byOwner[0].name+' brought in the most this month ('+lkr(byOwner[0].v)+').');
- ins.push('Win rate is '+winRate+'% ('+won.length+' of '+created.length+' '+CFG.entity.plural.toLowerCase()+' created).');
+ ins.push('Enrol rate is '+winRate+'% ('+won.length+' of '+created.length+' '+CFG.entity.plural.toLowerCase()+' created).');
  const open=DB.get('records').filter(isOpen);const openW=open.reduce((s,r)=>s+r.value*(stageOf(r.stage).prob||0)/100,0);
- ins.push('Weighted open pipeline is '+lkr(openW)+' across '+open.length+' open '+CFG.entity.plural.toLowerCase()+'.');
+ ins.push('Open enquiries are worth '+lkr(openW)+' (weighted) across '+open.length+' open '+CFG.entity.plural.toLowerCase()+'.');
  document.getElementById('rpInsights').innerHTML=ins.map(i=>'<div style="margin-bottom:8px;padding-left:14px;border-left:3px solid var(--brand)">'+i+'</div>').join('');
 }
 function exportReport(){const ym=RP_YM||ymNow();const data=[];for(let i=5;i>=0;i--){const m=ymShift(ym,-i);const w=monthWon(m);data.push([monthLbl(m),w.length,w.reduce((s,r)=>s+r.value,0)]);}exportCSV('sales-report.csv',['Month','Deals won','Revenue ('+CFG.currency+')'],data);}
@@ -2817,6 +2817,7 @@ function onboardingDoc(id){
  w.document.close();
  toast(I.check+' Starter guide ready for '+x.name.split(' ')[0]);
 }
+renderDashboard=function(){var ym=ymNow();var st=recStats(ym);var activeStudents=DB.get('recurringPlans').filter(function(p){return p.status==='active';}).length;var openEnq=DB.get('records').filter(isOpen);var dueList=openEnq.filter(function(r){return r.followUp&&r.followUp<=todayISO();});var pctc=st.expected?Math.min(100,Math.round(st.collected/st.expected*100)):0;var toPay=st.owing.length+st.partial.length;document.getElementById('greet').innerHTML='<h1 style="font-size:27px;font-weight:800;letter-spacing:-.5px">'+greetWord(AS_OF.getHours())+', '+CURRENT.name+'</h1><div style="font-size:13px;color:var(--muted);margin-top:5px">'+DY_FULL[AS_OF.getDay()]+' '+AS_OF.getDate()+' '+MN_FULL[AS_OF.getMonth()]+' · '+(dueList.length?dueList.length+' follow-up'+(dueList.length>1?'s':'')+' due today':'fees, students and enquiries at a glance')+'</div>';document.getElementById('heroMoney').innerHTML='<div class="hm-cell"><div class="hm-label">Collected · '+MN_FULL[AS_OF.getMonth()]+'</div><div class="hm-val"><span data-to="'+st.collected+'" data-fmt="lkr">'+lkr(st.collected)+'</span></div><div class="hm-track"><div class="hm-fill" style="width:'+pctc+'%"></div></div><div class="hm-sub">'+pctc+'% of '+lkr(st.expected)+' expected</div></div><div class="hm-cell"><div class="hm-label">Outstanding</div><div class="hm-val"><span data-to="'+st.outstanding+'" data-fmt="lkr">'+lkr(st.outstanding)+'</span></div><div class="hm-sub">'+toPay+' student'+(toPay===1?'':'s')+' still to pay</div></div>';document.getElementById('dashKpis').innerHTML=kpiC('Active students',activeStudents,'across all batches',false,I.users)+kpiC('Collected in '+MN[AS_OF.getMonth()],lkr(st.collected),pctc+'% of expected',false,I.money)+kpiC('Outstanding',lkr(st.outstanding),toPay+' to collect',false,I.warn)+kpiC('Open enquiries',openEnq.length,dueList.length?dueList.length+' due today':'all on track',true,I.inbox);var data=[];for(var i=5;i>=0;i--){var m=ymShift(ym,-i);var v=recStats(m).collected;data.push({label:MN[+m.split('-')[1]-1],v:v,hi:m===ym,top:Math.round(v/1000)+'k'});}document.getElementById('dashChart').innerHTML=barChart(data,150);var ct=document.getElementById('chartTitle');if(ct)ct.textContent='Fees collected, last 6 months';document.getElementById('chartHint').textContent='Collected by month ('+CFG.currency+')';var owe=[].concat(st.owing,st.partial).sort(function(a,b){return (recFee(b)-recPaid(b.id,ym))-(recFee(a)-recPaid(a.id,ym));}).slice(0,5);document.getElementById('actionQueue').innerHTML=owe.length?owe.map(function(p){var got=recPaid(p.id,ym),due=recFee(p);return '<div class="aq-item" onclick="go(\'recurring\')"><span class="aq-dot" style="background:'+(got>0?'var(--amber)':'var(--danger)')+'"></span><div class="aq-main"><div class="aq-nm">'+p.name+'</div><div class="aq-why">'+cohortLabel(p.cohort)+' · owes '+lkr(due-got)+'</div></div><span class="aq-act">Collect</span></div>';}).join(''):emptyC(I.check,'All collected','Every student has paid for '+MN_FULL[AS_OF.getMonth()]+'.');document.getElementById('dashTasks').innerHTML=taskRows(scopeTasks().slice(0,4));};if(typeof RENDERERS!=='undefined')RENDERERS.dashboard=renderDashboard;
 
 DB.load();
 /* apply tenant customizations over the mold defaults — brand vars, vocabulary,
