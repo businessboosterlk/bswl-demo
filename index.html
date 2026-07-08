@@ -2795,7 +2795,7 @@ async function runSelfTest(opts){
   const idDupes=Object.keys(idSeen).filter(k=>idSeen[k]>1);
   ok('Boot: no duplicate DOM ids',idDupes.length===0,idDupes.join(', '));
   /* ── test context: all modules on (mold gate) or as configured ── */
-  if(opts.all){cfgOverrides().modules={quotes:true,recurring:true,cohorts:true,forecast:true,inventory:true,import:true};DB.commit();applyConfig();}
+  /* BSWL: the harness tests the tenant's ACTUAL enabled modules — recurring/cohorts/import + floor are ON; quotes/inventory/forecast are OFF and skip cleanly. */
   const staff=DB.get('staff');
   const owner=staff.find(s=>s.role==='owner'),mgr=staff.find(s=>s.role==='manager'),jr=staff.find(s=>s.role==='staff');
   /* ── A1 · roles gate ── */
@@ -2822,10 +2822,10 @@ async function runSelfTest(opts){
   const bk=[0,0,0,0,0];O.forEach(o=>{const b=invBalance(o);if(b<=0)return;const d=invDaysOver(o);bk[d<=0?0:d<=30?1:d<=60?2:d<=90?3:4]+=b;});
   ok('Finance: aging buckets reconcile to outstanding',bk.reduce((a,b)=>a+b,0)===outstanding,bk.join('/')+' vs '+outstanding);
   ok('Finance: breakdown reconciles to invoiced',invPaid+Math.max(0,outstanding-overdue)+overdue===invTot);
-  ok('Inventory: no negative stock',DB.get('products').every(p=>p.qty>=0));
-  ok('Quotes: net never exceeds subtotal, never negative',DB.get('records').filter(r=>r.quote&&r.quote.length).every(r=>qNet(r)>=0&&qNet(r)<=qTotal(r)));
-  DB.get('records').filter(r=>r.rev).forEach(r=>{if(!Object.values(r.rev).every(v=>isFinite(v)&&v>=0))ok('Forecast: rev cells finite and non-negative',false,r.name);});
-  ok('Forecast: month totals reconcile',(function(){const ms=mmMonths();const rows=DB.get('records').filter(r=>r.rev);const tot={};ms.forEach(mm=>tot[mm]=rows.reduce((s,r)=>s+(r.rev[mm]||0),0));const grand=ms.reduce((s,mm)=>s+tot[mm],0);const cellSum=rows.reduce((s,r)=>s+ms.reduce((x,mm)=>x+(r.rev[mm]||0),0),0);return grand===cellSum;})());
+  if(CFG.modules.inventory)ok('Inventory: no negative stock',DB.get('products').every(p=>p.qty>=0));
+  if(CFG.modules.quotes)ok('Quotes: net never exceeds subtotal, never negative',DB.get('records').filter(r=>r.quote&&r.quote.length).every(r=>qNet(r)>=0&&qNet(r)<=qTotal(r)));
+  if(CFG.modules.forecast)DB.get('records').filter(r=>r.rev).forEach(r=>{if(!Object.values(r.rev).every(v=>isFinite(v)&&v>=0))ok('Forecast: rev cells finite and non-negative',false,r.name);});
+  if(CFG.modules.forecast)ok('Forecast: month totals reconcile',(function(){const ms=mmMonths();const rows=DB.get('records').filter(r=>r.rev);const tot={};ms.forEach(mm=>tot[mm]=rows.reduce((s,r)=>s+(r.rev[mm]||0),0));const grand=ms.reduce((s,mm)=>s+tot[mm],0);const cellSum=rows.reduce((s,r)=>s+ms.reduce((x,mm)=>x+(r.rev[mm]||0),0),0);return grand===cellSum;})());
   /* ── A3 · primary actions + undo ── */
   const rec=DB.get('records').find(r=>isOpen(r)&&r.value);
   const actN=DB.get('activity').length;const st0=rec.stage;
@@ -2849,6 +2849,13 @@ async function runSelfTest(opts){
    if(!RECUR.ym)RECUR.ym=ymNow();
    const stt=recStats(RECUR.ym);
    ok('Recurring: ledger math sane',stt.expected>=0&&stt.outstanding>=0&&stt.collected>=0);
+   var _fm=[];for(var _i=13;_i>=0;_i--)_fm.push(ymShift(ymNow(),-_i));
+   ok('Fees: collection never exceeds 100% (any month)',_fm.every(function(mm){var s=recStats(mm);return !s.expected||s.collected<=s.expected;}));
+   var _al={};DB.get('recurringPlans').forEach(function(p){if(p.status!=='active')_al[p.id]=1;});
+   var _alr=DB.get('recurringPayments').filter(function(r){return _al[r.planId];}).length;
+   ok('Fees: alumni carry no ledger rows',_alr===0,_alr+' stray rows');
+   var _rec=recStats(ymNow());var _os=_rec.owing.reduce(function(t,p){return t+recFee(p);},0)+_rec.partial.reduce(function(t,p){return t+(recFee(p)-recPaid(p.id,ymNow()));},0);
+   ok('Fees: outstanding reconciles to who-owes list',_os===_rec.outstanding,_os+' vs '+_rec.outstanding);
    if(stt.owing.length){const n0=DB.get('recurringPayments').length;RECUR.mark(stt.owing[0].id);const marked=recPaid(stt.owing[0].id,RECUR.ym)>=recFee(stt.owing[0]);RECUR.undo();
     ok('Recurring: mark-paid + undo',marked&&DB.get('recurringPayments').length===n0);}
   }
