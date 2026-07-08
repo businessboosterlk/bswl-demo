@@ -503,6 +503,16 @@ select.filter{appearance:none;-webkit-appearance:none;background-image:url("data
 .lvl-btn.lv-good.on{background:var(--green);border-color:var(--green);color:#fff}
 .lvl-btn.lv-okay.on{background:var(--amber);border-color:var(--amber);color:#fff}
 .lvl-btn.lv-bad.on{background:var(--danger);border-color:var(--danger);color:#fff}
+.att-hint{font-size:12px;color:var(--muted);margin:-4px 2px 12px}
+.att-sum{display:flex;gap:10px;margin-bottom:14px}
+.asx{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--muted);font-weight:600}
+.asx b{display:block;font-family:'Poppins';font-size:22px;font-weight:800;color:var(--ink);line-height:1;margin-bottom:4px}
+.asx.as-p b{color:var(--green)}.asx.as-a b{color:var(--danger)}
+.att-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.att-row:last-child{border-bottom:none}
+.att-btn{margin-left:auto;flex-shrink:0;padding:9px 18px;border-radius:99px;font-size:13px;font-weight:700;transition:.15s;min-width:96px}
+.att-btn.is-present{background:color-mix(in srgb,var(--green) 12%,transparent);color:var(--green);border:1px solid color-mix(in srgb,var(--green) 24%,transparent)}
+.att-btn.is-absent{background:color-mix(in srgb,var(--danger) 12%,transparent);color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 28%,transparent)}
 
 .stat-kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;position:relative;overflow:hidden;box-shadow:var(--shadow-xs);transition:box-shadow var(--t-fast),transform var(--t-fast) var(--ease)}
 .stat-kpi:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
@@ -736,6 +746,26 @@ body.dark .stat-kpi .val{color:#fff}
 @media(max-width:640px){.stu-row .sr-l{width:100%}}
 
 /* ============================================================
+   SELF-TEST REPORT (dev-only overlay)
+   ============================================================ */
+.st-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;display:flex;align-items:center;justify-content:center;padding:18px}
+.st-panel{background:var(--surface);border-radius:18px;width:640px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:var(--shadow2);overflow:hidden}
+.st-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.st-head .st-badge{font-family:'Poppins';font-size:15px;font-weight:800;padding:6px 14px;border-radius:99px}
+.st-badge.pass{background:var(--green-soft);color:var(--green)}
+.st-badge.fail{background:var(--danger-soft);color:var(--danger)}
+.st-head .hint{font-size:12px;color:var(--muted)}
+.st-body{overflow-y:auto;padding:8px 22px 16px}
+.st-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--line2);font-size:12.5px}
+.st-row:last-child{border:none}
+.st-row .ic{width:15px;height:15px;flex-shrink:0;margin-top:1px}
+.st-row.p .ic{color:var(--green)}.st-row.f .ic{color:var(--danger)}
+.st-row .nm{font-weight:650;min-width:0}
+.st-row .dt{color:var(--faint);font-size:11.5px;margin-top:2px;word-break:break-word}
+.st-row.f .nm{color:var(--danger)}
+.st-foot{padding:12px 22px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end}
+
+/* ============================================================
    ON-ACCENT SWEEP — must stay LAST so it wins the cascade.
    Every accent surface carries --on-accent text; this is what
    makes the monochrome dark-mode inversion a one-token change.
@@ -782,17 +812,16 @@ body.dark .stat-kpi .val{color:#fff}
         <button class="nav-item" data-pg="reports" data-role="manager" data-module="reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>Reports</button>
       </div>
       <div class="nav-group" data-group="work">
-        <button class="nav-label" onclick="toggleGroup(this)">Sales<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span></button>
-        <button class="nav-item" data-pg="pipeline" data-role="all" data-module="pipeline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="9" y2="18"/></svg>Pipeline</button>
+        <button class="nav-label" onclick="toggleGroup(this)">Daily<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span></button>
         <button class="nav-item" data-pg="records" data-role="all" data-module="records"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Leads<span class="badge" id="nbRecords"></span></button>
         <button class="nav-item" data-pg="customers" data-role="all" data-module="customers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>Customers<span class="badge" id="nbCustomers"></span></button>
         <button class="nav-item" data-pg="quotes" data-role="all" data-module="quotes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>Quotes</button>
         <button class="nav-item" data-pg="inventory" data-role="all" data-module="inventory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Inventory<span class="badge" id="nbInventory"></span></button>
-        <button class="nav-item" data-pg="tasks" data-role="all" data-module="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Tasks<span class="badge" id="nbTasks"></span></button>
+        <button class="nav-item" data-pg="attendance" data-role="owner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/><path d="M9 15l2 2 4-4"/></svg>Attendance</button>
+        <button class="nav-item" data-pg="tasks" data-role="all" data-module="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Task Book<span class="badge" id="nbTasks"></span></button>
       </div>
       <div class="nav-group" data-group="money">
         <button class="nav-label" onclick="toggleGroup(this)">Money<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span></button>
-        <button class="nav-item" data-pg="finance" data-role="manager" data-module="finance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Finance</button>
         <button class="nav-item" data-pg="recurring" data-role="manager" data-module="recurring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Recurring</button>
         <button class="nav-item" data-pg="forecast" data-role="manager" data-module="forecast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Forecast</button>
       </div>
@@ -953,6 +982,16 @@ body.dark .stat-kpi .val{color:#fff}
       </div>
 
       <!-- ══ TEAM ══ -->
+      <div class="page" id="page-attendance">
+        <div class="toolbar">
+          <input type="date" id="attDate" class="filter" onchange="ATT.setDate(this.value)">
+          <select class="filter" id="attBatch" onchange="ATT.set('batch',this.value)"><option value="all">All batches</option><option value="0">2027</option><option value="1">2028</option><option value="2">Crash</option></select>
+          <select class="filter" id="attLoc" onchange="ATT.set('loc',this.value)"><option value="all">All locations</option><option value="Nugegoda">Nugegoda</option><option value="Kiribathgoda">Kiribathgoda</option><option value="Online">Online</option></select>
+        </div>
+        <div id="attSummary"></div>
+        <div class="att-hint">Everyone is Present by default. Tap a student to mark them Absent.</div>
+        <div class="card"><div class="card-b" id="attList" style="padding:2px 18px 10px"></div></div>
+      </div>
       <div class="page" id="page-team">
         <div class="team-grid" id="teamGrid"></div>
       </div>
@@ -1077,6 +1116,23 @@ body.dark .stat-kpi .val{color:#fff}
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
+/* ════════════════════════════════════════════════════════════════════
+   SECTION 0 — ERROR RECORDER (defensive standard — never remove)
+   Every console.error/warn, uncaught error and unhandled rejection is
+   recorded from the first parsed line. The self-test harness asserts
+   this log stays empty; the error boundary writes into it. Original
+   console behaviour is preserved.
+   ════════════════════════════════════════════════════════════════════ */
+window.__ST_LOG=[];
+(function(){
+ const rec=(kind,args)=>{try{window.__ST_LOG.push({kind:kind,msg:Array.from(args).map(a=>a&&a.message?a.message:String(a)).join(' ').slice(0,300),at:Date.now()});}catch(e){}};
+ const ce=console.error.bind(console),cw=console.warn.bind(console);
+ console.error=function(){rec('error',arguments);ce.apply(null,arguments);};
+ console.warn=function(){rec('warn',arguments);cw.apply(null,arguments);};
+ window.addEventListener('error',e=>rec('uncaught',[e.message||e.type]));
+ window.addEventListener('unhandledrejection',e=>rec('rejection',[e.reason&&e.reason.message||String(e.reason)]));
+})();
+
 /* ════════════════════════════════════════════════════════════════════
    SECTION 1 — CFG: the per-client configuration block.
    Opus edits THIS (plus the :root brand block + 2 logo slots) to spin
@@ -1266,7 +1322,7 @@ function seedData(){
   const paidMonths=Math.min(monthsIn,s.status==='alumni'?monthsIn:Math.max(1,monthsIn-1));
   const history=[];for(let k=0;k<Math.min(paidMonths,6);k++){const hm=ymShift(s.joined.slice(0,7),k);history.push({item:'Tuition fee — '+monthShort(hm),cat:'Fee',date:hm+'-05',value:fee});}
   const sent=s.status==='alumni'?iRnd(0,3):iRnd(0,2);
-  return {id:s.id,name:s.name,co:s.loc,type:COHORT_SHORT[s.cohort],phone:s.phone,email:'',owner:1,cohort:s.cohort,sent:sent,last:ymShift(ym,-iRnd(0,3))+'-'+pad(iRnd(1,26)),status:s.status,level:pick(['good','good','good','okay','okay','okay','okay','bad','bad']),history:history};
+  return {id:s.id,name:s.name,co:s.loc,type:COHORT_SHORT[s.cohort],phone:s.phone,email:'',owner:1,cohort:s.cohort,joined:s.joined,sent:sent,last:ymShift(ym,-iRnd(0,3))+'-'+pad(iRnd(1,26)),status:s.status,level:pick(['good','good','good','okay','okay','okay','okay','bad','bad']),history:history};
  });
  /* ---- enquiry -> enrolment funnel (records). Won=Enrolled spread over 12 months
     gives the Reports trend; a live pipeline of open enquiries + a few "Not now". ---- */
@@ -1331,7 +1387,7 @@ function seedData(){
   recurringPayments:recurringPayments,
   activity:activity,
   loginAudit:loginAudit,
-  products:[],
+  attendance:BSWL_seedAttendance(customers),products:[],
  };
 }
 
@@ -1417,7 +1473,7 @@ function buildTitles(){TITLES={
  customers:[CFG.contactWord.plural,'Enrolled students, batches and referrals'],
  quotes:['Quotes','Build and send branded quotations'],
  inventory:['Inventory','Stock, low-stock and dead-stock at a glance'],
- tasks:['Tasks','Assign and track work'],
+ tasks:['Task Book','Assign and track work'],attendance:['Attendance','Mark who came to class'],
  finance:['Finance','Fee invoices, collections and aging'],
  recurring:[CFG.recurring.label+' collection','Who paid, collected vs expected, who owes'],
  forecast:['Forecast','Month-by-month revenue recognition'],
@@ -1440,8 +1496,32 @@ function go(pg){
  document.getElementById('pgSub').textContent=TITLES[pg][1];
  closePanel();closeSidebar();
  applyBrandVars();   /* discard any unsaved Studio colour preview on navigation */
- try{if(RENDERERS[pg])RENDERERS[pg]();}catch(e){console.warn('render '+pg,e);}
+ healPage(pg);
+ try{if(RENDERERS[pg])RENDERERS[pg]();}catch(e){pageErrorBoundary(pg,e);}
  animateCounts(document.getElementById('page-'+pg));
+}
+/* ── ERROR BOUNDARY (defensive standard): a throwing renderer becomes a calm
+   inline card, never a white screen. The page's pristine markup is snapshotted
+   at boot (PAGE_PRISTINE) and restored by healPage() before every render, so
+   an errored view SELF-HEALS on the next navigation — the boundary card can
+   never permanently eat a page's container skeleton. ── */
+const PAGE_PRISTINE={};
+function snapshotPages(){document.querySelectorAll('.page').forEach(p=>{PAGE_PRISTINE[p.id.replace('page-','')]=p.innerHTML;});}
+function healPage(pg){
+ const el=document.getElementById('page-'+pg);
+ if(el&&el.dataset.stErr){el.innerHTML=PAGE_PRISTINE[pg]||el.innerHTML;delete el.dataset.stErr;applyChrome();}
+}
+function pageErrorBoundary(pg,e){
+ console.warn('render '+pg,e);
+ const el=document.getElementById('page-'+pg);if(!el)return;
+ el.dataset.stErr='1';
+ el.innerHTML='<div class="card"><div class="card-b" style="padding:34px 20px"><div class="empty">'
+  +'<div class="es-ic" style="border-style:solid;color:var(--amber)">'+I.warn+'</div>'
+  +'<div class="es-t">This view hit a problem</div>'
+  +'Your data is safe — the rest of the system keeps working.'
+  +'<div style="font-size:11px;color:var(--faint);margin-top:8px;font-variant-numeric:tabular-nums">'+String(e&&e.message||e).slice(0,120)+'</div>'
+  +'<div class="es-cta"><button class="btn-ghost" onclick="go(\''+pg+'\')">Try again</button></div>'
+  +'</div></div></div>';
 }
 function toggleGroup(lbl){lbl.closest('.nav-group').classList.toggle('collapsed');}
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sbOverlay').classList.toggle('open');}
@@ -1495,7 +1575,7 @@ function exportXLS(name,headers,rows){
  const head='<tr>'+headers.map(h=>'<th style="background:'+brand+';color:#fff;padding:6px">'+esc(h)+'</th>').join('')+'</tr>';
  const body=rows.map(r=>'<tr>'+r.map(c=>'<td style="padding:5px">'+esc(c)+'</td>').join('')+'</tr>').join('');
  const html='<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body><table border="1" cellspacing="0">'+head+body+'</table></body></html>';
- const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([html],{type:'application/vnd.ms-excel'}));a.download=name;a.click();
+ _download(name,new Blob([html],{type:'application/vnd.ms-excel'}));
 }
 function exportRecords(){exportXLS((CFG.app.client||'export').toLowerCase().replace(/\s+/g,'-')+'-'+CFG.entity.plural.toLowerCase()+'.xls',
  ['Name','Company','Phone','Stage','Owner','Follow-up','Value ('+CFG.currency+')'],
@@ -1641,7 +1721,8 @@ function renderApp(){
  renderBadges();
  const act=document.querySelector('.page.active');
  const pg=act?act.id.replace('page-',''):'dashboard';
- if(RENDERERS[pg])try{RENDERERS[pg]();}catch(e){console.warn(e);}
+ healPage(pg);
+ if(RENDERERS[pg])try{RENDERERS[pg]();}catch(e){pageErrorBoundary(pg,e);}
  animateCounts(act);
 }
 
@@ -1695,6 +1776,13 @@ function kpiC(label,val,sub,accent,icon){
 function emptyC(icon,title,line,cta){
  return '<div class="empty"><div class="es-ic">'+icon+'</div><div class="es-t">'+title+'</div>'+line+(cta?'<div class="es-cta">'+cta+'</div>':'')+'</div>';
 }
+/* ── mapSafe (defensive standard): one malformed record can never blank a
+   whole list. Bad rows are skipped, counted, and reported inline. ── */
+function mapSafe(arr,fn,rowWrap){
+ let skipped=0;
+ const html=arr.map(function(x,i){try{return fn(x,i);}catch(e){skipped++;console.warn('row skipped',e&&e.message);return '';}}).join('');
+ return html+(skipped?(rowWrap==='tr'?'<tr><td colspan="9" style="color:var(--faint);font-size:11.5px;padding:8px 15px">'+skipped+' record'+(skipped===1?'':'s')+' could not be displayed</td></tr>':'<div style="color:var(--faint);font-size:11.5px;padding:8px 0">'+skipped+' record'+(skipped===1?'':'s')+' could not be displayed</div>'):'');
+}
 function taskRows(list){
  if(!list.length)return emptyC(I.check,'No tasks','Add the first task to get the team moving.','<button class="btn-ghost" onclick="openTaskModal()">Add a task</button>');
  return list.map(tk=>{
@@ -1713,11 +1801,11 @@ function renderBoard(){
   const cards=recs.filter(r=>r.stage===st.k);
   return '<div class="col" ondragover="dragOver(event,this)" ondragleave="dragLeave(this)" ondrop="drop(event,\''+st.k+'\')">'
   +'<div class="col-h"><span class="ct"><span class="dot" style="background:'+st.color+'"></span>'+st.label+'</span><span class="cn">'+cards.length+'</span></div>'
-  +'<div class="col-b">'+(cards.length?cards.map(r=>
+  +'<div class="col-b">'+(cards.length?mapSafe(cards,r=>
    '<div class="lead-card" draggable="true" ondragstart="dragStart(event,'+r.id+')" ondragend="dragEnd(event)" onclick="openRecord('+r.id+')">'
-   +'<div class="lc-top"><div><div class="lc-nm">'+r.name+'</div><div class="lc-co">'+(r.co||'')+'</div></div>'
+   +'<div class="lc-top"><div><div class="lc-nm">'+r.name.toString()+'</div><div class="lc-co">'+(r.co||'')+'</div></div>'
    +(r.followUp&&r.followUp<=todayISO()&&isOpen(r)?'<span class="bdg bdg-action">DUE</span>':'')+'</div>'
-   +'<div class="lc-foot"><span class="lc-val">'+(r.value?lkr(r.value):'—')+'</span><span class="lc-own" title="'+staffById(r.owner).name+'">'+staffById(r.owner).name[0]+'</span></div></div>').join('')
+   +'<div class="lc-foot"><span class="lc-val">'+(r.value?lkr(r.value):'—')+'</span><span class="lc-own" title="'+staffById(r.owner).name+'">'+staffById(r.owner).name[0]+'</span></div></div>')
   :'<div class="empty" style="padding:18px 8px"><div class="es-ic" style="width:38px;height:38px">'+I.inbox+'</div>Nothing here yet</div>')+'</div></div>';}).join('');
 }
 function dragStart(e,id){DRAG=id;e.currentTarget.classList.add('dragging');e.dataTransfer.effectAllowed='move';}
@@ -1741,13 +1829,13 @@ function renderRecords(){
  if(sSel.options.length<=1)sSel.innerHTML='<option value="all">All stages</option>'+CFG.stages.map(s=>'<option value="'+s.k+'">'+s.label+'</option>').join('');
  const stf=sSel.value||'all';
  const rows=scopeRecords().filter(r=>stf==='all'||r.stage===stf).sort((a,b)=>b.value-a.value);
- document.getElementById('recBody').innerHTML=rows.map(r=>{
+ document.getElementById('recBody').innerHTML=mapSafe(rows,r=>{
   const due=r.followUp&&r.followUp<=todayISO()&&isOpen(r);
-  return '<tr onclick="openRecord('+r.id+')"><td><div class="tn">'+r.name+'</div><div class="tm">'+(r.co||'')+'</div></td>'
+  return '<tr onclick="openRecord('+r.id+')"><td><div class="tn">'+r.name.toString()+'</div><div class="tm">'+(r.co||'')+'</div></td>'
   +'<td><span class="bdg bdg-stage">'+stageLabel(r.stage)+'</span></td>'
   +'<td>'+staffById(r.owner).name+'</td>'
   +'<td>'+(due?'<span class="bdg bdg-action">'+r.followUp+'</span>':(r.followUp||'<span style="color:var(--faint)">—</span>'))+'</td>'
-  +'<td class="tnum">'+(r.value?lkr(r.value):'—')+'</td></tr>';}).join('');
+  +'<td class="tnum">'+(r.value?lkr(r.value):'—')+'</td></tr>';},'tr');
  document.getElementById('recEmpty').innerHTML=rows.length?'':emptyC(I.inbox,'No '+CFG.entity.plural.toLowerCase(),'Nothing matches this filter.','<button class="btn-ghost" onclick="openRecordModal()">Add the first one</button>');
 }
 
@@ -1908,7 +1996,7 @@ function applyChrome(){
  _setNavText('records',CFG.entity.plural);
  _setNavText('customers',CFG.contactWord.plural);
  _setNavText('recurring',CFG.recurring.label+'s');
- _setNavText('settings','Customize');
+ _setNavText('settings','Settings');
  const qi=document.getElementById('quoIntro');if(qi)qi.textContent='Open a '+CFG.entity.singular.toLowerCase()+' to build its quote, then generate a branded PDF';
  const hs=document.getElementById('stuHeroSub');if(hs)hs.textContent='Make '+CFG.app.client+' yours. Every change is safe to try — undo any edit, or reset any section back to default.';
  document.querySelectorAll('[data-fl]').forEach(el=>{const k=el.dataset.fl;if(CFG.fieldLabels[k])el.textContent=CFG.fieldLabels[k]+(el.hasAttribute('data-fl-cur')?' ('+CFG.currency+')':'');});
@@ -2130,7 +2218,11 @@ function stuSystem(){
  +stuCard('Resets','both ask before doing anything',
   '<div style="display:flex;gap:10px;flex-wrap:wrap;padding:12px 0">'
   +'<button class="btn-ghost" onclick="stuResetAll()">Reset ALL customizations</button>'
-  +'<button class="btn-danger" onclick="if(confirm(\'Reset all in-session edits back to the seeded demo data? Your customizations reset too.\')){DB.reset();applyConfig();renderApp();toast(\'Demo data reset\');}">Reset demo data</button></div>','');
+  +'<button class="btn-danger" onclick="if(confirm(\'Reset all in-session edits back to the seeded demo data? Your customizations reset too.\')){DB.reset();applyConfig();renderApp();toast(\'Demo data reset\');}">Reset demo data</button></div>','')
+ +(CFG.data.mode==='demo'?stuCard('Self-test (dev)','exercises every module, role and safety rail, then restores everything — must be ALL GREEN before any handover',
+  '<div style="display:flex;gap:10px;flex-wrap:wrap;padding:12px 0;align-items:center">'
+  +'<button class="btn-primary" onclick="runSelfTest({all:true})">Run self-test</button>'
+  +'<span style="font-size:11.5px;color:var(--faint)">also runs via ?selftest in the URL · run at ~390px AND desktop</span></div>',''):'');
 }
 function stuResetAll(){
  if(!confirm('Put every customization back to the factory default? Your data is not touched.'))return;
@@ -2183,16 +2275,16 @@ function renderCustomers(){
   +statKpi('Avg order',orders?lkr(totLTV/orders):'—','',null,'var(--amber)')
   +statKpi('Due today',dueN,dueN?'re-engage now':'all scheduled',dueN?'down':'flat',dueN?'var(--danger)':'var(--faint)');
  const arr=[...list].sort((a,b)=>(custNext(a)||'9999').localeCompare(custNext(b)||'9999'));
- document.getElementById('cusBody').innerHTML=(cohortsOn?BSWL_STAND_LEGEND:'')+arr.map(c=>{
+ document.getElementById('cusBody').innerHTML=(cohortsOn?BSWL_STAND_LEGEND:'')+mapSafe(arr,c=>{
   const done=c.sent>=3,due=custDue(c)&&c.status!=='alumni',next=custNext(c);
   const dots='<span class="cad-dots">'+[0,1,2].map(i=>'<span style="background:'+(c.sent>i?'var(--green)':(c.sent===i&&due?'var(--danger)':'var(--line)'))+'"></span>').join('')+'</span>';
   const stat=c.status==='alumni'?['Alumni','bdg-blue']:done?['Complete','bdg-green']:due?[cadDays(c.sent)+'-day due','bdg-action']:['Scheduled','bdg-grey'];
-  return '<tr onclick="openCustomer('+c.id+')"><td><div class="tn"><span class="sdot s-'+studentStanding(c).key+'" title="'+studentStanding(c).label+'"></span>'+c.name+'</div><div class="tm">'+(c.co||'')+(cohortsOn?' · '+cohortLabel(c.cohort):'')+'</div></td>'
+  return '<tr onclick="openCustomer('+c.id+')"><td><div class="tn"><span class="sdot s-'+studentStanding(c).key+'" title="'+studentStanding(c).label+'"></span>'+c.name.toString()+'</div><div class="tm">'+(c.co||'')+(cohortsOn?' · '+cohortLabel(c.cohort):'')+'</div></td>'
    +'<td>'+dots+'</td>'
    +'<td style="font-size:12.5px;color:'+(due?'var(--danger)':'var(--muted)')+'">'+(done||c.status==='alumni'?'—':fmtDate(next))+'</td>'
    +'<td><span class="bdg '+stat[1]+'">'+stat[0]+'</span></td>'
    +'<td class="tnum">'+lkr(custLTV(c))+'</td></tr>';
- }).join('');
+ },'tr');
  document.getElementById('cusEmpty').innerHTML=arr.length?'':emptyC(I.users,'No '+CFG.contactWord.plural.toLowerCase(),'Won deals become '+CFG.contactWord.plural.toLowerCase()+' here for repeat business.');
 }
 function custWA(c,msg){const ph=(c.phone||'').replace(/\D/g,'').replace(/^0/,'94');if(!ph){toast('No number saved');return;}window.open('https://wa.me/'+ph+'?text='+encodeURIComponent(msg),'_blank');}
@@ -2439,7 +2531,10 @@ function renderRecurring(keepFocus){
 }
 
 /* generic CSV export (XLS export already defined in Section 8) */
-function exportCSV(name,headers,rows){const esc=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';const csv=[headers.map(esc).join(','),...rows.map(r=>r.map(esc).join(','))].join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=name;a.click();toast(I.check+' CSV exported');}
+/* ONE download seam — every exporter goes through here so the self-test
+   harness can stub it and assert real bytes without triggering downloads. */
+function _download(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();}
+function exportCSV(name,headers,rows){const esc=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';const csv=[headers.map(esc).join(','),...rows.map(r=>r.map(esc).join(','))].join('\n');_download(name,new Blob([csv],{type:'text/csv'}));toast(I.check+' CSV exported');}
 function exportQuotes(){const rows=[];DB.get('records').filter(r=>r.quote&&r.quote.length).forEach(r=>r.quote.forEach(it=>rows.push([r.name,it.p,it.q,it.u,it.q*it.u,stageLabel(r.stage)])));exportCSV('quotes.csv',['Customer','Item','Qty','Unit','Line total','Stage'],rows);}
 
 /* ════════════════════════════════════════════════════════════════════
@@ -2666,10 +2761,203 @@ function downloadImportTemplate(){
 const RENDERERS={dashboard:renderDashboard,reports:renderReports,pipeline:renderBoard,records:renderRecords,customers:renderCustomers,quotes:renderQuotes,inventory:renderInventory,tasks:renderTasks,finance:renderFinance,recurring:renderRecurring,forecast:renderMMGrid,team:renderTeam,activity:renderActivity,settings:renderSettings};
 
 /* ════════════════════════════════════════════════════════════════════
+   SECTION 12 — SELF-TEST HARNESS (dev-only; the pre-deploy gate)
+   runSelfTest({all:true}) snapshots ALL state, exercises the real app
+   (roles, actions+undo, money math, export/import/search, Studio,
+   sanitizer, resilience, every page at the current viewport), restores
+   everything, and reports PASS/FAIL per check. A fork is NOT
+   handoverable until this is all-green at desktop AND ~390px width.
+   Run via: the Studio → System tab (demo mode), ?selftest in the URL,
+   or runSelfTest() in the console. Returns {pass, failed, results}.
+   ════════════════════════════════════════════════════════════════════ */
+async function runSelfTest(opts){
+ opts=opts||{};
+ const R=[];const ok=(name,pass,detail)=>{R.push({name:name,pass:!!pass,detail:String(detail==null?'':detail).slice(0,200)});};
+ /* full snapshot — the harness must leave zero footprint */
+ const snapData=JSON.stringify(DB._d);
+ const snapCur=JSON.parse(JSON.stringify(CURRENT));
+ const snapIn=!document.getElementById('app').classList.contains('hide');
+ const snapDark=document.body.classList.contains('dark');
+ const snapPage=((document.querySelector('.page.active')||{}).id||'page-dashboard').replace('page-','');
+ const dlOrig=_download;const boundOrig=RENDERERS.reports;
+ const bootLog=window.__ST_LOG.slice();
+ try{
+  /* ── A0 · boot integrity ── */
+  ok('Boot: core globals present',typeof CFG==='object'&&typeof DB==='object'&&!!DB._d&&typeof RENDERERS==='object'&&typeof applyConfig==='function');
+  ok('Boot: zero console errors/warnings since load',bootLog.length===0,bootLog.length?bootLog[0].kind+': '+bootLog[0].msg:'');
+  /* duplicate top-level identifiers — reads the script's own source */
+  const src=Array.from(document.scripts).map(s=>s.textContent).join('\n');
+  const seen={};const reDecl=/^(?:const|let|function)\s+([A-Za-z_$][\w$]*)/gm;let m;
+  while((m=reDecl.exec(src)))seen[m[1]]=(seen[m[1]]||0)+1;
+  const dupes=Object.keys(seen).filter(k=>seen[k]>1);
+  ok('Boot: no duplicate global identifiers',dupes.length===0,dupes.join(', '));
+  const idSeen={};document.querySelectorAll('[id]').forEach(el=>idSeen[el.id]=(idSeen[el.id]||0)+1);
+  const idDupes=Object.keys(idSeen).filter(k=>idSeen[k]>1);
+  ok('Boot: no duplicate DOM ids',idDupes.length===0,idDupes.join(', '));
+  /* ── test context: all modules on (mold gate) or as configured ── */
+  if(opts.all){cfgOverrides().modules={quotes:true,recurring:true,cohorts:true,forecast:true,inventory:true,import:true};DB.commit();applyConfig();}
+  const staff=DB.get('staff');
+  const owner=staff.find(s=>s.role==='owner'),mgr=staff.find(s=>s.role==='manager'),jr=staff.find(s=>s.role==='staff');
+  /* ── A1 · roles gate ── */
+  if(jr){signIn(jr);
+   const vis=Array.from(document.querySelectorAll('.nav-item[data-pg]')).filter(n=>n.style.display!=='none').map(n=>n.dataset.pg);
+   ok('Roles: staff nav hides manager/owner pages',!vis.includes('finance')&&!vis.includes('settings')&&!vis.includes('reports'),'visible: '+vis.join(','));
+   go('settings');const p1=document.querySelector('.page.active').id;
+   go('finance');const p2=document.querySelector('.page.active').id;
+   ok('Roles: staff hand-typed go() bounces to dashboard',p1==='page-dashboard'&&p2==='page-dashboard',p1+' / '+p2);}
+  else ok('Roles: staff account present',false,'no staff-role user in seed');
+  if(mgr){signIn(mgr);go('settings');
+   ok('Roles: manager blocked from the Studio',document.querySelector('.page.active').id==='page-dashboard');}
+  signIn(owner);
+  ok('Roles: owner reaches the Studio',(go('settings'),document.querySelector('.page.active').id==='page-settings'));
+  /* ── A2 · money + data math ── */
+  const sp=spread(100001,ymNow(),3);
+  ok('Math: spread() sums exactly to the total',Object.values(sp).reduce((a,b)=>a+b,0)===100001,JSON.stringify(sp));
+  const O=DB.get('invoices');
+  const invTot=O.reduce((s,o)=>s+o.amount,0),invPaid=O.reduce((s,o)=>s+o.paid,0);
+  const overdue=O.filter(o=>invBalance(o)>0&&invDaysOver(o)>0).reduce((s,o)=>s+invBalance(o),0);
+  const outstanding=invTot-invPaid;
+  ok('Finance: collection never exceeds 100%',invPaid<=invTot,invPaid+' / '+invTot);
+  ok('Finance: no negative balances',O.every(o=>invBalance(o)>=0));
+  const bk=[0,0,0,0,0];O.forEach(o=>{const b=invBalance(o);if(b<=0)return;const d=invDaysOver(o);bk[d<=0?0:d<=30?1:d<=60?2:d<=90?3:4]+=b;});
+  ok('Finance: aging buckets reconcile to outstanding',bk.reduce((a,b)=>a+b,0)===outstanding,bk.join('/')+' vs '+outstanding);
+  ok('Finance: breakdown reconciles to invoiced',invPaid+Math.max(0,outstanding-overdue)+overdue===invTot);
+  ok('Inventory: no negative stock',DB.get('products').every(p=>p.qty>=0));
+  ok('Quotes: net never exceeds subtotal, never negative',DB.get('records').filter(r=>r.quote&&r.quote.length).every(r=>qNet(r)>=0&&qNet(r)<=qTotal(r)));
+  DB.get('records').filter(r=>r.rev).forEach(r=>{if(!Object.values(r.rev).every(v=>isFinite(v)&&v>=0))ok('Forecast: rev cells finite and non-negative',false,r.name);});
+  ok('Forecast: month totals reconcile',(function(){const ms=mmMonths();const rows=DB.get('records').filter(r=>r.rev);const tot={};ms.forEach(mm=>tot[mm]=rows.reduce((s,r)=>s+(r.rev[mm]||0),0));const grand=ms.reduce((s,mm)=>s+tot[mm],0);const cellSum=rows.reduce((s,r)=>s+ms.reduce((x,mm)=>x+(r.rev[mm]||0),0),0);return grand===cellSum;})());
+  /* ── A3 · primary actions + undo ── */
+  const rec=DB.get('records').find(r=>isOpen(r)&&r.value);
+  const actN=DB.get('activity').length;const st0=rec.stage;
+  markWon(rec.id);
+  ok('Action: win a deal + activity log grows',isWon(rec)&&DB.get('activity').length===actN+1);
+  runUndo();
+  ok('Undo: win restores stage',rec.stage===st0);
+  const tk=DB.get('tasks').find(t=>!t.d);toggleTask(tk.id);const tD=tk.d;runUndo();
+  ok('Action+undo: task toggle',tD===true&&tk.d===false);
+  const inv=DB.get('invoices').find(o=>invBalance(o)>0);const paid0=inv.paid;markInvoicePaid(inv.id);const paidNow=inv.paid===inv.amount;runUndo();
+  ok('Action+undo: invoice mark-paid',paidNow&&inv.paid===paid0);
+  const rl=DB.get('records').find(r=>isOpen(r));const rlSt=rl.stage;markLost(rl.id,'Self-test');const lostNow=rl.stage==='lost';runUndo();
+  ok('Action+undo: mark lost with reason',lostNow&&rl.stage===rlSt);
+  if(CFG.modules.inventory){
+   const pd=DB.get('products').find(p=>p.qty>0);const q0=pd.qty;adjustStock(pd.id,-1,'Sale');const dec=pd.qty===q0-1;runUndo();
+   ok('Inventory: sale decrements + undo restores',dec&&pd.qty===q0);
+   const tmp={id:99998,name:'ST',quote:[{p:pd.name,code:pd.code,q:2,u:10}]};
+   const undoInv=decrementForRecord(tmp);const auto=pd.qty===q0-2;if(undoInv)undoInv();
+   ok('Inventory: auto-decrement on win + returned undo',auto&&pd.qty===q0);}
+  if(CFG.modules.recurring){
+   if(!RECUR.ym)RECUR.ym=ymNow();
+   const stt=recStats(RECUR.ym);
+   ok('Recurring: ledger math sane',stt.expected>=0&&stt.outstanding>=0&&stt.collected>=0);
+   if(stt.owing.length){const n0=DB.get('recurringPayments').length;RECUR.mark(stt.owing[0].id);const marked=recPaid(stt.owing[0].id,RECUR.ym)>=recFee(stt.owing[0]);RECUR.undo();
+    ok('Recurring: mark-paid + undo',marked&&DB.get('recurringPayments').length===n0);}
+  }
+  /* ── A4 · export / import / search / customers ── */
+  let dlN=0,dlBytes=0;_download=function(name,blob){dlN++;dlBytes+=blob.size;};
+  exportRecords();exportCSV('st.csv',['a'],[[1]]);
+  _download=dlOrig;
+  ok('Export: produces real file payloads',dlN>=2&&dlBytes>60,dlN+' files, '+dlBytes+' bytes');
+  if(CFG.modules.import){
+   openImport('records');
+   impParsed(parseCSV('Name,Phone,Value\nST Alpha,0771000000,1000\n,,\nST Beta,0772000000,2000'));
+   const n0=DB.get('records').length;impDoImport();
+   ok('Import: maps columns, imports good rows, skips bad',DB.get('records').length===n0+2,(DB.get('records').length-n0)+' imported (expected 2, 1 skipped)');
+   closeImport();}
+  doSearch(DB.get('records')[0].name.slice(0,5));
+  ok('Search: returns results',document.querySelectorAll('#searchResults .sr-item').length>0);
+  closeSearch();
+  const cust=DB.get('customers').find(c=>c.status!=='alumni');
+  ok('Customers: cadence produces a valid next date',cust.sent>=3||/^\d{4}-\d{2}-\d{2}$/.test(custNext(cust)||''));
+  /* ── A5 · Studio: apply + undo + sanitize + reset ── */
+  stuSave('st-vocab',function(c){c.entity={singular:'STest',plural:'STests'};return null;});
+  const rippled=CFG.entity.singular==='STest'&&document.querySelector('.nav-item[data-pg="records"]').textContent.indexOf('STests')>-1;
+  runUndo();
+  ok('Studio: vocabulary applies, ripples, undoes',rippled&&CFG.entity.singular!=='STest');
+  cfgOverrides().stages=[{k:'evil',label:'Hack'},{k:'won',prob:5}];cfgOverrides().data={mode:'local'};const mods0=cfgOverrides().modules;cfgOverrides().modules={reports:false};
+  applyConfig();
+  ok('Studio: hostile override fully sanitized',CFG.stages.length===CFG_DEFAULTS.stages.length&&!CFG.stages.some(s=>s.k==='evil')&&CFG.stages.find(s=>s.k==='won').prob===100&&CFG.modules.reports===true&&CFG.data.mode===CFG_DEFAULTS.data.mode);
+  delete cfgOverrides().stages;delete cfgOverrides().data;if(mods0)cfgOverrides().modules=mods0;else delete cfgOverrides().modules;applyConfig();
+  /* ── A6 · every enabled page renders, no overflow, no stray fixed/absolute ── */
+  const vw=window.innerWidth;
+  const rectAudit=()=>{const b=[];document.querySelectorAll('.page.active *').forEach(el=>{const cs=getComputedStyle(el);if((cs.position==='fixed'||cs.position==='absolute')&&cs.display!=='none'){const rc=el.getBoundingClientRect();if(rc.width>0&&(Math.round(rc.right)>vw+1||Math.round(rc.left)<-1)){let p=el.parentElement,clip=false;while(p){if(/(hidden|clip|auto|scroll)/.test(getComputedStyle(p).overflowX)){clip=true;break;}p=p.parentElement;}if(!clip)b.push(el.className||el.id||el.tagName);}}});return b;};
+  Object.keys(RENDERERS).forEach(pg=>{
+   if(!pageAllowed(pg))return;
+   go(pg);
+   const el=document.getElementById('page-'+pg);
+   /* blank = missing, near-empty, OR the renderer left the pristine skeleton
+      untouched (a renderer that silently produced nothing) */
+   const blank=!el||el.innerHTML.trim().length<40||el.innerHTML===PAGE_PRISTINE[pg];
+   const over=document.documentElement.scrollWidth>vw+1;
+   const rects=rectAudit();
+   ok('Page "'+pg+'": renders, no overflow ('+vw+'px), rects clean',!blank&&!over&&!rects.length,(blank?'blank ':'')+(over?'scrollW '+document.documentElement.scrollWidth+' ':'')+rects.join(','));
+  });
+  /* ── A7 · dark mode sweep ── */
+  const logBeforeDark=window.__ST_LOG.length;
+  applyTheme('dark');['dashboard','finance','reports'].forEach(pg=>go(pg));
+  applyTheme(snapDark?'dark':'light');
+  ok('Dark mode: renders with zero errors',window.__ST_LOG.length===logBeforeDark);
+  /* ── A8 · no unexpected errors during phases A ── */
+  ok('Clean run: no console errors during behaviour tests',window.__ST_LOG.length===bootLog.length,window.__ST_LOG.length>bootLog.length?window.__ST_LOG[bootLog.length].kind+': '+window.__ST_LOG[bootLog.length].msg:'');
+  /* ── B · resilience (failures are INTENTIONAL here) ── */
+  DB.get('records').unshift({id:99999,name:null,co:'bad',stage:'new',owner:owner.id,value:0,followUp:'',created:todayISO(),rev:null,acts:[]});
+  go('records');
+  const recPage=document.getElementById('page-records');
+  ok('Resilience: one malformed record cannot blank the list',recPage.innerHTML.indexOf('could not be displayed')>-1&&document.querySelectorAll('#recBody tr').length>1);
+  DB.get('records').splice(DB.get('records').findIndex(r=>r.id===99999),1);
+  RENDERERS.reports=function(){throw new Error('selftest-boom');};
+  go('reports');
+  const boundary=document.getElementById('page-reports').innerHTML.indexOf('This view hit a problem')>-1;
+  RENDERERS.reports=boundOrig;
+  go('reports');
+  ok('Resilience: a throwing renderer shows the error card, never a white screen',boundary&&document.getElementById('page-reports').innerHTML.indexOf('This view hit a problem')===-1);
+ }catch(e){
+  ok('HARNESS: completed without crashing',false,String(e&&e.message||e));
+ }finally{
+  /* ── restore EVERYTHING ── */
+  _download=dlOrig;RENDERERS.reports=boundOrig;
+  DB._d=JSON.parse(snapData);DB.commit();
+  STU_LOGO_TMP=undefined;STU_STAGES=null;
+  applyConfig();
+  applyTheme(snapDark?'dark':'light');
+  if(snapIn){const back=DB.get('staff').find(s=>s.id===snapCur.id)||DB.get('staff')[0];signIn(back);go(snapPage);}
+  else signOut();
+  /* drain the harness's own intentional log entries so re-runs stay idempotent;
+     genuine pre-run errors persist (they were captured in bootLog). */
+  window.__ST_LOG.length=bootLog.length;
+ }
+ const failed=R.filter(r=>!r.pass);
+ try{console.table(R.map(r=>({check:r.name,result:r.pass?'PASS':'FAIL',detail:r.detail})));}catch(e){}
+ stReport(R,failed);
+ return {pass:failed.length===0,failed:failed,results:R,viewport:window.innerWidth+'px'};
+}
+function stReport(R,failed){
+ const old=document.getElementById('stOv');if(old)old.remove();
+ const ov=document.createElement('div');ov.className='st-ov';ov.id='stOv';
+ ov.innerHTML='<div class="st-panel"><div class="st-head">'
+  +'<span class="st-badge '+(failed.length?'fail':'pass')+'">'+(failed.length?failed.length+' FAILED':'ALL GREEN')+'</span>'
+  +'<span class="hint">'+R.length+' checks · '+window.innerWidth+'px viewport · '+(failed.length?'NOT handoverable':'handover gate passed at this width — run at ~390px AND desktop')+'</span></div>'
+  +'<div class="st-body">'+R.map(r=>'<div class="st-row '+(r.pass?'p':'f')+'">'+(r.pass?I.check:I.x)+'<div><div class="nm">'+r.name+'</div>'+(r.detail?'<div class="dt">'+r.detail+'</div>':'')+'</div></div>').join('')+'</div>'
+  +'<div class="st-foot"><button class="btn-ghost" onclick="document.getElementById(\'stOv\').remove()">Close</button><button class="btn-primary" onclick="document.getElementById(\'stOv\').remove();runSelfTest({all:true})">Re-run</button></div></div>';
+ document.body.appendChild(ov);
+}
+
+/* ════════════════════════════════════════════════════════════════════
    SECTION 10 — BOOT
    ════════════════════════════════════════════════════════════════════ */
 function _setNavText(pg,text){const n=document.querySelector('.nav-item[data-pg="'+pg+'"]');if(n)n.childNodes.forEach(x=>{if(x.nodeType===3&&x.textContent.trim())x.textContent=text;});}
 
+
+/* ===== BSWL Attendance module (ported from the approved build) ===== */
+function BSWL_dMinus(iso,days){var p=iso.split('-');var dt=new Date(+p[0],+p[1]-1,+p[2]);dt.setDate(dt.getDate()-days);return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');}
+function BSWL_seedAttendance(custs){var out=[];var id=1;var active=custs.filter(function(c){return c.status==='active';});for(var w=0;w<10;w++){var d=BSWL_dMinus(todayISO(),7*w+((7-new Date(todayISO().split('-')[0],+todayISO().split('-')[1]-1,+todayISO().split('-')[2]).getDay())%7));active.forEach(function(c){if((c.joined||'9999')<=d){var present=(((c.id*7+w*3)%10)!==0);out.push({id:id++,studentId:c.id,date:d,present:present});}});}return out;}
+function attRecords(sid){return DB.get('attendance').filter(function(a){return a.studentId===sid;});}
+function attRate(sid){var r=attRecords(sid);if(!r.length)return null;return r.filter(function(a){return a.present;}).length/r.length;}
+function attSessions(){return Array.from(new Set(DB.get('attendance').map(function(a){return a.date;}))).sort().reverse();}
+function attFor(sid,date){return DB.get('attendance').find(function(a){return a.studentId===sid&&a.date===date;});}
+function setAttendance(sid,date,present){var a=attFor(sid,date);if(a){a.present=present;}else{DB.get('attendance').push({id:DB.nextId('attendance'),studentId:sid,date:date,present:present});}DB.commit();}
+var ATT={date:null,batch:'all',loc:'all',setDate:function(v){this.date=v;renderAttendance();},set:function(k,v){this[k]=v;renderAttendance();},toggle:function(sid){var cur=attFor(sid,this.date);if(!cur)setAttendance(sid,this.date,false);else setAttendance(sid,this.date,!cur.present);renderAttendance();renderBadges();}};
+function renderAttendance(){var el=document.getElementById('attList');if(!el)return;if(!ATT.date)ATT.date=attSessions()[0]||todayISO();var dp=document.getElementById('attDate');if(dp)dp.value=ATT.date;var studs=DB.get('customers').filter(function(s){return s.status==='active'&&(s.joined||'0000')<=ATT.date&&(ATT.batch==='all'||String(s.cohort)===ATT.batch)&&(ATT.loc==='all'||s.co===ATT.loc);}).sort(function(a,b){return a.name.localeCompare(b.name);});var present=0,absent=0;el.innerHTML=studs.map(function(s){var a=attFor(s.id,ATT.date);var isAbsent=a&&!a.present;if(isAbsent)absent++;else present++;var r=attRate(s.id);var rp=r!=null?Math.round(r*100)+'% attendance':'new';return '<div class="att-row"><div class="pr-av">'+init2(s.name)+'</div><div class="pr-main"><div class="pr-nm">'+s.name+'</div><div class="pr-mt">'+cohortLabel(s.cohort).replace(' Batch','')+' · '+s.co+' · '+rp+'</div></div><button class="att-btn '+(isAbsent?'is-absent':'is-present')+'" onclick="ATT.toggle('+s.id+')">'+(isAbsent?'Absent':'Present')+'</button></div>';}).join('')||emptyC(I.users,'No students for this class','Nobody had joined by this date, or the filter is empty.');var sum=document.getElementById('attSummary');if(sum)sum.innerHTML=studs.length?'<div class="att-sum"><div class="asx as-p"><b>'+present+'</b> present</div><div class="asx as-a"><b>'+absent+'</b> absent</div><div class="asx as-r"><b>'+Math.round(present/studs.length*100)+'%</b> turnout</div></div>':'';}
+if(typeof RENDERERS!=='undefined')RENDERERS.attendance=renderAttendance;
 /* ===== BSWL tuition extras: knowledge signal + Starter Guide PDF + Receipt ===== */
 function studentStanding(s){const lv=(s&&s.level)||'okay';if(lv==='good')return{key:'good',label:'Strong',color:'var(--green)'};if(lv==='bad')return{key:'bad',label:'Needs work',color:'var(--danger)'};return{key:'okay',label:'Okay',color:'var(--amber)'};}
 function setLevel(id,lv){const c=DB.get('customers').find(x=>x.id===id);if(!c)return;c.level=lv;DB.commit();var cp=document.getElementById('page-customers');if(cp&&cp.classList.contains('active'))renderCustomers();var rp2=document.getElementById('page-recurring');if(rp2&&rp2.classList.contains('active')&&typeof renderRecurring==='function')renderRecurring();if(document.getElementById('panel').classList.contains('open'))openCustomer(id);toast(I.check+' '+c.name.split(' ')[0]+' set to '+studentStanding(c).label);}
@@ -2823,6 +3111,7 @@ DB.load();
 /* apply tenant customizations over the mold defaults — brand vars, vocabulary,
    titles, nav texts, module visibility. The Studio re-runs this on every save. */
 applyConfig();
+snapshotPages();   /* pristine page markup — lets errored views self-heal (see pageErrorBoundary) */
 document.querySelectorAll('.nav-item[data-pg]').forEach(n=>n.onclick=()=>go(n.dataset.pg));
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
 ['pipeOwner','recOwner'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML='<option value="all">Whole team</option>'+DB.get('staff').filter(s=>s.active).map(s=>'<option value="'+s.id+'">'+s.name+'</option>').join('');});
@@ -2839,6 +3128,8 @@ let _theme='light';try{_theme=localStorage.getItem(CFG.data.key+'_theme')||'ligh
 applyTheme(_theme);
 renderLogin();renderBadges();updateClock();setInterval(updateClock,15000);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePanel();closeRecordModal();closeTaskModal();closeProductModal();closeImport();}});
+/* dev gate: ?selftest auto-runs the harness (all modules) after boot settles */
+if(location.search.indexOf('selftest')>-1)setTimeout(function(){runSelfTest({all:true});},150);
 </script>
 </body>
 </html>
