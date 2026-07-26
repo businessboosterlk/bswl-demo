@@ -985,8 +985,8 @@ body.dark .stat-kpi .val{color:#fff}
       <div class="page" id="page-attendance">
         <div class="toolbar">
           <input type="date" id="attDate" class="filter" onchange="ATT.setDate(this.value)">
-          <select class="filter" id="attBatch" onchange="ATT.set('batch',this.value)"><option value="all">All batches</option><option value="0">2027</option><option value="1">2028</option><option value="2">Crash</option></select>
-          <select class="filter" id="attLoc" onchange="ATT.set('loc',this.value)"><option value="all">All locations</option><option value="Nugegoda">Nugegoda</option><option value="Kiribathgoda">Kiribathgoda</option><option value="Online">Online</option></select>
+          <select class="filter" id="attBatch" onchange="ATT.set('batch',this.value)"><option value="all">All batches</option><option value="0">2027</option><option value="1">2028</option></select>
+          <select class="filter" id="attLoc" onchange="ATT.set('loc',this.value)"><option value="all">All locations</option><option value="Kings · Nugegoda">Kings Nugegoda</option><option value="JMC · Kiribathgoda">JMC Kiribathgoda</option><option value="Sasik · Gampaha">Sasik Gampaha</option><option value="Residence">Residence</option><option value="Online">Online</option></select>
         </div>
         <div id="attSummary"></div>
         <div class="att-hint">Everyone is Present by default. Tap a student to mark them Absent.</div>
@@ -1159,20 +1159,20 @@ const CFG={
  /* Black & white minimalist — colours come from the mono :root; Leon owns them via the Studio.
     logo = dark lockup for the white login; logoSide = white lockup for the dark sidebar. */
  brand:{brand:'',dark:'',sidebar:'',onAccent:'',logo:BSWL_LOGO_LOGIN,logoSide:BSWL_LOGO_SIDE,logoDoc:BSWL_LOGO_DOC},
- company:{name:'Academy of Business Studies by Leon Fambeck',phone:'+94 77 000 0000',email:'hello@bswithleon.lk',address:'Nugegoda · Kiribathgoda · Online',regNo:''},
+ company:{name:'Academy of Business Studies by Leon Fambeck',phone:'077 139 6173',email:'hello@bswithleon.lk',address:'Kings Nugegoda · JMC Kiribathgoda · Sasik Gampaha · Residence · Online',regNo:''},
  modules:{
   pipeline:true, records:true, customers:true, tasks:true,
   finance:true,  reports:true, team:true,      activity:true,
   import:true,
   quotes:false,     // fixed fee — no quoting
   recurring:true,   // HERO: monthly fee ledger (who paid / collected vs expected / who owes)
-  cohorts:true,     // 2027 / 2028 / Crash + active/alumni segmentation
+  cohorts:true,     // 2027 / 2028 + active/alumni segmentation
   forecast:false,   // not needed for tuition
   inventory:false,  // service business — no stock
  },
  recurring:{label:'Fee',amount:4000,cycle:'month',
-  waRemind:'Hi {name}, a friendly reminder that your {month} tuition {label} of {amount} is due. Please let me know once settled. Thank you! — Academy of Business Studies'},
- cohorts:['2027 Batch','2028 Batch','Crash Course'],
+  waRemind:'Hi {name}, a friendly reminder that your {month} tuition {label} of {amount} is due in the first week. Please let me know once settled. Thank you! — Leon, Academy of Business Studies'},
+ cohorts:['2027 Batch','2028 Batch'],
  inventory:{lowThreshold:5,deadStockDays:30,storageBucket:'product-photos'},
  stages:[
   {k:'new',      label:'Enquiry',   color:'var(--blue)',  prob:10, board:true},
@@ -1268,28 +1268,35 @@ function seedData(){
  const pad=n=>String(n).padStart(2,'0');
  const FN=['Senuki','Nethmi','Kavindu','Ishara','Dulaj','Hasini','Tharindu','Sanduni','Ashen','Ruwan','Amaya','Bihan','Chamodi','Deneth','Dilki','Dilshan','Gimhani','Hirusha','Imasha','Januki','Kavisha','Malsha','Nimna','Oshadi','Pasan','Rashmi','Sahan','Thisara','Umesha','Vihanga','Yasas','Zainab','Ahamed','Fathima','Rizna','Shifra','Aqil','Aamina','Nuwan','Piyumi','Sachini','Tharushi','Vidusha','Yohan','Kavindi','Maleesha','Nethmin','Oshan','Rithika','Sithumi'];
  const LN=['Perera','Silva','Fernando','Jayasuriya','Bandara','Wickramasinghe','Gunawardena','Rajapaksa','Dissanayake','Wijesinghe','Karunaratne','Alwis','Cooray','Mendis','Rathnayake','Samarasinghe','Herath','Ekanayake','Senanayake','Weerasinghe'];
- const LOCS=['Nugegoda','Nugegoda','Nugegoda','Nugegoda','Kiribathgoda','Kiribathgoda','Kiribathgoda','Online','Online'];
- /* cohort index: 0=2027 Batch, 1=2028 Batch, 2=Crash Course */
- const cohortPool=[0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,2,2,2,2];
  const usedNames={};
  function uniqName(){let nm;let g=0;do{nm=pick(FN)+' '+pick(LN);g++;}while(usedNames[nm]&&g<40);usedNames[nm]=1;return nm;}
  function phone(){return '07'+pick(['1','2','5','6','7','8'])+' '+pad(iRnd(0,999))+' '+pad(iRnd(0,9999));}
- const N=100;
- const students=[];
- for(let i=0;i<N;i++){
-  const cohort=cohortPool[Math.floor(rnd()*cohortPool.length)];
-  const loc=pick(LOCS);
-  /* joined: spread over the last ~15 months, weighted toward more recent months (class grew) */
-  const back=Math.floor(Math.pow(rnd(),1.7)*15); // 0..14, skewed small (recent)
-  const joined=ymShift(ym,-back)+'-'+pad(iRnd(1,28));
-  /* ~12 alumni: the earliest joiners who have since finished/left */
-  let status='active';
-  if(back>=11&&rnd()<0.75)status='alumni';
-  /* custom fee on ~8% of students; the rest use the LKR 4,000 default */
-  let fee=null;const fr=rnd();
-  if(fr<0.03)fee=4500; else if(fr<0.05)fee=5000; else if(fr<0.08)fee=3500; // premium / crash / sibling-scholarship
-  students.push({id:i+1,name:uniqName(),phone:phone(),cohort:cohort,loc:loc,joined:joined,status:status,fee:fee});
+ /* ── Leon's REAL fee model: fee = f(program, location) ──
+    institutes (Kings/JMC/Sasik) share one price; Residence and Online differ. */
+ function locClass(loc){return (loc==='Kings'||loc==='JMC'||loc==='Sasik')?'inst':(loc==='Residence'?'res':'online');}
+ function bswlFee(program,loc){const c=locClass(loc);
+  if(program==='Combined')return c==='online'?5500:7000;   /* Theory + Revision */
+  if(program==='Revision')return c==='online'?3000:4000;
+  return c==='res'?6000:(c==='online'?3000:4000);           /* Theory */
  }
+ function pickProgram(loc){if(loc==='Residence')return 'Theory';const r=rnd();return r<0.5?'Theory':(r<0.75?'Revision':'Combined');}
+ /* head-counts from Leon (Online not in his table — modest demo figure until confirmed) */
+ const ROSTER=[
+  [0,'Kings',50],[0,'JMC',5],[0,'Sasik',2],[0,'Residence',20],[0,'Online',8],
+  [1,'Kings',40],[1,'JMC',1],[1,'Sasik',5],[1,'Residence',40],[1,'Online',5]
+ ];
+ const students=[];let sid=1;
+ ROSTER.forEach(function(row){const cohort=row[0],loc=row[1],n=row[2];
+  for(let k=0;k<n;k++){
+   const program=pickProgram(loc);
+   const fee=bswlFee(program,loc);
+   const back=Math.floor(Math.pow(rnd(),1.7)*15);
+   const joined=ymShift(ym,-back)+'-'+pad(iRnd(1,28));
+   let status='active';
+   if(back>=12&&rnd()<0.5)status='alumni';
+   students.push({id:sid++,name:uniqName(),phone:phone(),cohort:cohort,loc:loc,program:program,joined:joined,status:status,fee:fee});
+  }
+ });
  /* ---- recurring fee ledger: payments only for ACTIVE students, joined->now.
     Only charged students ever get a row, so collection rate stays <=100%. ---- */
  const recurringPayments=[];let payId=1;
@@ -1313,36 +1320,38 @@ function seedData(){
   }
  });
  /* recurringPlans = the fee subscribers (same ids as students) */
- const recurringPlans=students.map(s=>({id:s.id,name:s.name,phone:s.phone,cohort:s.cohort,fee:s.fee,joined:s.joined,status:s.status}));
+ const recurringPlans=students.map(s=>({id:s.id,name:s.name,phone:s.phone,cohort:s.cohort,program:s.program,loc:s.loc,fee:s.fee,joined:s.joined,status:s.status}));
  /* customers = the Students roster: cohort + location + active/alumni + fee history (LTV) + referral cadence */
- const COHORT_SHORT=['2027','2028','Crash'];
+ const COHORT_SHORT=['2027','2028'];
+ const LOC_LABEL={Kings:'Kings · Nugegoda',JMC:'JMC · Kiribathgoda',Sasik:'Sasik · Gampaha',Residence:'Residence',Online:'Online'};
  const customers=students.map(s=>{
   const fee=s.fee!=null?s.fee:4000;
   const monthsIn=Math.max(1,Math.round((new Date(ym+'-01')-new Date(s.joined.slice(0,7)+'-01'))/2629800000));
   const paidMonths=Math.min(monthsIn,s.status==='alumni'?monthsIn:Math.max(1,monthsIn-1));
-  const history=[];for(let k=0;k<Math.min(paidMonths,6);k++){const hm=ymShift(s.joined.slice(0,7),k);history.push({item:'Tuition fee — '+monthShort(hm),cat:'Fee',date:hm+'-05',value:fee});}
+  const history=[];for(let k=0;k<Math.min(paidMonths,6);k++){const hm=ymShift(s.joined.slice(0,7),k);history.push({item:s.program+' fee — '+monthShort(hm),cat:'Fee',date:hm+'-05',value:fee});}
   const sent=s.status==='alumni'?iRnd(0,3):iRnd(0,2);
-  return {id:s.id,name:s.name,co:s.loc,type:COHORT_SHORT[s.cohort],phone:s.phone,email:'',owner:1,cohort:s.cohort,joined:s.joined,sent:sent,last:ymShift(ym,-iRnd(0,3))+'-'+pad(iRnd(1,26)),status:s.status,level:pick(['good','good','good','okay','okay','okay','okay','bad','bad']),history:history};
+  return {id:s.id,name:s.name,co:LOC_LABEL[s.loc]||s.loc,program:s.program,type:COHORT_SHORT[s.cohort],phone:s.phone,email:'',owner:1,cohort:s.cohort,loc:s.loc,joined:s.joined,sent:sent,last:ymShift(ym,-iRnd(0,3))+'-'+pad(iRnd(1,26)),status:s.status,level:pick(['good','good','good','okay','okay','okay','okay','bad','bad']),history:history};
  });
  /* ---- enquiry -> enrolment funnel (records). Won=Enrolled spread over 12 months
     gives the Reports trend; a live pipeline of open enquiries + a few "Not now". ---- */
  const records=[];let rid=1;
  const SRC=['Instagram','TikTok','Facebook','Friend referral','Walk-in'];
  function enqName(){return uniqName();}
+ function enqCo(){return pick(['2027 Batch','2028 Batch'])+' · '+pick(['Kings · Nugegoda','JMC · Kiribathgoda','Sasik · Gampaha','Residence','Online']);}
  /* enrolled history across the last 12 months for the trend */
  for(let back=11;back>=0;back--){
   const m=ymShift(ym,-back);
   const cnt=iRnd(2,5);
   for(let c=0;c<cnt;c++){
    const val=iRnd(6,16)*3000; // enrolment value (term commitment)
-   records.push({id:rid++,name:enqName(),co:pick(['2027 Batch','2028 Batch','Crash Course'])+' · '+pick(LOCS),phone:phone(),stage:'won',owner:iRnd(1,3),value:val,followUp:'',created:m,rev:spread(val,m,1),acts:[{t:'Enrolled',m:'Joined the class',tm:back+'mo ago'}]});
+   records.push({id:rid++,name:enqName(),co:enqCo(),phone:phone(),stage:'won',owner:iRnd(1,3),value:val,followUp:'',created:m,rev:spread(val,m,1),acts:[{t:'Enrolled',m:'Joined the class',tm:back+'mo ago'}]});
   }
  }
  /* live open pipeline (current) */
- const openDefs=[['new','New enquiry via Instagram DM'],['new','Asked about Crash Course fee'],['contacted','Sent class times, awaiting reply'],['contacted','Parent wants a call back'],['quoted','Came for a trial class'],['quoted','Trial done, deciding']];
- openDefs.forEach((d,i)=>{records.push({id:rid++,name:enqName(),co:pick(['2027 Batch','2028 Batch','Crash Course'])+' · '+pick(LOCS),phone:phone(),stage:d[0],owner:iRnd(1,3),value:iRnd(6,16)*3000,followUp:i<3?todayISO():ymShift(ym,0)+'-'+pad(iRnd(16,27)),created:ym,rev:null,acts:[{t:'Enquiry received',m:d[1],tm:'recent'}]});});
+ const openDefs=[['new','New enquiry via Instagram DM'],['new','Asked about the Combined fee'],['contacted','Sent class times, awaiting reply'],['contacted','Parent wants a call back'],['quoted','Came for a trial class'],['quoted','Trial done, deciding']];
+ openDefs.forEach((d,i)=>{records.push({id:rid++,name:enqName(),co:enqCo(),phone:phone(),stage:d[0],owner:iRnd(1,3),value:iRnd(6,16)*3000,followUp:i<3?todayISO():ymShift(ym,0)+'-'+pad(iRnd(16,27)),created:ym,rev:null,acts:[{t:'Enquiry received',m:d[1],tm:'recent'}]});});
  /* a couple of "Not now" */
- [['Fee too high'],['No response']].forEach(r=>{records.push({id:rid++,name:enqName(),co:pick(['2027 Batch','2028 Batch','Crash Course'])+' · '+pick(LOCS),phone:phone(),stage:'lost',owner:iRnd(1,3),value:iRnd(6,12)*3000,followUp:'',created:prev,rev:null,lostReason:r[0],acts:[{t:'Marked Not now',m:r[0],tm:'2w ago'}]});});
+ [['Fee too high'],['No response']].forEach(r=>{records.push({id:rid++,name:enqName(),co:enqCo(),phone:phone(),stage:'lost',owner:iRnd(1,3),value:iRnd(6,12)*3000,followUp:'',created:prev,rev:null,lostReason:r[0],acts:[{t:'Marked Not now',m:r[0],tm:'2w ago'}]});});
 
  /* ---- fee invoices for the Finance floor (this term, a realistic mix) ---- */
  const invoices=[];let inv=1;
@@ -1363,7 +1372,7 @@ function seedData(){
  const activity=[
   {id:1,who:1,t:'Fee collected',m:customers[0].name+' · '+monthShort(ym),when:ym+'-14 09:20'},
   {id:2,who:1,t:'Enrolled',m:'New '+COHORT_SHORT[1]+' student from a referral',when:ym+'-12 16:03'},
-  {id:3,who:1,t:'Enquiry added',m:'Instagram DM · Crash Course',when:ym+'-11 10:40'},
+  {id:3,who:1,t:'Enquiry added',m:'Instagram DM · 2028 Theory',when:ym+'-11 10:40'},
   {id:4,who:1,t:'Reminder sent',m:'WhatsApp fee reminder · 2027 Batch',when:ym+'-10 08:55'},
  ];
  const loginAudit=[
@@ -2279,7 +2288,7 @@ function renderCustomers(){
   const done=c.sent>=3,due=custDue(c)&&c.status!=='alumni',next=custNext(c);
   const dots='<span class="cad-dots">'+[0,1,2].map(i=>'<span style="background:'+(c.sent>i?'var(--green)':(c.sent===i&&due?'var(--danger)':'var(--line)'))+'"></span>').join('')+'</span>';
   const stat=c.status==='alumni'?['Alumni','bdg-blue']:done?['Complete','bdg-green']:due?[cadDays(c.sent)+'-day due','bdg-action']:['Scheduled','bdg-grey'];
-  return '<tr onclick="openCustomer('+c.id+')"><td><div class="tn"><span class="sdot s-'+studentStanding(c).key+'" title="'+studentStanding(c).label+'"></span>'+c.name.toString()+'</div><div class="tm">'+(c.co||'')+(cohortsOn?' · '+cohortLabel(c.cohort):'')+'</div></td>'
+  return '<tr onclick="openCustomer('+c.id+')"><td><div class="tn"><span class="sdot s-'+studentStanding(c).key+'" title="'+studentStanding(c).label+'"></span>'+c.name.toString()+'</div><div class="tm">'+(cohortsOn?cohortLabel(c.cohort).replace(' Batch','')+' · ':'')+(c.program?c.program+' · ':'')+(c.co||'')+'</div></td>'
    +'<td>'+dots+'</td>'
    +'<td style="font-size:12.5px;color:'+(due?'var(--danger)':'var(--muted)')+'">'+(done||c.status==='alumni'?'—':fmtDate(next))+'</td>'
    +'<td><span class="bdg '+stat[1]+'">'+stat[0]+'</span></td>'
@@ -2521,7 +2530,7 @@ function renderRecurring(keepFocus){
  show=[...show].sort((a,b)=>stateOfPlan(a)-stateOfPlan(b));
  document.getElementById('payList').innerHTML=show.length?show.map(p=>{
   const got=recPaid(p.id,ym),due=recFee(p),stt=got>=due?'paid':got>0?'partial':'owing';
-  const meta=(CFG.modules.cohorts?cohortLabel(p.cohort)+' · ':'')+lkr(due);
+  const meta=(CFG.modules.cohorts?cohortLabel(p.cohort).replace(' Batch','')+' · ':'')+(p.program?p.program+' · ':'')+lkr(due);
   let act='';
   if(stt==='owing')act='<button class="btn-mark" onclick="RECUR.mark('+p.id+')">'+I.check+'Mark paid</button><button class="btn-wa" title="Remind on WhatsApp" aria-label="Remind on WhatsApp" onclick="RECUR.remind('+p.id+')">'+I.wa+'</button>';
   else if(stt==='partial')act='<span class="pr-pill pill-partial">'+got.toLocaleString()+' / '+due.toLocaleString()+'</span><button class="btn-mark" onclick="RECUR.mark('+p.id+')">'+I.check+'Complete</button>';
@@ -3021,7 +3030,7 @@ function receiptDoc(id,ym){
    '<div class="sub">A/L Business Studies Tuition Class</div>'+
    '<div class="hr"></div>'+
    '<div class="rf">Received From</div><div class="nm">'+x.name+'</div>'+
-   '<div class="meta"><span>'+cohortLabel(x.cohort)+'</span><span class="dot">|</span><span>'+(c.co||'')+'</span></div>'+
+   '<div class="meta"><span>'+cohortLabel(x.cohort)+'</span><span class="dot">|</span><span>'+(c.program||'')+'</span><span class="dot">|</span><span>'+(c.co||'')+'</span></div>'+
    '<div class="tbar"><span>Description</span><span>Amount</span></div>'+
    '<div class="trow"><span>Class fee — '+monthLbl(ym)+'</span><span class="amt">'+f(paid)+'</span></div>'+
    '<div class="boxes"><div class="bx"><div class="l">Payment Method</div><div class="v">Cash</div><div class="n">Cash / Bank transfer</div></div>'+
@@ -3031,7 +3040,7 @@ function receiptDoc(id,ym){
    '<div class="ft"><div class="sig"><div class="sg">Leon Fambeck</div><div class="ln"></div><div class="rb">Received by · Leon Fambeck</div></div>'+
     '<div class="ty">Thank you for your payment. We appreciate your commitment to learning and look forward to supporting your progress in Business Studies.<br><br><b>— Leon Fambeck</b></div></div>'+
   '</div>'+
-  '<div class="foot"><div class="fb"><img src="'+BSWL_LOGO_DOC+'" alt="" style="height:34px;width:auto"></div><div class="loc">BS With Leon · A/L Business Studies<br>Nugegoda · Kiribathgoda · Online</div></div>'+
+  '<div class="foot"><div class="fb"><img src="'+BSWL_LOGO_DOC+'" alt="" style="height:34px;width:auto"></div><div class="loc">BS With Leon · A/L Business Studies<br>Nugegoda · Kiribathgoda · Gampaha · Online</div></div>'+
   '<div class="cg">This is a computer-generated receipt.</div>'+
   '</div></body></html>');
  w.document.close();
@@ -3095,7 +3104,7 @@ function onboardingDoc(id){
    '<div class="top"><img src="'+BSWL_LOGO_DOC+'" alt="Academy of Business Studies by Leon Fambeck" style="height:54px;width:auto"><div class="tag"><div class="t1">STUDENT STARTER GUIDE</div><div class="t2">'+fmtDate(todayISO())+'</div></div></div>'+
    '<h1>Welcome to the class, '+x.name.split(' ')[0]+'.</h1>'+
    '<p class="lead">You are now enrolled in A/L Business Studies with Leon. This guide is your short path to studying the right way from day one — how the exam actually rewards you, your weekly rhythm, and the road to an A. Read it before your first class and keep it close.</p>'+
-   '<div class="grid"><div class="box"><div class="l">Student</div><div class="v">'+x.name+'</div></div><div class="box"><div class="l">Batch</div><div class="v">'+cohortLabel(x.cohort)+'</div></div><div class="box"><div class="l">Location</div><div class="v">'+(c.co||'')+'</div></div><div class="box"><div class="l">Start date</div><div class="v">'+fmtDate(rp.joined||todayISO())+'</div></div></div>'+
+   '<div class="grid"><div class="box"><div class="l">Student</div><div class="v">'+x.name+'</div></div><div class="box"><div class="l">Batch & program</div><div class="v">'+cohortLabel(x.cohort).replace(' Batch','')+' · '+(c.program||'')+'</div></div><div class="box"><div class="l">Location</div><div class="v">'+(c.co||'')+'</div></div><div class="box"><div class="l">Start date</div><div class="v">'+fmtDate(rp.joined||todayISO())+'</div></div></div>'+
    '<div class="feebar">Your fee is <b>LKR '+fee.toLocaleString('en-LK')+' per month</b>, due by the <b>'+ordinal(due)+'</b> of each month. Pay at class or by transfer; if a payment slips you will get a friendly reminder on WhatsApp.</div>'+
    '<div class="gt">Studying it the right way</div><div class="gsub">A short path to studying A/L Business Studies well, from day one.</div>'+
    secHTML+
@@ -3107,12 +3116,12 @@ function onboardingDoc(id){
    '<div class="quote">"The students who earn A grades aren’t always the smartest. They’re simply the most consistent."</div>'+
    '<div class="oath"><h4>My commitment</h4><div class="oi">I, <b>'+x.name+'</b>, am joining this class to earn a top grade. I commit to:</div><ul>'+oathHTML+'</ul>'+
     '<div class="osign"><div class="c"><div class="ln">Student signature</div></div><div class="c"><div class="ln">Date</div></div></div></div>'+
-   '<div class="foot"><img src="'+BSWL_LOGO_DOC+'" alt="" style="height:34px;width:auto"><div class="loc">BS With Leon · A/L Business Studies<br>Nugegoda · Kiribathgoda · Online</div></div>'+
+   '<div class="foot"><img src="'+BSWL_LOGO_DOC+'" alt="" style="height:34px;width:auto"><div class="loc">BS With Leon · A/L Business Studies<br>Nugegoda · Kiribathgoda · Gampaha · Online</div></div>'+
   '</div></body></html>');
  w.document.close();
  toast(I.check+' Starter guide ready for '+x.name.split(' ')[0]);
 }
-renderDashboard=function(){var ym=ymNow();var st=recStats(ym);var activeStudents=DB.get('recurringPlans').filter(function(p){return p.status==='active';}).length;var openEnq=DB.get('records').filter(isOpen);var dueList=openEnq.filter(function(r){return r.followUp&&r.followUp<=todayISO();});var pctc=st.expected?Math.min(100,Math.round(st.collected/st.expected*100)):0;var toPay=st.owing.length+st.partial.length;document.getElementById('greet').innerHTML='<h1 style="font-size:27px;font-weight:800;letter-spacing:-.5px">'+greetWord(AS_OF.getHours())+', '+CURRENT.name+'</h1><div style="font-size:13px;color:var(--muted);margin-top:5px">'+DY_FULL[AS_OF.getDay()]+' '+AS_OF.getDate()+' '+MN_FULL[AS_OF.getMonth()]+' · '+(dueList.length?dueList.length+' follow-up'+(dueList.length>1?'s':'')+' due today':'fees, students and enquiries at a glance')+'</div>';document.getElementById('heroMoney').innerHTML='<div class="hm-cell"><div class="hm-label">Collected · '+MN_FULL[AS_OF.getMonth()]+'</div><div class="hm-val"><span data-to="'+st.collected+'" data-fmt="lkr">'+lkr(st.collected)+'</span></div><div class="hm-track"><div class="hm-fill" style="width:'+pctc+'%"></div></div><div class="hm-sub">'+pctc+'% of '+lkr(st.expected)+' expected</div></div><div class="hm-cell"><div class="hm-label">Outstanding</div><div class="hm-val"><span data-to="'+st.outstanding+'" data-fmt="lkr">'+lkr(st.outstanding)+'</span></div><div class="hm-sub">'+toPay+' student'+(toPay===1?'':'s')+' still to pay</div></div>';document.getElementById('dashKpis').innerHTML=kpiC('Active students',activeStudents,'across all batches',false,I.users)+kpiC('Collected in '+MN[AS_OF.getMonth()],lkr(st.collected),pctc+'% of expected',false,I.money)+kpiC('Outstanding',lkr(st.outstanding),toPay+' to collect',false,I.warn)+kpiC('Open enquiries',openEnq.length,dueList.length?dueList.length+' due today':'all on track',true,I.inbox);var data=[];for(var i=5;i>=0;i--){var m=ymShift(ym,-i);var v=recStats(m).collected;data.push({label:MN[+m.split('-')[1]-1],v:v,hi:m===ym,top:Math.round(v/1000)+'k'});}document.getElementById('dashChart').innerHTML=barChart(data,150);var ct=document.getElementById('chartTitle');if(ct)ct.textContent='Fees collected, last 6 months';document.getElementById('chartHint').textContent='Collected by month ('+CFG.currency+')';var owe=[].concat(st.owing,st.partial).sort(function(a,b){return (recFee(b)-recPaid(b.id,ym))-(recFee(a)-recPaid(a.id,ym));}).slice(0,5);document.getElementById('actionQueue').innerHTML=owe.length?owe.map(function(p){var got=recPaid(p.id,ym),due=recFee(p);return '<div class="aq-item" onclick="go(\'recurring\')"><span class="aq-dot" style="background:'+(got>0?'var(--amber)':'var(--danger)')+'"></span><div class="aq-main"><div class="aq-nm">'+p.name+'</div><div class="aq-why">'+cohortLabel(p.cohort)+' · owes '+lkr(due-got)+'</div></div><span class="aq-act">Collect</span></div>';}).join(''):emptyC(I.check,'All collected','Every student has paid for '+MN_FULL[AS_OF.getMonth()]+'.');document.getElementById('dashTasks').innerHTML=taskRows(scopeTasks().slice(0,4));};if(typeof RENDERERS!=='undefined')RENDERERS.dashboard=renderDashboard;
+renderDashboard=function(){var ym=ymNow();var st=recStats(ym);var activeStudents=DB.get('recurringPlans').filter(function(p){return p.status==='active';}).length;var openEnq=DB.get('records').filter(isOpen);var dueList=openEnq.filter(function(r){return r.followUp&&r.followUp<=todayISO();});var pctc=st.expected?Math.min(100,Math.round(st.collected/st.expected*100)):0;var toPay=st.owing.length+st.partial.length;var prevSt=recStats(ymShift(ym,-1));var prevPay=prevSt.owing.length+prevSt.partial.length;var onlineN=DB.get('customers').filter(function(c){return c.status==='active'&&c.loc==='Online';}).length;document.getElementById('greet').innerHTML='<h1 style="font-size:27px;font-weight:800;letter-spacing:-.5px">'+greetWord(AS_OF.getHours())+', '+CURRENT.name+'</h1><div style="font-size:13px;color:var(--muted);margin-top:5px">'+DY_FULL[AS_OF.getDay()]+' '+AS_OF.getDate()+' '+MN_FULL[AS_OF.getMonth()]+' · '+(dueList.length?dueList.length+' follow-up'+(dueList.length>1?'s':'')+' due today':'fees, students and enquiries at a glance')+'</div>';document.getElementById('heroMoney').innerHTML='<div class="hm-cell"><div class="hm-label">Collected · '+MN_FULL[AS_OF.getMonth()]+'</div><div class="hm-val"><span data-to="'+st.collected+'" data-fmt="lkr">'+lkr(st.collected)+'</span></div><div class="hm-track"><div class="hm-fill" style="width:'+pctc+'%"></div></div><div class="hm-sub">'+pctc+'% of '+lkr(st.expected)+' expected</div></div><div class="hm-cell"><div class="hm-label">Outstanding</div><div class="hm-val"><span data-to="'+st.outstanding+'" data-fmt="lkr">'+lkr(st.outstanding)+'</span></div><div class="hm-sub">'+toPay+' student'+(toPay===1?'':'s')+' still to pay</div></div>';document.getElementById('dashKpis').innerHTML=kpiC('Outstanding this month',lkr(st.outstanding),toPay+' still to pay',false,I.warn)+kpiC('Outstanding last month',lkr(prevSt.outstanding),prevPay?prevPay+' still owed':'all cleared',false,I.money)+kpiC('Online students',onlineN,'active online',false,I.users)+kpiC('New enquiries',openEnq.length,dueList.length?dueList.length+' due today':'potential converts',true,I.inbox);var data=[];for(var i=5;i>=0;i--){var m=ymShift(ym,-i);var v=recStats(m).collected;data.push({label:MN[+m.split('-')[1]-1],v:v,hi:m===ym,top:Math.round(v/1000)+'k'});}document.getElementById('dashChart').innerHTML=barChart(data,150);var ct=document.getElementById('chartTitle');if(ct)ct.textContent='Fees collected, last 6 months';document.getElementById('chartHint').textContent='Collected by month ('+CFG.currency+')';var owe=[].concat(st.owing,st.partial).sort(function(a,b){return (recFee(b)-recPaid(b.id,ym))-(recFee(a)-recPaid(a.id,ym));}).slice(0,5);document.getElementById('actionQueue').innerHTML=owe.length?owe.map(function(p){var got=recPaid(p.id,ym),due=recFee(p);return '<div class="aq-item" onclick="go(\'recurring\')"><span class="aq-dot" style="background:'+(got>0?'var(--amber)':'var(--danger)')+'"></span><div class="aq-main"><div class="aq-nm">'+p.name+'</div><div class="aq-why">'+cohortLabel(p.cohort)+' · owes '+lkr(due-got)+'</div></div><span class="aq-act">Collect</span></div>';}).join(''):emptyC(I.check,'All collected','Every student has paid for '+MN_FULL[AS_OF.getMonth()]+'.');document.getElementById('dashTasks').innerHTML=taskRows(scopeTasks().slice(0,4));};if(typeof RENDERERS!=='undefined')RENDERERS.dashboard=renderDashboard;
 
 DB.load();
 /* apply tenant customizations over the mold defaults — brand vars, vocabulary,
