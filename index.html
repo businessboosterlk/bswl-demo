@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>BB Master Skeleton — Client System Template</title>
+<title>BS With Leon — Academy of Business Studies by Leon Fambeck</title>
 <!-- ════════════════════════════════════════════════════════════════════
      BB MASTER SKELETON v1 — every client system starts as a copy of this file.
      Reskin surface: (A) the BRAND block in :root (3 hex values), (B) the CFG
@@ -2373,7 +2373,7 @@ function renderReports(){
  ins.push('Open enquiries are worth '+lkr(openW)+' (weighted) across '+open.length+' open '+CFG.entity.plural.toLowerCase()+'.');
  document.getElementById('rpInsights').innerHTML=ins.map(i=>'<div style="margin-bottom:8px;padding-left:14px;border-left:3px solid var(--brand)">'+i+'</div>').join('');
 }
-function exportReport(){const ym=RP_YM||ymNow();const data=[];for(let i=5;i>=0;i--){const m=ymShift(ym,-i);const w=monthWon(m);data.push([monthLbl(m),w.length,w.reduce((s,r)=>s+r.value,0)]);}exportCSV('sales-report.csv',['Month','Deals won','Revenue ('+CFG.currency+')'],data);}
+function exportReport(){const ym=RP_YM||ymNow();const data=[];for(let i=5;i>=0;i--){const m=ymShift(ym,-i);const w=monthWon(m);data.push([monthLbl(m),w.length,w.reduce((s,r)=>s+r.value,0)]);}exportCSV('bswl-report.csv',['Month','Enrolled','Enrolment value ('+CFG.currency+')'],data);}
 
 /* ════════ FINANCE — invoices, collections, aging (always-on) ════════ */
 let FIN_FILTER='all';
