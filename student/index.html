@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BSWL Student · Academy of Business Studies by Leon Fambeck</title>
+<meta name="description" content="You will always know what to study next and why. The A/L Business Studies companion.">
+<meta name="theme-color" content="#0d0d0d">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BSWL Student">
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   BSWL STUDENT COMPANION v2 - a learning-recovery product, not a dashboard.
+   The loop: open, get one useful task, do it, get feedback, know what is
+   next. Three tabs only. PURE MONOCHROME by client rule (an indigo accent
+   was reversed once: "super ugly, I like the white and black").
+   Demo build: in-memory seed, resets clean on reload, no backend.
+   ══════════════════════════════════════════════════════════════════════ */
+:root{
+ --sat:env(safe-area-inset-top,0px);
+ --sab:env(safe-area-inset-bottom,0px);
+ --bg:#0d0d0d; --surface:#141414; --surface-2:#1b1b1b;
+ --ink:#f5f5f5; --muted:#a3a3a3; --faint:#6e6e6e;
+ --line:#262626; --line-2:#333333;
+ --r:14px; --r-sm:9px; --r-pill:999px;
+ --ease:cubic-bezier(.16,1,.3,1);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,Inter,system-ui,sans-serif;
+ background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;
+ padding-bottom:calc(84px + var(--sab))}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;text-align:left}
+a{color:inherit;text-decoration:none}
+input,select{font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:10px 12px;width:100%}
+input:focus,select:focus{outline:none;border-color:var(--faint)}
+svg{display:block}
+.ic{width:20px;height:20px}
+.statusfill{position:fixed;top:0;left:0;right:0;height:var(--sat);background:var(--bg);z-index:40;pointer-events:none}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+.topbar{display:flex;align-items:center;gap:10px;padding:calc(14px + var(--sat)) 16px 12px;position:sticky;top:0;z-index:30;
+ background:rgba(13,13,13,.92);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);max-width:560px;margin:0 auto}
+.topbar .mark{width:30px;height:30px;flex:none}
+.topbar .tt{font-weight:800;font-size:14px;line-height:1.15}
+.topbar .ts{font-size:10.5px;color:var(--faint)}
+.topbar .day{margin-left:auto;font-size:11.5px;color:var(--muted);text-align:right}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.card h3{font-size:14.5px;font-weight:700;margin-bottom:2px}
+.card .sub{font-size:12px;color:var(--muted)}
+.eyebrow{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+.hint{font-size:11.5px;color:var(--faint)}
+.row{display:flex;align-items:center;gap:10px}
+.grow{flex:1;min-width:0}
+.bar{height:7px;background:var(--surface-2);border-radius:var(--r-pill);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ink);border-radius:var(--r-pill);transition:width .5s var(--ease)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700;font-size:13.5px;
+ padding:12px 16px;border-radius:var(--r-pill);min-height:44px;text-align:center}
+.btn-solid{background:var(--ink);color:#0d0d0d}
+.btn-line{border:1px solid var(--line-2)}
+.tag{font-size:10.5px;font-weight:700;border:1px solid var(--line-2);border-radius:var(--r-pill);padding:3px 9px;color:var(--muted);display:inline-block}
+
+/* DO NEXT: the one big task. The only inverted surface in the app. */
+.donext{background:var(--ink);color:#0d0d0d;border:none}
+.donext .eyebrow{color:#5e5e5e}
+.donext .why{font-size:12.5px;color:#3f3f3f;margin:2px 0 10px}
+.donext h2{font-size:19px;font-weight:800;letter-spacing:-.01em;line-height:1.25}
+.donext .btn{background:#0d0d0d;color:#f5f5f5}
+.queue .q-row{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line);align-items:flex-start}
+.queue .q-row:first-child{border-top:none}
+.queue .q-no{font-size:10.5px;font-weight:800;color:var(--faint);padding-top:2px;flex:none;width:16px}
+.queue .q-t{font-size:13px;font-weight:600}
+.queue .q-why{font-size:11.5px;color:var(--faint)}
+
+/* segmented sub-nav inside Learn & practise */
+.seg{display:flex;background:var(--surface-2);border-radius:var(--r-pill);padding:3px;margin-bottom:12px}
+.seg button{flex:1;text-align:center;font-size:12.5px;font-weight:700;padding:9px 6px;border-radius:var(--r-pill);color:var(--muted);min-height:38px}
+.seg button.on{background:var(--ink);color:#0d0d0d}
+
+/* syllabus tree */
+.unit{border-top:1px solid var(--line);padding:12px 0 4px}
+.unit:first-child{border-top:none;padding-top:0}
+.unit .u-h{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.unit .u-no{font-size:11px;font-weight:800;color:var(--faint)}
+.unit .u-nm{font-size:13.5px;font-weight:700}
+.unit .u-pc{margin-left:auto;font-size:11px;color:var(--faint)}
+.topic{display:flex;align-items:center;gap:10px;padding:9px 0;min-height:48px}
+.topic .t-no{font-size:11px;color:var(--faint);width:26px;flex:none}
+.topic .t-main{flex:1;min-width:0}
+.topic .t-nm{font-size:13.5px}
+.topic.uncovered .t-nm{color:var(--faint)}
+.topic .t-ev{font-size:10.5px;color:var(--faint);margin-top:1px}
+/* confidence ring: monochrome states */
+.self{width:26px;height:26px;flex:none;border-radius:50%;border:1.6px dashed var(--line-2);display:flex;align-items:center;justify-content:center}
+.self.got{border-style:solid;border-color:var(--ink);background:var(--ink)}
+.self.got svg{stroke:#0d0d0d}
+.self.shaky{border-style:solid;border-color:var(--ink)}
+.self.shaky i{width:12px;height:12px;border-radius:50%;background:var(--ink);display:block}
+.self.lost{border-style:solid;border-color:var(--faint)}
+.self.lost svg{stroke:var(--faint)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--muted);padding:4px 0 2px}
+.legend .self{width:18px;height:18px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+
+/* calibration check sheet */
+.shade{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.shade.on{display:flex}
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:16px 16px 0 0;width:100%;max-width:560px;
+ padding:20px 18px calc(22px + var(--sab))}
+.opt{display:block;width:100%;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:12px;margin-top:8px;font-size:13.5px;min-height:44px}
+.opt.pick{background:var(--ink);color:#0d0d0d;border-color:var(--ink)}
+
+/* tutes + papers */
+.tuterow{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);min-height:48px}
+.tuterow:first-child{border-top:none}
+.tuterow .t{flex:1;font-size:13.5px}
+.tuterow .st{font-size:10.5px;color:var(--faint);flex:none}
+.paper{padding:10px 0;border-top:1px solid var(--line)}
+.paper .p-h{display:flex;gap:8px;align-items:baseline}
+.paper .mk{font-weight:800;margin-left:auto}
+.paper .p-m{font-size:11px;color:var(--faint);margin-top:2px}
+
+/* progress */
+.step{display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--line);align-items:center}
+.step:first-child{border-top:none}
+.step .dot{width:30px;height:30px;border-radius:50%;border:1.6px solid var(--line-2);display:flex;align-items:center;justify-content:center;flex:none;font-size:10.5px;font-weight:800;color:var(--faint)}
+.step.lit .dot{background:var(--ink);border-color:var(--ink);color:#0d0d0d}
+.step .s-t{font-size:13px;font-weight:600}
+.step .s-how{font-size:11px;color:var(--faint)}
+.reward{border-top:1px solid var(--line);padding:12px 0}
+.reward:first-child{border-top:none}
+.reward .r-t{font-size:13.5px;font-weight:700;display:flex;gap:8px;align-items:center}
+.reward .r-p{font-size:12px;color:var(--muted);margin:2px 0 8px}
+.me-stat{text-align:center;padding:14px 6px}
+.me-stat b{display:block;font-size:24px;font-weight:800}
+.me-stat span{font-size:11px;color:var(--muted)}
+.oath{font-size:13px;color:var(--muted);line-height:1.65;border-left:2px solid var(--line-2);padding-left:12px}
+.oath b{color:var(--ink)}
+
+.nav{position:fixed;bottom:0;left:0;right:0;display:flex;z-index:30;max-width:560px;margin:0 auto;
+ background:rgba(13,13,13,.94);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+ border-top:1px solid var(--line);padding-bottom:var(--sab)}
+.nav button{flex:1;padding:10px 2px 12px;display:flex;flex-direction:column;align-items:center;gap:4px;
+ color:var(--faint);font-size:9.5px;font-weight:700;text-align:center}
+.nav button svg{width:21px;height:21px}
+.nav button.on{color:var(--ink)}
+.page{display:none;padding-top:8px}
+.page.on{display:block}
+
+.install{display:none;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:12px;align-items:center;gap:11px}
+.install.show{display:flex}
+.install .txt{flex:1;font-size:12px;color:var(--muted)}
+.install .txt b{color:var(--ink)}
+.install svg{width:20px;height:20px;flex:none}
+.offline{position:fixed;top:var(--sat);left:0;right:0;z-index:50;background:var(--ink);color:#0d0d0d;
+ text-align:center;font-size:12px;font-weight:800;padding:7px 12px;display:none}
+.toast{position:fixed;bottom:calc(94px + var(--sab));left:50%;transform:translateX(-50%) translateY(12px);
+ background:var(--surface-2);border:1px solid var(--line-2);color:var(--ink);padding:11px 16px;border-radius:var(--r-sm);
+ font-size:12.5px;font-weight:600;z-index:60;opacity:0;pointer-events:none;transition:.22s var(--ease);max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="statusfill" aria-hidden="true"></div>
+<div class="offline" id="offline">You are offline. Everything here still works.</div>
+
+<header class="topbar">
+ <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.7 1 1.6 1 2.5h6c0-.9.2-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>
+ <div><div class="tt">BSWL Student</div><div class="ts">Academy of Business Studies by Leon Fambeck</div></div>
+ <div class="day" id="topDay"></div>
+</header>
+
+<main class="wrap">
+
+ <!-- ══ TAB 1 · DO NEXT ══ -->
+ <section class="page on" id="pg-next">
+  <div class="install" id="installTip">
+   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><rect x="4" y="11" width="16" height="10" rx="2"/></svg>
+   <div class="txt"><b>Put this on your home screen.</b> Tap the share button shown here, then choose Add to Home Screen.</div>
+   <button aria-label="Dismiss" onclick="hideInstall()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  </div>
+  <div id="doNextSlot"></div>
+  <div class="card queue"><div class="eyebrow">Then</div><div id="queueSlot"></div></div>
+  <div class="split">
+   <div class="card"><div class="eyebrow">Next class</div><div style="font-weight:700;font-size:14px" id="nextClass"></div><div class="hint" id="nextClassNote" style="margin-top:3px"></div></div>
+   <div class="card"><div class="eyebrow">Last class covered</div><div id="lastCovered" style="font-size:13px;line-height:1.55"></div></div>
+  </div>
+  <div class="card row">
+   <div class="grow"><div class="eyebrow">Your A/L exam</div><div style="font-weight:800;font-size:17px" id="examLine"></div><div class="hint" id="phaseLine"></div></div>
+   <a class="btn btn-line" id="waLeon" href="#" target="_blank" rel="noopener">Ask Leon</a>
+  </div>
+ </section>
+
+ <!-- ══ TAB 2 · LEARN & PRACTISE ══ -->
+ <section class="page" id="pg-learn">
+  <div class="seg" id="learnSeg">
+   <button class="on" data-seg="syllabus">Syllabus</button>
+   <button data-seg="tutes">Tutes</button>
+   <button data-seg="papers">Papers</button>
+  </div>
+  <div id="seg-syllabus">
+   <div class="card">
+    <h3>Three truths per topic.</h3>
+    <div class="sub" style="margin-bottom:8px">What the class covered, what you feel, and what a check has shown. Kept separate on purpose: feeling sure is a start, showing it is the proof.</div>
+    <div class="legend">
+     <span><span class="self got"><svg class="ic" style="width:12px;height:12px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></span>Got it</span>
+     <span><span class="self shaky"><i></i></span>Shaky</span>
+     <span><span class="self lost"><svg class="ic" style="width:11px;height:11px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>Lost</span>
+     <span><span class="self"></span>Not marked</span>
+    </div>
+   </div>
+   <div class="card" id="sylTree"></div>
+  </div>
+  <div id="seg-tutes" style="display:none">
+   <div class="card">
+    <div class="row" style="align-items:baseline"><h3 class="grow">Tutes</h3><span class="hint" id="tuteCount"></span></div>
+    <div class="sub" style="margin-bottom:4px">Tap a tute to move it along: assigned, started, done, needs another pass. Your call, your honesty. No prize rides on it.</div>
+    <div id="tuteList"></div>
+   </div>
+  </div>
+  <div id="seg-papers" style="display:none">
+   <div class="card">
+    <div class="row" style="align-items:baseline"><h3 class="grow">Past-paper attempts</h3><span class="hint" id="paperCount"></span></div>
+    <div class="sub">Every attempt logged with what went wrong, because the error type is the lesson. No single graph mixes timed with untimed.</div>
+    <div id="paperInsight" style="margin:10px 0 4px"></div>
+    <div id="paperList"></div>
+    <div style="margin-top:12px;display:grid;gap:8px">
+     <input id="ppName" placeholder="Paper and question (2019 Paper II Q3)" aria-label="Paper name">
+     <div class="row" style="gap:8px">
+      <input id="ppMark" placeholder="Score" inputmode="numeric" aria-label="Score" style="flex:1">
+      <input id="ppMax" placeholder="Out of" inputmode="numeric" aria-label="Maximum score" style="flex:1">
+      <select id="ppTimed" aria-label="Timed" style="flex:1"><option value="untimed">Untimed</option><option value="timed">Timed</option></select>
+     </div>
+     <select id="ppErr" aria-label="Error type">
+      <option value="">Main problem, if any</option>
+      <option>Knowledge gap</option><option>Misread question</option><option>Weak application</option>
+      <option>Poor answer structure</option><option>Missing terminology</option><option>Time management</option><option>Careless mistake</option>
+     </select>
+     <button class="btn btn-solid" onclick="addPaper()">Log the attempt</button>
+     <div class="hint">Self-marked scores are labelled as yours. They never touch rewards, so log the rough ones too.</div>
+    </div>
+   </div>
+  </div>
+ </section>
+
+ <!-- ══ TAB 3 · PROGRESS ══ -->
+ <section class="page" id="pg-progress">
+  <div class="card">
+   <div class="row">
+    <div style="width:52px;height:52px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px" id="meAv"></div>
+    <div class="grow"><div style="font-weight:800;font-size:16px" id="meName"></div><div class="sub" id="meMeta"></div></div>
+   </div>
+   <div class="split" style="margin-top:12px">
+    <div class="me-stat card" style="margin:0"><b id="meAtt">0%</b><span>verified attendance</span></div>
+    <div class="me-stat card" style="margin:0"><b id="meBest">0</b><span>personal best score</span></div>
+   </div>
+  </div>
+  <div class="card">
+   <h3>Covered against shown</h3>
+   <div class="sub" style="margin-bottom:10px">What the class has covered, and how much of it you have demonstrated in a check. The space between the bars is your work list, and having one is normal.</div>
+   <div class="hint">Covered in class</div><div class="bar" style="margin:4px 0 10px"><i id="pbCov"></i></div>
+   <div class="hint">Demonstrated by you</div><div class="bar" style="margin:4px 0 2px"><i id="pbDem"></i></div>
+   <div class="hint" id="pbGapLine" style="margin-top:8px"></div>
+  </div>
+  <div class="card">
+   <h3>Rewards</h3>
+   <div class="sub" style="margin-bottom:6px">Earned by turning up. Attendance is marked in class on Leon's side, so nothing in this app can game it. The bar is 90%, not perfect: life happens.</div>
+   <div id="rewardList"></div>
+   <div class="hint" style="margin-top:6px">Approved absences, cancelled classes and replacement classes are settled by Leon when a claim is checked.</div>
+  </div>
+  <div class="card">
+   <div class="row" style="align-items:baseline"><h3 class="grow">The road to an A</h3><span class="hint" id="roadCount"></span></div>
+   <div class="sub">Leon's 14 steps. They light off your real data, never off promises.</div>
+   <div id="roadList" style="margin-top:8px"></div>
+  </div>
+  <div class="card" id="socialSlot"></div>
+  <div class="card">
+   <div class="eyebrow">Leon's read on you</div>
+   <div style="font-weight:700" id="meLevel"></div>
+   <div class="hint" style="margin-top:3px">Set by Leon in class, not by this app. It moves when your work does.</div>
+  </div>
+  <div class="card">
+   <div class="eyebrow">Your oath</div>
+   <p class="oath">I chose an A. I will turn up, do the work when it is set, fix what I get wrong and ask early when I am stuck. <b>Signed on my first day.</b></p>
+  </div>
+  <div class="card"><div class="hint">Demo build. Sample data only, resets on reload. Nothing here is a real student.</div></div>
+ </section>
+</main>
+
+<nav class="nav" aria-label="Sections">
+ <button class="on" data-pg="next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Do next</button>
+ <button data-pg="learn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 0-2 2z"/><path d="M9 7h7M9 11h7"/></svg>Learn &amp; practise</button>
+ <button data-pg="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Progress</button>
+</nav>
+
+<!-- calibration check sheet -->
+<div class="shade" id="shade" role="dialog" aria-modal="true" aria-label="Quick check">
+ <div class="sheet" id="sheetBody"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   DATA. Demo mode: in-memory, reseeds clean every reload, like the staff
+   OS demo. ONE CLOCK: AS_OF must equal the staff OS demo date or the two
+   surfaces silently disagree about which classes happened.
+   ══════════════════════════════════════════════════════════════════════ */
+var CFG={
+ app:{name:'BSWL Student',version:'student v2'},
+ leonWa:'94771396173',
+ /* PLACEHOLDER - NEEDS LEON: the real exam timetable date. */
+ exam:{date:'2027-08-16',label:'A/L Business Studies 2027'},
+ /* PLACEHOLDER - NEEDS LEON: real class days and times per location. */
+ schedule:{day:6,label:'Saturday',note:'Kings · Nugegoda (confirm the time with Leon)'},
+ demo:{asOf:'2026-07-15'},
+};
+var AS_OF=new Date(CFG.demo.asOf+'T09:41:00');
+function todayISO(){var d=AS_OF;return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var DY=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+function fmtD(iso){var p=iso.split('-');return +p[2]+' '+MN[+p[1]-1];}
+function dowName(iso){return DY[new Date(iso+'T00:00:00').getDay()];}
+function dMinus(iso,days){var p=iso.split('-');var dt=new Date(+p[0],+p[1]-1,+p[2]);dt.setDate(dt.getDate()-days);
+ return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');}
+function daysBetween(a,b){return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);}
+
+/* SYLLABUS. PLACEHOLDER - NEEDS LEON. Must stay IDENTICAL to the staff OS
+   list (same ids). One shared table when Supabase lands. */
+var SYLLABUS=[
+ {u:'1',name:'The nature of business',topics:[['1.1','What a business is and does'],['1.2','Needs, wants and resources'],['1.3','Business objectives'],['1.4','Stakeholders']]},
+ {u:'2',name:'The business environment',topics:[['2.1','Internal environment'],['2.2','Micro environment'],['2.3','Macro environment'],['2.4','Environment analysis']]},
+ {u:'3',name:'Forms of business',topics:[['3.1','Sole proprietorship'],['3.2','Partnerships'],['3.3','Companies'],['3.4','State and cooperative bodies']]},
+ {u:'4',name:'Management process',topics:[['4.1','Planning'],['4.2','Organising'],['4.3','Leading'],['4.4','Controlling']]},
+ {u:'5',name:'Marketing',topics:[['5.1','Markets and customers'],['5.2','The marketing mix'],['5.3','Product and price'],['5.4','Promotion and place']]},
+ {u:'6',name:'Human resources',topics:[['6.1','HR planning'],['6.2','Recruitment and selection'],['6.3','Training and development'],['6.4','Motivation']]},
+ {u:'7',name:'Operations and finance',topics:[['7.1','Operations management'],['7.2','Sources of finance'],['7.3','Financial statements'],['7.4','Ratios and interpretation']]},
+ {u:'8',name:'Business growth',topics:[['8.1','Small business and entrepreneurship'],['8.2','Growth strategies'],['8.3','International business']]},
+];
+function flatTopics(){var o=[];SYLLABUS.forEach(function(u){u.topics.forEach(function(t){o.push(t[0]);});});return o;}
+function topicName(id){var n='';SYLLABUS.forEach(function(u){u.topics.forEach(function(t){if(t[0]===id)n=t[1];});});return n;}
+
+/* RETRIEVAL CHECKS. SAMPLE QUESTIONS - NEEDS LEON. Placeholders so the
+   calibration loop can be felt in the demo. Leon's real checks replace
+   them before any student sees this; nothing here is presented as his
+   teaching. One question per topic, three options, one correct. */
+var CHECKS={
+ '1.1':{q:'A business is best described as an organisation that',opts:['uses resources to make things people need or want','collects taxes for the government','only sells goods, never services'],a:0},
+ '1.3':{q:'A business objective is',opts:['a target the business works towards','a legal requirement','a type of resource'],a:0},
+ '1.4':{q:'Which of these is a stakeholder in a business?',opts:['Only the owner','Anyone affected by its decisions, like employees or customers','Only its paying customers'],a:1},
+ '2.1':{q:'The internal environment includes',opts:['inflation and exchange rates','the firm’s own staff, culture and resources','government tax policy'],a:1},
+ '2.2':{q:'A firm’s micro environment includes',opts:['its competitors and suppliers','the weather','world oil prices'],a:0},
+ '2.3':{q:'A change in national interest rates belongs to the',opts:['internal environment','micro environment','macro environment'],a:2},
+ '3.1':{q:'A sole proprietorship is owned by',opts:['one person, who carries unlimited liability','at least two partners','shareholders with limited liability'],a:0},
+ '3.2':{q:'In an ordinary partnership, profits are shared',opts:['equally by law, always','as the partnership agreement sets out','only by the senior partner’s decision'],a:1},
+ '4.1':{q:'Planning in the management process means',opts:['checking results against targets','setting objectives and deciding how to reach them','arranging people into a structure'],a:1},
+};
+
+/* class dates: SAME formula as the staff OS seed, so absences line up */
+function classDates(){var out=[];for(var w=9;w>=0;w--){out.push(dMinus(todayISO(),7*w+((7-new Date(todayISO().split('-')[0],+todayISO().split('-')[1]-1,+todayISO().split('-')[2]).getDay())%7)));}return out;}
+function seedClassLog(){
+ var flat=flatTopics(),dates=classDates(),out=[],done=0,total=16,per=total/dates.length;
+ dates.forEach(function(d,i){var upto=Math.round(per*(i+1));var slice=flat.slice(done,Math.min(upto,total));done=Math.min(upto,total);
+  if(slice.length)out.push({date:d,topics:slice});});
+ return out;
+}
+
+/* THE DEMO STUDENT. Attendance mirrors staff id 1: absent when
+   ((id*7+w*3)%10)===0, so last week's class was missed. That miss powers
+   the catch-up task with nobody typing anything. */
+var ME={id:1,name:'Senuki Perera',batch:'2027',loc:'Kings · Nugegoda',program:'Theory',joined:'2026-01-10',level:'okay'};
+function seedAttendance(){var out=[];classDates().forEach(function(d,i){var w=9-i;
+ out.push({date:d,present:((ME.id*7+w*3)%10)!==0});});return out;}
+
+var DB={
+ classLog:seedClassLog(),
+ attendance:seedAttendance(),
+ /* confidence: the student's feel per topic. Never proof, never rewarded. */
+ self:{'1.1':'got','1.2':'got','1.3':'got','1.4':'shaky','2.1':'got','2.2':'shaky','2.3':'got','3.1':'got','3.2':'lost','4.1':'shaky'},
+ /* evidence: what checks have shown. untested | developing | demonstrated,
+    each with a date, because evidence goes stale. Seed includes one honest
+    conflict: 2.3 feels "got" but the check exposed a gap. */
+ evidence:{
+  '1.1':{state:'demonstrated',date:'2026-06-06'},
+  '1.2':{state:'demonstrated',date:'2026-06-06'},
+  '1.3':{state:'developing',date:'2026-06-13'},
+  '2.1':{state:'demonstrated',date:'2026-05-30'},
+  '2.3':{state:'developing',date:'2026-07-04'},
+  '3.1':{state:'demonstrated',date:'2026-07-04'},
+ },
+ /* tutes: assigned | started | done | fix. Self-reported. */
+ tutes:{'1':'done','2':'done','3':'started','4':'assigned'},
+ papers:[
+  {date:'2026-03-14',name:'2018 Paper I Q2',score:12,max:20,timed:'untimed',marker:'self',err:'Poor answer structure'},
+  {date:'2026-04-18',name:'2019 Paper I Q1',score:14,max:20,timed:'untimed',marker:'self',err:'Missing terminology'},
+  {date:'2026-05-16',name:'2019 Paper II Q3',score:13,max:20,timed:'timed',marker:'leon',err:'Weak application'},
+  {date:'2026-06-13',name:'2020 Paper I Q2',score:15,max:20,timed:'timed',marker:'self',err:'Weak application'},
+  {date:'2026-07-04',name:'2021 Paper I Q1',score:16,max:20,timed:'timed',marker:'self',err:''},
+ ],
+ /* batch aggregates: seeded for the demo, sample size always shown. The
+    live build computes these server-side. Never rankings. */
+ batch:{n:50,tuteDoneRate:71,paperMedian:14},
+};
+
+/* ══ DERIVED ENGINES ══ */
+function coveredMap(){var m={};DB.classLog.forEach(function(r){r.topics.forEach(function(t){m[t]=r.date;});});return m;}
+function coveredPc(){return Math.round(Object.keys(coveredMap()).length/flatTopics().length*100);}
+function demonstratedPc(){var cov=Object.keys(coveredMap());if(!cov.length)return 0;
+ var d=cov.filter(function(t){return DB.evidence[t]&&DB.evidence[t].state==='demonstrated';}).length;
+ return Math.round(d/cov.length*100);}
+function missedClasses(){return DB.attendance.filter(function(a){return !a.present;}).map(function(a){return a.date;});}
+function attRate(){var n=DB.attendance.length;if(!n)return null;
+ return DB.attendance.filter(function(a){return a.present;}).length/n;}
+function lastClass(){return DB.classLog.length?DB.classLog[DB.classLog.length-1]:null;}
+function nextClassISO(){var t=todayISO();for(var i=1;i<=7;i++){var d=dMinus(t,-i);
+ if(new Date(d+'T00:00:00').getDay()===CFG.schedule.day)return d;}return t;}
+function evState(t){return (DB.evidence[t]&&DB.evidence[t].state)||'untested';}
+function evStale(t){var e=DB.evidence[t];if(!e||!e.date)return false;return daysBetween(e.date,todayISO())>42;}
+function examPhase(){var d=daysBetween(todayISO(),CFG.exam.date);
+ if(d>300)return 'Early phase: learn it properly and check it early.';
+ if(d>150)return 'Middle phase: topic questions and answer technique.';
+ if(d>90)return 'Paper phase: mixed timed sections and error repair.';
+ if(d>21)return 'Final 90: full papers, pacing and repeated-error repair.';
+ return 'Final weeks: focused revision, no new backlogs.';}
+
+/* ── THE DO-NEXT ENGINE. One recommended action, ranked by priority, each
+   with its reason attached. Recovery tasks capped at three so the list is
+   a plan, never a backlog. ── */
+function candidates(){
+ var out=[],cov=coveredMap(),missed=missedClasses();
+ /* 1. catch-up after a missed class */
+ DB.classLog.forEach(function(r){
+  if(missed.indexOf(r.date)<0)return;
+  var open=r.topics.filter(function(t){return evState(t)!=='demonstrated';});
+  if(open.length)out.push({pr:1,kind:'catchup',
+   t:'Catch up on '+open.join(' and '),
+   why:'You missed '+dowName(r.date)+'’s class. It covered '+open.map(function(t){return t+' '+topicName(t);}).join(' and ')+'.',
+   act:function(){go('learn');seg('syllabus');}});
+ });
+ /* 2. a check exposed a gap where you felt confident */
+ Object.keys(DB.self).forEach(function(t){
+  if(DB.self[t]==='got'&&evState(t)==='developing')out.push({pr:2,kind:'conflict',
+   t:'Revisit '+t+' '+topicName(t),
+   why:'You said you had '+t+', but the quick check caught a gap. No shame in it, that is what checks are for.',
+   act:function(){go('learn');seg('syllabus');}});
+ });
+ /* 3. topics marked Lost */
+ Object.keys(DB.self).forEach(function(t){
+  if(DB.self[t]==='lost'&&cov[t])out.push({pr:3,kind:'lost',
+   t:'Rebuild '+t+' '+topicName(t),
+   why:'You marked this one Lost. Start with the unit '+t.split('.')[0]+' tute, then take the check.',
+   act:function(){go('learn');seg('syllabus');}});
+ });
+ /* 4. an assigned tute not finished */
+ Object.keys(DB.tutes).forEach(function(u){
+  var st=DB.tutes[u];
+  if(st==='started'||st==='assigned')out.push({pr:4,kind:'tute',
+   t:(st==='started'?'Finish':'Start')+' the unit '+u+' tute',
+   why:st==='started'?'It is half done. Twenty focused minutes closes it.':'It is assigned and untouched. First pages are the hardest.',
+   act:function(){go('learn');seg('tutes');}});
+ });
+ /* 5. spaced retrieval: demonstrated but gone stale */
+ Object.keys(DB.evidence).forEach(function(t){
+  if(evState(t)==='demonstrated'&&evStale(t))out.push({pr:5,kind:'stale',
+   t:'Re-check '+t+' '+topicName(t),
+   why:'You proved this one on '+fmtD(DB.evidence[t].date)+' and it has not been checked in six weeks. Memory fades quietly.',
+   act:function(){go('learn');seg('syllabus');}});
+ });
+ /* 6. always available: a timed question, tuned to the exam phase */
+ out.push({pr:6,kind:'paper',
+  t:'Do one timed past-paper question',
+  why:examPhase(),
+  act:function(){go('learn');seg('papers');}});
+ out.sort(function(a,b){return a.pr-b.pr;});
+ var recovery=out.filter(function(c){return c.pr<6;}).slice(0,3);
+ return recovery.concat(out.filter(function(c){return c.pr===6;})).slice(0,4);
+}
+
+/* ── REWARDS. Verified attendance ONLY. Rolling windows, no harsh streak
+   reset: tier 1 counts presents in the LAST FOUR classes, so one bad week
+   rolls out of the window instead of zeroing you. ── */
+function rewards(){
+ var att=attRate()||0;
+ var last4=DB.attendance.slice(-4).filter(function(a){return a.present;}).length;
+ return [
+  {t:'Four of your last four',p:'Be there for four classes in a row and the first bit of BSWL merch is yours. A missed week rolls out of the window, it does not erase you.',
+   have:last4,need:4,done:last4>=4,rule:'Counts your last four classes on Leon’s attendance record.'},
+  {t:'A term at 90%',p:'Hold 90% attendance for the term and the BSWL t-shirt is yours.',
+   have:Math.round(att*100),need:90,pct:true,done:att>=0.9&&DB.attendance.length>=10,rule:'Verified attendance across the term, checked when you claim.'},
+  {t:'A year at 90%',p:'Hold it for the year and you graduate with 10% off at the partner university.',
+   have:DB.attendance.length,need:40,done:false,flag:'to be confirmed',rule:'To be confirmed in writing before anyone counts on it.'},
+ ];
+}
+
+/* ── ROAD TO AN A: Leon's 14 steps, lit only by real data. ── */
+function roadSteps(){
+ var att=attRate()||0,papers=DB.papers.length;
+ var tutesDone=Object.keys(DB.tutes).filter(function(k){return DB.tutes[k]==='done';}).length;
+ var demonstrated=Object.keys(DB.evidence).filter(function(t){return DB.evidence[t].state==='demonstrated';}).length;
+ var timed=DB.papers.filter(function(p){return p.timed==='timed';}).length;
+ var clean=DB.papers.some(function(p){return !p.err;});
+ var marksUp=(function(){var t=DB.papers;if(t.length<2)return false;
+  return t[t.length-1].score/t[t.length-1].max>t[0].score/t[0].max;})();
+ var lost=Object.keys(DB.self).filter(function(k){return DB.self[k]==='lost';}).length;
+ return [
+  ['01','Set your goal',true,'Lit by signing your oath.'],
+  ['02','Attend every class',att>=0.9,'Lights at 90% verified attendance. You are at '+Math.round(att*100)+'%.'],
+  ['03','Review in 24 hours',Object.keys(DB.self).length>=8,'Lights once you have rated 8 topics honestly.'],
+  ['04','Build summary notes',tutesDone>=1,'Lights with your first finished tute.'],
+  ['05','Practise questions',papers>=1,'Lights with your first logged attempt.'],
+  ['06','Mark to the scheme',DB.papers.some(function(p){return p.marker==='leon';}),'Lights when Leon has marked one of your attempts.'],
+  ['07','Fix every mistake',clean,'Lights when an attempt comes back clean of its old error.'],
+  ['08','Timed past papers',timed>=3,'Lights at three timed attempts. You have '+timed+'.'],
+  ['09','Improve weak topics',lost===0,'Lights when no topic is marked Lost.'],
+  ['10','Ask early',false,'Lights the term you ask Leon a question before class, not after the exam.'],
+  ['11','Track progress',marksUp,'Lights when your latest score rate beats your first.'],
+  ['12','Repeat',demonstrated>=5,'Lights at five topics demonstrated in checks. You have '+demonstrated+'.'],
+  ['13','Exam ready',coveredPc()===100&&papers>=8,'Lights when the syllabus is done and eight attempts are in.'],
+  ['14','Achieve an A',false,'This one lights in the exam hall.'],
+ ];
+}
+
+/* ══ RENDER ══ */
+var IC_CHECK='<svg class="ic" style="width:13px;height:13px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
+var IC_X='<svg class="ic" style="width:11px;height:11px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+var EV_LABEL={untested:'untested',developing:'developing',demonstrated:'demonstrated'};
+
+function renderNext(){
+ document.getElementById('topDay').innerHTML=dowName(todayISO())+'<br>'+fmtD(todayISO());
+ var cs=candidates(),top=cs[0],rest=cs.slice(1);
+ document.getElementById('doNextSlot').innerHTML=
+  '<div class="card donext"><div class="eyebrow">Do this next</div><h2>'+esc(top.t)+'</h2>'
+  +'<div class="why">'+esc(top.why)+'</div>'
+  +'<button class="btn" onclick="NEXT_ACT(0)">Start now</button></div>';
+ document.getElementById('queueSlot').innerHTML=rest.length?rest.map(function(c,i){
+  return '<button class="q-row" style="width:100%" onclick="NEXT_ACT('+(i+1)+')"><span class="q-no">'+(i+2)+'</span><span class="grow"><span class="q-t">'+esc(c.t)+'</span><br><span class="q-why">'+esc(c.why)+'</span></span></button>';
+ }).join(''):'<div class="hint">Nothing else queued. Rare air. Enjoy it.</div>';
+ var nx=nextClassISO();
+ document.getElementById('nextClass').textContent=CFG.schedule.label+' '+fmtD(nx);
+ document.getElementById('nextClassNote').textContent=CFG.schedule.note;
+ var lc=lastClass();
+ document.getElementById('lastCovered').innerHTML=lc?lc.topics.map(function(t){
+  return '<div><b>'+t+'</b> '+esc(topicName(t))+'</div>';}).join(''):'<span class="hint">No classes logged yet.</span>';
+ document.getElementById('examLine').textContent=daysBetween(todayISO(),CFG.exam.date)+' days · '+CFG.exam.label;
+ document.getElementById('phaseLine').textContent=examPhase();
+ document.getElementById('waLeon').href='https://wa.me/'+CFG.leonWa+'?text='+encodeURIComponent('Hi Leon, '+ME.name.split(' ')[0]+' here from the '+ME.batch+' batch. Quick question: ');
+}
+function NEXT_ACT(i){var c=candidates()[i];if(c)c.act();}
+
+function renderSyllabus(){
+ var cov=coveredMap();
+ document.getElementById('sylTree').innerHTML=SYLLABUS.map(function(u){
+  var covered=u.topics.filter(function(t){return cov[t[0]];}).length;
+  return '<div class="unit"><div class="u-h"><span class="u-no">'+u.u+'</span><span class="u-nm">'+esc(u.name)+'</span><span class="u-pc">'+covered+'/'+u.topics.length+' in class</span></div>'
+   +u.topics.map(function(t){
+    var c=cov[t[0]],st=DB.self[t[0]]||'',ev=evState(t[0]);
+    var inner=st==='got'?IC_CHECK:(st==='shaky'?'<i></i>':(st==='lost'?IC_X:''));
+    var evLine=c?('covered '+fmtD(c)+' · '+EV_LABEL[ev]+(DB.evidence[t[0]]&&DB.evidence[t[0]].date?(' '+fmtD(DB.evidence[t[0]].date)):'')+(evStale(t[0])?' · worth a re-check':'')):'not covered yet';
+    return '<div class="topic'+(c?'':' uncovered')+'">'
+     +'<button class="self '+st+'" aria-label="Rate '+t[0]+'" onclick="cycleSelf(\''+t[0]+'\')">'+inner+'</button>'
+     +'<span class="t-no">'+t[0]+'</span><div class="t-main"><div class="t-nm">'+esc(t[1])+'</div><div class="t-ev">'+evLine+'</div></div>'
+     +(c&&CHECKS[t[0]]?'<button class="tag" onclick="openCheck(\''+t[0]+'\')">check</button>':'')
+     +'</div>';
+   }).join('')+'</div>';
+ }).join('');
+}
+function cycleSelf(t){
+ var order=['','got','shaky','lost'];
+ var next=order[(order.indexOf(DB.self[t]||'')+1)%order.length];
+ if(next)DB.self[t]=next;else delete DB.self[t];
+ renderSyllabus();renderNext();renderProgress();
+ /* calibration: saying "Got it" earns a friendly check, never a free pass */
+ if(next==='got'&&CHECKS[t])openCheck(t,true);
+}
+
+/* calibration check sheet */
+var CHK={topic:null,picked:null};
+function openCheck(t,fromGot){
+ var c=CHECKS[t];if(!c)return;
+ CHK={topic:t,picked:null};
+ document.getElementById('sheetBody').innerHTML=
+  '<div class="eyebrow">Quick check · '+t+' '+esc(topicName(t))+'</div>'
+  +(fromGot?'<div class="hint" style="margin-bottom:8px">You marked it Got it. Thirty seconds to show it.</div>':'')
+  +'<div style="font-weight:700;font-size:14.5px;margin-bottom:4px">'+esc(c.q)+'</div>'
+  +c.opts.map(function(o,i){return '<button class="opt" onclick="pickOpt('+i+')">'+esc(o)+'</button>';}).join('')
+  +'<div class="row" style="margin-top:14px"><button class="btn btn-line grow" onclick="closeCheck()">Not now</button>'
+  +'<button class="btn btn-solid grow" onclick="answerCheck()">Answer</button></div>'
+  +'<div class="hint" style="margin-top:10px">Sample question for the demo. Leon’s real checks replace these.</div>';
+ document.getElementById('shade').classList.add('on');
+}
+function pickOpt(i){CHK.picked=i;
+ document.querySelectorAll('#sheetBody .opt').forEach(function(b,j){b.classList.toggle('pick',j===i);});}
+function closeCheck(){document.getElementById('shade').classList.remove('on');}
+function answerCheck(){
+ if(CHK.picked==null){toast('Pick an answer first.');return;}
+ var c=CHECKS[CHK.topic];var right=CHK.picked===c.a;var felt=DB.self[CHK.topic];
+ DB.evidence[CHK.topic]={state:right?'demonstrated':'developing',date:todayISO()};
+ closeCheck();
+ /* neutral calibration messages: honesty is never punished */
+ if(right&&felt!=='got')toast('You felt unsure, but answered correctly. Trust yourself a bit more.');
+ else if(right)toast('Demonstrated. It goes on the record with today’s date.');
+ else if(felt==='got')toast('You felt confident, but this question exposed a gap. Now you know exactly where to look.');
+ else toast('Not yet, and that is fine. The topic stays on your list.');
+ renderSyllabus();renderNext();renderProgress();
+}
+
+var TUTE_FLOW={assigned:'started',started:'done',done:'fix',fix:'assigned'};
+var TUTE_LABEL={assigned:'assigned',started:'started',done:'done',fix:'needs another pass'};
+function renderTutes(){
+ var lc=coveredMap();
+ var units=SYLLABUS.filter(function(u){return u.topics.some(function(t){return lc[t[0]];});});
+ document.getElementById('tuteList').innerHTML=units.map(function(u){
+  var st=DB.tutes[u.u]||'assigned';
+  return '<button class="tuterow" style="width:100%" onclick="togTute(\''+u.u+'\')">'
+   +'<span class="t">Unit '+u.u+' tute · '+esc(u.name)+'</span><span class="st">'+TUTE_LABEL[st]+'</span></button>';
+ }).join('');
+ var dn=Object.keys(DB.tutes).filter(function(k){return DB.tutes[k]==='done';}).length;
+ document.getElementById('tuteCount').textContent=dn+' of '+units.length+' done';
+}
+function togTute(u){DB.tutes[u]=TUTE_FLOW[DB.tutes[u]||'assigned'];renderTutes();renderNext();renderProgress();}
+
+function renderPapers(){
+ var ps=DB.papers;
+ document.getElementById('paperCount').textContent=ps.length+' attempts';
+ var errs={};ps.forEach(function(p){if(p.err)errs[p.err]=(errs[p.err]||0)+1;});
+ var top=Object.keys(errs).sort(function(a,b){return errs[b]-errs[a];})[0];
+ document.getElementById('paperInsight').innerHTML=top
+  ?'<span class="tag">Most common problem: '+esc(top)+' ('+errs[top]+' of '+ps.length+')</span>'
+  :'<span class="hint">Log attempts with their error type and the pattern shows itself.</span>';
+ document.getElementById('paperList').innerHTML=ps.slice(-5).reverse().map(function(p){
+  return '<div class="paper"><div class="p-h"><span class="hint" style="width:52px;flex:none">'+fmtD(p.date)+'</span>'
+   +'<span style="font-size:13px;font-weight:600">'+esc(p.name)+'</span><span class="mk">'+p.score+'/'+p.max+'</span></div>'
+   +'<div class="p-m">'+(p.timed==='timed'?'timed':'untimed')+' · '+(p.marker==='leon'?'marked by Leon':'self-marked')+(p.err?' · '+esc(p.err):' · clean')+'</div></div>';
+ }).join('');
+}
+function addPaper(){
+ var n=document.getElementById('ppName').value.trim();
+ var s=parseInt(document.getElementById('ppMark').value,10);
+ var m=parseInt(document.getElementById('ppMax').value,10);
+ if(!n||isNaN(s)||isNaN(m)||m<1||s<0||s>m){toast('An attempt needs a name, a score and what it was out of.');return;}
+ DB.papers.push({date:todayISO(),name:n,score:s,max:m,
+  timed:document.getElementById('ppTimed').value,marker:'self',
+  err:document.getElementById('ppErr').value});
+ ['ppName','ppMark','ppMax'].forEach(function(id){document.getElementById(id).value='';});
+ document.getElementById('ppErr').value='';
+ renderPapers();renderNext();renderProgress();toast('Logged, labelled self-marked. Honest logs make honest plans.');
+}
+
+function renderProgress(){
+ document.getElementById('meAv').textContent=ME.name.split(' ').map(function(w){return w[0];}).slice(0,2).join('');
+ document.getElementById('meName').textContent=ME.name;
+ document.getElementById('meMeta').textContent=ME.batch+' batch · '+ME.loc+' · '+ME.program+' · joined '+fmtD(ME.joined);
+ var r=attRate();
+ document.getElementById('meAtt').textContent=r==null?'new':Math.round(r*100)+'%';
+ var best=DB.papers.reduce(function(m,p){return Math.max(m,Math.round(p.score/p.max*100));},0);
+ document.getElementById('meBest').textContent=best?best+'%':'none yet';
+ document.getElementById('pbCov').style.width=coveredPc()+'%';
+ document.getElementById('pbDem').style.width=Math.round(coveredPc()*demonstratedPc()/100)+'%';
+ document.getElementById('pbGapLine').textContent='Covered '+coveredPc()+'% · demonstrated '+demonstratedPc()+'% of what is covered.';
+ document.getElementById('rewardList').innerHTML=rewards().map(function(rw){
+  var pc=Math.min(100,Math.round(rw.have/rw.need*100));
+  return '<div class="reward"><div class="r-t">'+(rw.done?IC_CHECK:'')+' '+esc(rw.t)+(rw.flag?' <span class="tag">'+rw.flag+'</span>':'')+'</div>'
+   +'<div class="r-p">'+esc(rw.p)+'</div>'
+   +'<div class="row"><div class="bar grow"><i style="width:'+pc+'%"></i></div><span class="hint" style="flex:none">'+(rw.pct?rw.have+'% of '+rw.need+'%':rw.have+' of '+rw.need)+'</span></div>'
+   +'<div class="hint" style="margin-top:5px">'+esc(rw.rule)+'</div></div>';
+ }).join('');
+ var steps=roadSteps(),lit=steps.filter(function(s){return s[2];}).length;
+ document.getElementById('roadCount').textContent=lit+' of 14 lit';
+ document.getElementById('roadList').innerHTML=steps.map(function(s){
+  return '<div class="step'+(s[2]?' lit':'')+'"><div class="dot">'+(s[2]?IC_CHECK:s[0])+'</div>'
+   +'<div class="grow"><div class="s-t">'+esc(s[1])+'</div><div class="s-how">'+esc(s[3])+'</div></div></div>';
+ }).join('');
+ document.getElementById('socialSlot').innerHTML='<h3>Your batch this term</h3>'
+  +'<div class="sub" style="margin-bottom:8px">Percentages from '+DB.batch.n+' students, never rankings. Your only race is with the syllabus.</div>'
+  +'<div class="row" style="padding:5px 0"><span class="grow" style="font-size:13px">'+DB.batch.tuteDoneRate+'% have finished the current tute</span></div>'
+  +'<div class="row" style="padding:5px 0"><span class="grow" style="font-size:13px">Median paper score is '+DB.batch.paperMedian+' of 20</span></div>';
+ document.getElementById('meLevel').textContent=ME.level==='good'?'Strong':(ME.level==='bad'?'Needs work':'Okay');
+}
+
+/* ══ NAV + BOOT. Hash deep-links (#learn, #papers, #progress) so a
+   WhatsApp message can land a student directly on a task. ══ */
+function go(pg){
+ document.querySelectorAll('.page').forEach(function(p){p.classList.toggle('on',p.id==='pg-'+pg);});
+ document.querySelectorAll('.nav button').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-pg')===pg);});
+ window.scrollTo(0,0);
+}
+function seg(which){
+ document.querySelectorAll('#learnSeg button').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-seg')===which);});
+ ['syllabus','tutes','papers'].forEach(function(s){document.getElementById('seg-'+s).style.display=s===which?'':'none';});
+}
+document.querySelectorAll('.nav button').forEach(function(b){
+ b.addEventListener('click',function(){go(b.getAttribute('data-pg'));});
+});
+document.querySelectorAll('#learnSeg button').forEach(function(b){
+ b.addEventListener('click',function(){seg(b.getAttribute('data-seg'));});
+});
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
+ clearTimeout(toast._h);toast._h=setTimeout(function(){t.classList.remove('show');},2800);}
+function hideInstall(){document.getElementById('installTip').classList.remove('show');
+ try{sessionStorage.setItem('bswl_install_seen','1');}catch(e){}}
+(function(){
+ var standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+ var seen=false;try{seen=!!sessionStorage.getItem('bswl_install_seen');}catch(e){}
+ if(!standalone&&!seen)document.getElementById('installTip').classList.add('show');
+})();
+function syncOffline(){document.getElementById('offline').style.display=navigator.onLine?'none':'block';}
+window.addEventListener('online',syncOffline);window.addEventListener('offline',syncOffline);
+
+renderNext();renderSyllabus();renderTutes();renderPapers();renderProgress();syncOffline();
+if(location.hash==='#learn')go('learn');
+if(location.hash==='#papers'){go('learn');seg('papers');}
+if(location.hash==='#progress')go('progress');
+
+if('serviceWorker' in navigator&&location.protocol==='https:'){
+ navigator.serviceWorker.register('sw.js').catch(function(){});
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SELF-TEST HARNESS. Run from the console: BSWL_TEST()
+   Every promise in the spec gets an assertion, including the invisible
+   ones: reward immunity, evidence rules and the safe area.
+   ══════════════════════════════════════════════════════════════════════ */
+function BSWL_TEST(){
+ var P=0,F=0,out=[];
+ function ok(name,cond,extra){if(cond){P++;}else{F++;}out.push((cond?'PASS':'FAIL')+' · '+name+(extra?' · '+extra:''));}
+ try{
+  var cs=candidates();
+  ok('Do Next produces a ranked plan',cs.length>=2,cs.length+' actions');
+  ok('Every action carries its why',cs.every(function(c){return c.why&&c.why.length>10;}));
+  ok('Top action is the missed-class catch-up',cs[0].kind==='catchup',cs[0].kind);
+  ok('Recovery tasks are capped at three',cs.filter(function(c){return c.pr<6;}).length<=3);
+  /* calibration: confidence never writes evidence */
+  var evBefore=JSON.stringify(DB.evidence);
+  DB.self['5.1']='got';DB.self['6.1']='lost';
+  ok('Confidence taps never touch evidence',JSON.stringify(DB.evidence)===evBefore);
+  delete DB.self['5.1'];delete DB.self['6.1'];
+  /* a correct answer writes dated evidence */
+  CHK={topic:'1.3',picked:CHECKS['1.3'].a};
+  answerCheck();
+  ok('A passed check writes demonstrated with a date',DB.evidence['1.3'].state==='demonstrated'&&DB.evidence['1.3'].date===todayISO());
+  ok('Confidence and evidence can disagree (2.3 got but developing)',DB.self['2.3']==='got'&&evState('2.3')==='developing');
+  /* rewards read verified data only */
+  var snap=JSON.stringify(rewards());
+  var tutesSnap=JSON.stringify(DB.tutes);
+  Object.keys(DB.tutes).forEach(function(k){DB.tutes[k]='done';});
+  DB.papers.push({date:todayISO(),name:'harness',score:20,max:20,timed:'timed',marker:'self',err:''});
+  DB.self['7.1']='got';
+  ok('No reward moves on self-reported input',JSON.stringify(rewards())===snap);
+  DB.papers.pop();DB.tutes=JSON.parse(tutesSnap);delete DB.self['7.1'];
+  ok('Missing data reads untested, never got',evState('8.3')==='untested');
+  ok('Evidence goes stale after six weeks',evStale('2.1')===true,'2.1 checked '+DB.evidence['2.1'].date);
+  ok('Demo clock matches the staff OS',CFG.demo.asOf==='2026-07-15');
+  ok('Attendance mirrors staff id 1: one absence in ten',missedClasses().length===1);
+  var src=document.documentElement.outerHTML;
+  ok('No fee or debt wording in the app shell',!/\bfee\b|\bfees\b|\bowes?\b|\bLKR\b|\bpayment\b/i.test(src.replace(new RegExp('<scr'+'ipt[\\s\\S]*<\\/scr'+'ipt>'),'')));
+  ok('No API key patterns',!/eyJ[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9]{20,}/.test(src));
+  ok('Zero em dashes in the document',src.indexOf('\u2014')<0&&src.indexOf('\u2013')<0);
+  var chroma=0;
+  document.querySelectorAll('.card,.btn,.nav button.on,.step.lit .dot,a').forEach(function(el){
+   var c=getComputedStyle(el).color.match(/\d+/g);if(c&&(+c[0]!==+c[1]||+c[1]!==+c[2]))chroma++;});
+  ok('Pure monochrome on core surfaces',chroma===0);
+  var root=document.documentElement;
+  root.style.setProperty('--sat','59px');
+  ok('Status fill obeys a 59px Dynamic Island',Math.abs(document.querySelector('.statusfill').getBoundingClientRect().height-59)<1.5);
+  root.style.setProperty('--sat','0px');
+  ok('And collapses cleanly at 0',document.querySelector('.statusfill').getBoundingClientRect().height<1.5);
+  root.style.removeProperty('--sat');
+  ['next','learn','progress'].forEach(function(p){go(p);
+   ok('Tab renders: '+p,document.getElementById('pg-'+p).classList.contains('on')&&document.getElementById('pg-'+p).textContent.trim().length>40);});
+  go('next');
+  ok('Batch proof shows its sample size',document.getElementById('socialSlot').textContent.indexOf(String(DB.batch.n))>=0);
+ }catch(e){F++;out.push('FAIL · harness crashed · '+(e&&e.message));}
+ console.log(out.join('\n'));console.log(P+' passed, '+F+' failed');
+ return {pass:P,fail:F,lines:out};
+}
+</script>
+</body>
+</html>

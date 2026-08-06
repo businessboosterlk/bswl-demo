@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0E141B">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -24,6 +29,9 @@
    --brand via color-mix, so 3 hex swaps restyle the whole app.
    ============================================================ */
 :root{
+/* ── BB APP SHELL: the phone reports its own insets, we never guess a model ── */
+--sat:env(safe-area-inset-top,0px);
+--sab:env(safe-area-inset-bottom,0px);
 /* ── BRAND (swap these 3 per client) ─────────────────────── */
 --brand:#141417;            /* BSWL: black & white minimalist — mono accent */
 --brand-dark:#000000;       /* pressed / gradient base */
@@ -94,6 +102,9 @@ input,select,textarea{font-family:inherit;color:var(--ink)}
 ::-webkit-scrollbar-track{background:transparent}
 :is(button,a,select,input,textarea,[tabindex]):focus-visible{outline:none;box-shadow:var(--ring)}
 .nav-item:focus-visible,.side-foot .out:focus-visible{box-shadow:var(--ring);outline:none}
+/* the strip behind the clock and the battery. In standalone the page owns it,
+   so the page has to paint it or the content shows through. */
+.statusfill{position:fixed;top:0;left:0;right:0;height:var(--sat);z-index:60;pointer-events:none}
 .app{display:flex;min-height:100vh;overflow-x:clip;max-width:100vw}
 .app.hide,#login.hide{display:none}
 .main{overflow-x:clip;max-width:100%}
@@ -774,6 +785,7 @@ body.dark .stat-kpi .val{color:#fff}
 </style>
 </head>
 <body>
+<div class="statusfill" aria-hidden="true"></div>
 
 <!-- ══════════ LOGIN (two-step, user list is data-driven from CFG.users) ══════════ -->
 <div id="login">
@@ -818,6 +830,7 @@ body.dark .stat-kpi .val{color:#fff}
         <button class="nav-item" data-pg="quotes" data-role="all" data-module="quotes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>Quotes</button>
         <button class="nav-item" data-pg="inventory" data-role="all" data-module="inventory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Inventory<span class="badge" id="nbInventory"></span></button>
         <button class="nav-item" data-pg="attendance" data-role="owner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/><path d="M9 15l2 2 4-4"/></svg>Attendance</button>
+        <button class="nav-item" data-pg="classes" data-role="owner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/></svg>Classes</button>
         <button class="nav-item" data-pg="tasks" data-role="all" data-module="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Task Book<span class="badge" id="nbTasks"></span></button>
       </div>
       <div class="nav-group" data-group="money">
@@ -992,6 +1005,22 @@ body.dark .stat-kpi .val{color:#fff}
         <div class="att-hint">Everyone is Present by default. Tap a student to mark them Absent.</div>
         <div class="card"><div class="card-b" id="attList" style="padding:2px 18px 10px"></div></div>
       </div>
+      <!-- ══ CLASSES (owner-only): Leon's ten-second topic marker.
+           One tap per class: pick the batch, tick what was covered, Save.
+           Never per student. This feeds the student app's catch-up engine. ══ -->
+      <div class="page" id="page-classes">
+        <div class="toolbar">
+          <input type="date" id="clsDate" class="filter" onchange="CLS.set('date',this.value)">
+          <select class="filter" id="clsBatch" onchange="CLS.set('cohort',this.value)"><option value="0">2027 Batch</option><option value="1">2028 Batch</option></select>
+        </div>
+        <div class="card"><div class="card-h"><h3>What did this class cover?</h3><span class="hint">Tick the topics, then save once. It applies to the whole batch.</span></div>
+          <div class="card-b" id="clsTopics" style="padding:6px 18px 12px"></div>
+          <div class="card-b" style="padding:0 18px 16px"><button class="btn-primary" onclick="CLS.save()">Save this class</button> <span class="hint" id="clsSaved"></span></div>
+        </div>
+        <div class="card"><div class="card-h"><h3>Coverage so far</h3><span class="hint">How much of the syllabus each batch has seen</span></div><div class="card-b" id="clsProgress" style="padding:10px 18px 16px"></div></div>
+        <div class="card"><div class="card-h"><h3>Batch signals</h3><span class="hint">Where this batch is struggling and what to teach next</span></div><div class="card-b" id="clsIntel" style="padding:10px 18px 16px"></div></div>
+        <div class="card"><div class="card-h"><h3>Worth a look</h3><span class="hint">At most ten students, each with a reason and one action</span></div><div class="card-b" id="clsQueue" style="padding:6px 18px 14px"></div></div>
+      </div>
       <div class="page" id="page-team">
         <div class="team-grid" id="teamGrid"></div>
       </div>
@@ -1130,7 +1159,9 @@ window.__ST_LOG=[];
  console.error=function(){rec('error',arguments);ce.apply(null,arguments);};
  console.warn=function(){rec('warn',arguments);cw.apply(null,arguments);};
  window.addEventListener('error',e=>rec('uncaught',[e.message||e.type]));
- window.addEventListener('unhandledrejection',e=>rec('rejection',[e.reason&&e.reason.message||String(e.reason)]));
+ window.addEventListener('unhandledrejection',e=>{var m=e.reason&&e.reason.message||String(e.reason);
+  if(/network|fetch|load failed|failed to fetch|abort/i.test(m))return; /* network noise is not an app bug */
+  rec('rejection',[m]);});
 })();
 
 /* ════════════════════════════════════════════════════════════════════
@@ -1396,7 +1427,7 @@ function seedData(){
   recurringPayments:recurringPayments,
   activity:activity,
   loginAudit:loginAudit,
-  attendance:BSWL_seedAttendance(customers),products:[],
+  attendance:BSWL_seedAttendance(customers),classLog:BSWL_seedClassLog(),products:[],
  };
 }
 
@@ -1482,7 +1513,7 @@ function buildTitles(){TITLES={
  customers:[CFG.contactWord.plural,'Enrolled students, batches and referrals'],
  quotes:['Quotes','Build and send branded quotations'],
  inventory:['Inventory','Stock, low-stock and dead-stock at a glance'],
- tasks:['Task Book','Assign and track work'],attendance:['Attendance','Mark who came to class'],
+ tasks:['Task Book','Assign and track work'],attendance:['Attendance','Mark who came to class'],classes:['Classes','Mark what each class covered'],
  finance:['Finance','Fee invoices, collections and aging'],
  recurring:[CFG.recurring.label+' collection','Who paid, collected vs expected, who owes'],
  forecast:['Forecast','Month-by-month revenue recognition'],
@@ -2974,6 +3005,107 @@ function setAttendance(sid,date,present){var a=attFor(sid,date);if(a){a.present=
 var ATT={date:null,batch:'all',loc:'all',setDate:function(v){this.date=v;renderAttendance();},set:function(k,v){this[k]=v;renderAttendance();},toggle:function(sid){var cur=attFor(sid,this.date);if(!cur)setAttendance(sid,this.date,false);else setAttendance(sid,this.date,!cur.present);renderAttendance();renderBadges();}};
 function renderAttendance(){var el=document.getElementById('attList');if(!el)return;if(!ATT.date)ATT.date=attSessions()[0]||todayISO();var dp=document.getElementById('attDate');if(dp)dp.value=ATT.date;var studs=DB.get('customers').filter(function(s){return s.status==='active'&&(s.joined||'0000')<=ATT.date&&(ATT.batch==='all'||String(s.cohort)===ATT.batch)&&(ATT.loc==='all'||s.co===ATT.loc);}).sort(function(a,b){return a.name.localeCompare(b.name);});var present=0,absent=0;el.innerHTML=studs.map(function(s){var a=attFor(s.id,ATT.date);var isAbsent=a&&!a.present;if(isAbsent)absent++;else present++;var r=attRate(s.id);var rp=r!=null?Math.round(r*100)+'% attendance':'new';return '<div class="att-row"><div class="pr-av">'+init2(s.name)+'</div><div class="pr-main"><div class="pr-nm">'+s.name+'</div><div class="pr-mt">'+cohortLabel(s.cohort).replace(' Batch','')+' · '+s.co+' · '+rp+'</div></div><button class="att-btn '+(isAbsent?'is-absent':'is-present')+'" onclick="ATT.toggle('+s.id+')">'+(isAbsent?'Absent':'Present')+'</button></div>';}).join('')||emptyC(I.users,'No students for this class','Nobody had joined by this date, or the filter is empty.');var sum=document.getElementById('attSummary');if(sum)sum.innerHTML=studs.length?'<div class="att-sum"><div class="asx as-p"><b>'+present+'</b> present</div><div class="asx as-a"><b>'+absent+'</b> absent</div><div class="asx as-r"><b>'+Math.round(present/studs.length*100)+'%</b> turnout</div></div>':'';}
 if(typeof RENDERERS!=='undefined')RENDERERS.attendance=renderAttendance;
+/* ===== BSWL CLASSES: the syllabus model + Leon's ten-second topic marker =====
+   PLACEHOLDER TOPIC LIST - NEEDS LEON. The unit names follow the shape of the
+   A/L Business Studies syllabus but the real list must come from Leon's own
+   scheme of work before this goes near a student. Swap the arrays, keep the ids.
+   Coverage is per BATCH, never per student: one save covers everyone in it. */
+function BSWL_SYLLABUS(){return BSWL_SYLLABUS._c||(BSWL_SYLLABUS._c=[
+ {u:'1',name:'The nature of business',topics:[['1.1','What a business is and does'],['1.2','Needs, wants and resources'],['1.3','Business objectives'],['1.4','Stakeholders']]},
+ {u:'2',name:'The business environment',topics:[['2.1','Internal environment'],['2.2','Micro environment'],['2.3','Macro environment'],['2.4','Environment analysis']]},
+ {u:'3',name:'Forms of business',topics:[['3.1','Sole proprietorship'],['3.2','Partnerships'],['3.3','Companies'],['3.4','State and cooperative bodies']]},
+ {u:'4',name:'Management process',topics:[['4.1','Planning'],['4.2','Organising'],['4.3','Leading'],['4.4','Controlling']]},
+ {u:'5',name:'Marketing',topics:[['5.1','Markets and customers'],['5.2','The marketing mix'],['5.3','Product and price'],['5.4','Promotion and place']]},
+ {u:'6',name:'Human resources',topics:[['6.1','HR planning'],['6.2','Recruitment and selection'],['6.3','Training and development'],['6.4','Motivation']]},
+ {u:'7',name:'Operations and finance',topics:[['7.1','Operations management'],['7.2','Sources of finance'],['7.3','Financial statements'],['7.4','Ratios and interpretation']]},
+ {u:'8',name:'Business growth',topics:[['8.1','Small business and entrepreneurship'],['8.2','Growth strategies'],['8.3','International business']]},
+])};
+function BSWL_topicName(id){var hit='';BSWL_SYLLABUS().forEach(function(u){u.topics.forEach(function(t){if(t[0]===id)hit=t[1];});});return hit;}
+function BSWL_topicCount(){var n=0;BSWL_SYLLABUS().forEach(function(u){n+=u.topics.length;});return n;}
+function BSWL_classDates(){var out=[];for(var w=9;w>=0;w--){out.push(BSWL_dMinus(todayISO(),7*w+((7-new Date(todayISO().split('-')[0],+todayISO().split('-')[1]-1,+todayISO().split('-')[2]).getDay())%7)));}return out;}
+/* seed: 2027 is further into the syllabus than 2028. Deterministic, no Date.now. */
+function BSWL_seedClassLog(){
+ var flat=[];BSWL_SYLLABUS().forEach(function(u){u.topics.forEach(function(t){flat.push(t[0]);});});
+ var dates=BSWL_classDates();var out=[];var id=1;
+ [[0,16],[1,8]].forEach(function(cfgRow){var cohort=cfgRow[0],total=cfgRow[1];var per=total/dates.length;var done=0;
+  dates.forEach(function(d,i){var upto=Math.round(per*(i+1));var slice=flat.slice(done,Math.min(upto,total));done=Math.min(upto,total);
+   if(slice.length)out.push({id:id++,date:d,cohort:cohort,topics:slice});});});
+ return out;
+}
+function coveredTopics(cohort){var set={};(DB.get('classLog')||[]).forEach(function(r){if(r.cohort===+cohort)r.topics.forEach(function(t){set[t]=r.date;});});return set;}
+var CLS={date:null,cohort:'0',picked:{},
+ set:function(k,v){this[k==='date'?'date':'cohort']=v;this.picked={};renderClasses();},
+ tog:function(id){if(this.picked[id])delete this.picked[id];else this.picked[id]=1;renderClasses();},
+ save:function(){var ids=Object.keys(this.picked);if(!ids.length){toast(I.warn+' Tick at least one topic first');return;}
+  var log=DB.get('classLog');var ex=log.find(function(r){return r.date===CLS.date&&r.cohort===+CLS.cohort;});
+  if(ex){ids.forEach(function(t){if(ex.topics.indexOf(t)<0)ex.topics.push(t);});}
+  else{log.push({id:DB.nextId('classLog'),date:CLS.date,cohort:+CLS.cohort,topics:ids});}
+  DB.commit();CLS.picked={};renderClasses();
+  toast(I.check+' Saved. The whole '+(+CLS.cohort===0?'2027':'2028')+' batch is updated.');},
+};
+function renderClasses(){var el=document.getElementById('clsTopics');if(!el)return;
+ if(!CLS.date)CLS.date=todayISO();var dp=document.getElementById('clsDate');if(dp)dp.value=CLS.date;
+ var cov=coveredTopics(CLS.cohort);
+ el.innerHTML=BSWL_SYLLABUS().map(function(u){
+  return '<div style="margin:10px 0 4px;font-weight:700;font-size:13px">'+u.u+'. '+u.name+'</div>'+u.topics.map(function(t){
+   var done=cov[t[0]];var on=CLS.picked[t[0]];
+   if(done)return '<div style="display:flex;align-items:center;gap:9px;padding:7px 2px;color:var(--faint);font-size:13.5px">'+I.check+' <span>'+t[0]+' '+t[1]+'</span><span class="hint" style="margin-left:auto">covered '+done.slice(5)+'</span></div>';
+   return '<button style="display:flex;align-items:center;gap:9px;padding:8px 2px;width:100%;text-align:left;font-size:13.5px;'+(on?'font-weight:700':'')+'" onclick="CLS.tog(\''+t[0]+'\')"><span style="width:17px;height:17px;border:1.6px solid var(--line-2);border-radius:5px;display:inline-flex;align-items:center;justify-content:center;flex:none">'+(on?I.check:'')+'</span><span>'+t[0]+' '+t[1]+'</span></button>';
+  }).join('');
+ }).join('');
+ var pr=document.getElementById('clsProgress');if(pr){var total=BSWL_topicCount();
+  pr.innerHTML=[0,1].map(function(c){var n=Object.keys(coveredTopics(c)).length;var pc=Math.round(n/total*100);
+   return '<div style="margin:8px 0"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><b>'+(c===0?'2027':'2028')+' Batch</b><span>'+n+' of '+total+' topics · '+pc+'%</span></div><div style="height:8px;background:var(--surface-2);border-radius:99px;overflow:hidden"><div style="height:100%;width:'+pc+'%;background:var(--brand);border-radius:99px"></div></div></div>';}).join('');}
+ if(typeof renderClassesIntel==='function')renderClassesIntel();
+}
+/* ── BATCH INTELLIGENCE. What did I teach, where is the batch struggling,
+   what should I do next. Attendance figures are REAL (from the attendance
+   collection). Evidence aggregates are SEEDED demo values and say so: the
+   real ones arrive when the student app's checks flow through Supabase. ── */
+function BSWL_batchIntel(cohort){
+ var total=BSWL_topicCount();var covN=Object.keys(coveredTopics(cohort)).length;
+ /* deterministic seeded aggregates per cohort, labelled demo in the UI */
+ var demPc=cohort===0?46:28, tutePc=cohort===0?71:58, median=cohort===0?14:11, mismatch=cohort===0?9:6, sample=cohort===0?43:31;
+ return {covPc:Math.round(covN/total*100),demPc:demPc,tutePc:tutePc,median:median,mismatch:mismatch,sample:sample};
+}
+function renderClassesIntel(){
+ var el=document.getElementById('clsIntel');if(!el)return;
+ var c=+CLS.cohort;var it=BSWL_batchIntel(c);
+ var sess=attSessions()[0];var studs=DB.get('customers').filter(function(s){return s.status==='active'&&s.cohort===c;});
+ var present=0;studs.forEach(function(s){var a=attFor(s.id,sess);if(!(a&&!a.present))present++;});
+ function bar(lbl,pc,note){return '<div style="margin:7px 0"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px"><span>'+lbl+'</span><b>'+pc+'%</b></div><div style="height:7px;background:var(--surface-2);border-radius:99px;overflow:hidden"><div style="height:100%;width:'+pc+'%;background:var(--brand);border-radius:99px"></div></div>'+(note?'<div class="hint" style="margin-top:3px;font-size:11.5px;color:var(--faint)">'+note+'</div>':'')+'</div>';}
+ el.innerHTML=
+  '<div style="font-size:13px;margin-bottom:6px"><b>Last class:</b> '+present+' of '+studs.length+' students present ('+sess+')</div>'
+  +bar('Syllabus covered in class',it.covPc,'')
+  +bar('Demonstrated in student checks',it.demPc,'Demo figure from '+it.sample+' students. Live once the student app connects.')
+  +bar('Tute completion (self-reported)',it.tutePc,'')
+  +'<div style="font-size:12.5px;margin:8px 0 4px">Recent paper median: <b>'+it.median+' of 20</b> · confidence and evidence disagree for <b>'+it.mismatch+'</b> students</div>'
+  +'<div style="border-top:1px solid var(--hair);margin-top:10px;padding-top:10px"><b style="font-size:13px">Teach next</b>'
+  +'<div style="font-size:12.5px;margin-top:5px">1. The gap between covered ('+it.covPc+'%) and demonstrated ('+it.demPc+'%) says a recap beats new ground this week.</div>'
+  +'<div style="font-size:12.5px;margin-top:3px">2. '+it.mismatch+' students feel sure of a topic the checks disagree on. Ten minutes of re-teaching clears it batch-wide.</div>'
+  +'<div class="hint" style="margin-top:5px;font-size:11.5px;color:var(--faint)">Rankings are never shown, here or to students.</div></div>';
+ var q=document.getElementById('clsQueue');if(!q)return;
+ /* the attention queue: REAL repeated absences from the attendance data */
+ /* Two real groups from the attendance data: repeated absence, and a miss in
+    the last two classes (a catch-up not yet confirmed). Sorted worst first,
+    capped at ten so it reads as a call list, not a backlog. */
+ var flagged=studs.map(function(s){
+  var rows=attRecords(s.id).sort(function(a,b){return a.date<b.date?-1:1;});
+  var absent=rows.filter(function(a){return !a.present;}).length;
+  var recent=rows.slice(-2).filter(function(a){return !a.present;}).length;
+  return {s:s,absent:absent,recent:recent};
+ }).filter(function(x){return x.absent>=2||x.recent>0;})
+   .sort(function(a,b){return (b.absent*2+b.recent)-(a.absent*2+a.recent);}).slice(0,10);
+ q.innerHTML=flagged.length?flagged.map(function(x){
+  var why=x.absent>=2?(x.absent+' absences on record. A pattern, not a one-off.')
+        :'Missed a class in the last fortnight and the catch-up is not confirmed.';
+  return '<div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--hair)"><div class="pr-av">'+init2(x.s.name)+'</div>'
+   +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+x.s.name+'</div>'
+   +'<div class="hint" style="font-size:11.5px;color:var(--faint)">'+why+' One WhatsApp beats a lost student.</div></div>'
+   +'<button class="btn-ghost" style="flex:none" onclick="window.open(\'https://wa.me/\'+String(\''+String(x.s.phone||'').replace(/\D/g,'')+'\').replace(/^0/,\'94\'))">Message</button></div>';
+ }).join(''):'<div class="hint" style="padding:8px 0">Nobody needs chasing in this batch. Rare and good.</div>';
+}
+if(typeof RENDERERS!=='undefined')RENDERERS.classes=function(){renderClasses();renderClassesIntel();};
 /* ===== BSWL tuition extras: knowledge signal + Starter Guide PDF + Receipt ===== */
 function studentStanding(s){const lv=(s&&s.level)||'okay';if(lv==='good')return{key:'good',label:'Strong',color:'var(--green)'};if(lv==='bad')return{key:'bad',label:'Needs work',color:'var(--danger)'};return{key:'okay',label:'Okay',color:'var(--amber)'};}
 function setLevel(id,lv){const c=DB.get('customers').find(x=>x.id===id);if(!c)return;c.level=lv;DB.commit();var cp=document.getElementById('page-customers');if(cp&&cp.classList.contains('active'))renderCustomers();var rp2=document.getElementById('page-recurring');if(rp2&&rp2.classList.contains('active')&&typeof renderRecurring==='function')renderRecurring();if(document.getElementById('panel').classList.contains('open'))openCustomer(id);toast(I.check+' '+c.name.split(' ')[0]+' set to '+studentStanding(c).label);}
