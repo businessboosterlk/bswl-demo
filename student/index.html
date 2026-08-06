@@ -278,6 +278,24 @@ label{display:block;font-size:var(--t-sm);font-weight:600;margin-bottom:var(--s2
  transition:color var(--m-fast) var(--ease)}
 .tabs button svg{width:22px;height:22px}
 .tabs button[aria-selected="true"]{color:var(--text)}
+/* ── SPLASH. It replaces a blank launch, it must never become one. Cold start
+   only, time-boxed, tap anywhere to skip. ── */
+.splash{position:fixed;inset:0;z-index:200;background:var(--bg);color:var(--text);
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ padding:var(--s6);text-align:center;transition:opacity var(--m-slow) var(--ease)}
+.splash.gone{opacity:0;pointer-events:none}
+.sp-mark{width:60px;height:60px;color:var(--text);margin-bottom:var(--s5)}
+.sp-name{font-size:var(--t-sm);font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+ color:var(--text-3);margin-bottom:var(--s6)}
+.sp-line{font-size:var(--t-xl);font-weight:600;line-height:1.35;letter-spacing:-.015em;max-width:19ch}
+.sp-foot{position:absolute;bottom:calc(var(--s8) + var(--sab));font-size:var(--t-xs);color:var(--text-3)}
+@media(prefers-reduced-motion:no-preference){
+ .sp-mark{animation:spUp .45s var(--ease) both}
+ .sp-name{animation:spUp .45s var(--ease) .06s both}
+ .sp-line{animation:spUp .5s var(--ease) .12s both}
+}
+@keyframes spUp{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+
 .screen{display:none;animation:sIn var(--m-base) var(--ease)}
 .screen.on{display:block}
 @keyframes sIn{from{opacity:0}to{opacity:1}}
@@ -294,6 +312,12 @@ label{display:block;font-size:var(--t-sm);font-weight:600;margin-bottom:var(--s2
 </style>
 </head>
 <body>
+<div class="splash" id="splash" role="status" aria-live="polite" onclick="hideSplash()">
+ <svg class="sp-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.7 1 1.6 1 2.5h6c0-.9.2-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>
+ <div class="sp-name">BS With Leon</div>
+ <div class="sp-line" id="spLine"></div>
+ <div class="sp-foot" id="spFoot"></div>
+</div>
 <div class="statusfill" aria-hidden="true"></div>
 <div class="offline-bar" id="offlineBar" role="status">Offline. Your work is saved on this device.</div>
 
@@ -1165,6 +1189,43 @@ function renderAll(){renderNext();renderSyllabus();renderTutes();renderPapers();
 function syncOffline(){document.getElementById('offlineBar').style.display=navigator.onLine?'none':'block';}
 window.addEventListener('online',syncOffline);window.addEventListener('offline',syncOffline);
 
+/* ══ SPLASH ══════════════════════════════════════════════════════════════
+   Written for a 17-year-old sitting an A/L, not for a poster. Nothing here
+   promises a grade, praises them for opening an app, or tells them off.
+   Deterministic by date: two students opening it the same morning see the
+   same line, and there is no randomness anywhere in this app. ══ */
+var SPLASH_LINES=[
+ 'The topic you keep avoiding is the one on the paper.',
+ 'Ten honest minutes beat an hour of pretending.',
+ 'You do not have to feel ready. You have to start.',
+ 'Every mistake you fix now is a mark you keep later.',
+ 'Understanding is quiet. Memorising is loud, and it forgets.',
+ 'Small, repeated, unglamorous. That is the whole method.',
+ 'The work is boring. Walking in prepared is not.'
+];
+function splashLine(){
+ var p=todayISO().split('-');
+ var n=(+p[0]*372)+(+p[1]*31)+(+p[2]);
+ return SPLASH_LINES[n%SPLASH_LINES.length];
+}
+var SPLASH_T=null;
+function hideSplash(){
+ var el=document.getElementById('splash');
+ if(!el||el.classList.contains('gone'))return;
+ clearTimeout(SPLASH_T);
+ el.classList.add('gone');
+ setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},360);
+}
+function showSplash(){
+ var el=document.getElementById('splash');if(!el)return;
+ document.getElementById('spLine').textContent=splashLine();
+ var d=daysBetween(todayISO(),CFG.exam.date);
+ document.getElementById('spFoot').textContent=d>0?d+' days to the exam':'Exam time';
+ /* time-boxed. It never stands between a student and the app. */
+ SPLASH_T=setTimeout(hideSplash,1200);
+}
+showSplash();
+
 renderAll();seg('syllabus');syncOffline();
 if(location.hash==='#learn'){seg('syllabus');show('learn');}
 if(location.hash==='#papers'){seg('papers');show('learn');}
@@ -1243,6 +1304,14 @@ function BSWL_TEST(){
    measured++;
    if(Math.abs(a.top-b.top)<4)runOn++;});
   ok('Row titles and subtitles are on separate lines',runOn===0&&measured>0,runOn+' run together of '+measured+' measured');
+  /* splash: it must inform, never block, never promise */
+  ok('Splash line is deterministic by date',splashLine()===splashLine()&&SPLASH_LINES.indexOf(splashLine())>-1);
+  ok('Splash lines promise no grade and no praise',
+     SPLASH_LINES.every(function(l){return !/\bA grade|guarantee|you will pass|well done|amazing|great job/i.test(l);}));
+  ok('Splash lines are a readable length',SPLASH_LINES.every(function(l){return l.length>24&&l.length<70;}));
+  ok('Splash can be dismissed',(function(){var e=document.getElementById('splash');
+     if(!e)return true; hideSplash(); return e.classList.contains('gone');})());
+
   /* a11y */
   var unlabelled=0;
   document.querySelectorAll('button').forEach(function(b){
