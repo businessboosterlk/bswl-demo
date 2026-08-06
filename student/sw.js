@@ -1,7 +1,63 @@
-/* BSWL Student offline shell. Cache-first for the app itself; there is no
-   network data layer in the demo, so offline is simply complete. */
-var C='bswl-student-v1';
-var ASSETS=['./','index.html','manifest.json','icon-192.png','icon-512.png','icon-maskable-512.png','apple-touch-icon.png'];
-self.addEventListener('install',function(e){e.waitUntil(caches.open(C).then(function(c){return c.addAll(ASSETS);}).then(function(){return self.skipWaiting();}));});
-self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k!==C;}).map(function(k){return caches.delete(k);}));}).then(function(){return self.clients.claim();}));});
-self.addEventListener('fetch',function(e){e.respondWith(caches.match(e.request,{ignoreSearch:true}).then(function(r){return r||fetch(e.request);}));});
+/* BSWL Student service worker.
+
+   THE BUG THIS FIXES: v1 was cache-first for everything with a fixed cache
+   name, so index.html was served from cache forever. Any student who had
+   opened the app once would never receive an update, no matter what we
+   deployed. A redesign shipped to nobody.
+
+   Strategy now:
+     HTML and navigations : network first, cache as the offline fallback,
+                            so a deploy always reaches the student.
+     Static assets        : cache first, refreshed quietly in the background,
+                            so icons and the manifest stay instant.
+   Bump CACHE whenever the asset list changes. */
+var CACHE='bswl-student-v2';
+var ASSETS=['./','index.html','manifest.json',
+ 'icon-192.png','icon-512.png','icon-maskable-512.png','apple-touch-icon.png'];
+
+self.addEventListener('install',function(e){
+ e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(ASSETS);})
+  .then(function(){return self.skipWaiting();}));
+});
+
+self.addEventListener('activate',function(e){
+ e.waitUntil(caches.keys().then(function(ks){
+  return Promise.all(ks.filter(function(k){return k!==CACHE;})
+   .map(function(k){return caches.delete(k);}));
+ }).then(function(){return self.clients.claim();}));
+});
+
+self.addEventListener('fetch',function(e){
+ var req=e.request;
+ if(req.method!=='GET')return;
+
+ var isHTML = req.mode==='navigate'
+   || (req.headers.get('accept')||'').indexOf('text/html')>=0;
+
+ if(isHTML){
+  e.respondWith(
+   fetch(req).then(function(res){
+    var copy=res.clone();
+    caches.open(CACHE).then(function(c){c.put(req,copy);});
+    return res;
+   }).catch(function(){
+    return caches.match(req,{ignoreSearch:true})
+      .then(function(r){return r||caches.match('index.html');});
+   })
+  );
+  return;
+ }
+
+ e.respondWith(
+  caches.match(req,{ignoreSearch:true}).then(function(hit){
+   var net=fetch(req).then(function(res){
+    if(res&&res.status===200){
+     var c2=res.clone();
+     caches.open(CACHE).then(function(c){c.put(req,c2);});
+    }
+    return res;
+   }).catch(function(){return hit;});
+   return hit||net;
+  })
+ );
+});
