@@ -1297,7 +1297,7 @@ const I={
  users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>',
  trend:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
  flame:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
- inbox:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+ inbox:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
  x:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
  sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/></svg>',
  moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>',
@@ -1424,7 +1424,7 @@ function seedData(){
   const fee=s.fee!=null?s.fee:4000;
   const monthsIn=Math.max(1,Math.round((new Date(ym+'-01')-new Date(s.joined.slice(0,7)+'-01'))/2629800000));
   const paidMonths=Math.min(monthsIn,s.status==='alumni'?monthsIn:Math.max(1,monthsIn-1));
-  const history=[];for(let k=0;k<Math.min(paidMonths,6);k++){const hm=ymShift(s.joined.slice(0,7),k);history.push({item:s.program+' fee — '+monthShort(hm),cat:'Fee',date:hm+'-05',value:fee});}
+  const history=[];for(let k=0;k<Math.min(paidMonths,6);k++){const hm=ymShift(s.joined.slice(0,7),k);history.push({item:s.program+' fee · '+monthShort(hm),cat:'Fee',date:hm+'-05',value:fee});}
   const sent=s.status==='alumni'?iRnd(0,3):iRnd(0,2);
   return {id:s.id,name:s.name,co:LOC_LABEL[s.loc]||s.loc,program:s.program,type:COHORT_SHORT[s.cohort],phone:s.phone,email:'',owner:1,cohort:s.cohort,loc:s.loc,joined:s.joined,sent:sent,last:ymShift(ym,-iRnd(0,3))+'-'+pad(iRnd(1,26)),status:s.status,level:pick(['good','good','good','okay','okay','okay','okay','bad','bad']),history:history};
  });
@@ -2435,8 +2435,8 @@ function openCustomer(id){
   +'<div class="pn-actions"><button class="pa primary" onclick="custSend('+id+')">'+I.phone+' WhatsApp</button><button class="pa" onclick="msgToStudent('+id+')">'+I.inbox+' Message app</button>'+(due?'<button class="pa" onclick="custDone('+id+')">'+I.check+' Mark done</button>':'')+'<button class="pa" onclick="onboardingDoc('+id+')">Starter guide</button><button class="pa" onclick="receiptDoc('+id+')">Receipt</button></div>'
   +'<div class="pn-body">'
   +'<div class="sec"><div class="sec-t">Knowledge level</div><div class="lvl-set"><button class="lvl-btn lv-good'+(c.level==='good'?' on':'')+'" onclick="setLevel('+id+',\'good\')">Strong</button><button class="lvl-btn lv-okay'+((c.level||'okay')==='okay'?' on':'')+'" onclick="setLevel('+id+',\'okay\')">Okay</button><button class="lvl-btn lv-bad'+(c.level==='bad'?' on':'')+'" onclick="setLevel('+id+',\'bad\')">Needs work</button></div></div>'
-  +'<div class="sec"><div class="sec-t">Summary</div><div class="info-grid"><div class="info"><div class="il">Lifetime value</div><div class="iv" style="color:var(--green)">'+lkr(ltv)+'</div></div><div class="info"><div class="il">Orders</div><div class="iv">'+(c.history?c.history.length:0)+'</div></div><div class="info"><div class="il">First order</div><div class="iv">'+fmtDate(custFirst(c))+'</div></div><div class="info"><div class="il">Last contact</div><div class="iv">'+fmtDate(c.last)+'</div></div></div></div>'
-  +'<div class="sec"><div class="sec-t">Purchase history</div><table class="tbl" style="font-size:12.5px"><thead><tr><th>Item</th><th>Date</th><th class="tnum">Value</th></tr></thead><tbody>'+(hist||'<tr><td colspan="3" style="color:var(--faint)">No purchases yet</td></tr>')+'</tbody></table></div>'
+  +'<div class="sec"><div class="sec-t">Summary</div><div class="info-grid"><div class="info"><div class="il">Fees paid to date</div><div class="iv" style="color:var(--green)">'+lkr(ltv)+'</div></div><div class="info"><div class="il">Months paid</div><div class="iv">'+(c.history?c.history.length:0)+'</div></div><div class="info"><div class="il">First payment</div><div class="iv">'+fmtDate(custFirst(c))+'</div></div><div class="info"><div class="il">Last contact</div><div class="iv">'+fmtDate(c.last)+'</div></div></div></div>'
+  +'<div class="sec"><div class="sec-t">Fee history</div><table class="tbl" style="font-size:12.5px"><thead><tr><th>Item</th><th>Date</th><th class="tnum">Value</th></tr></thead><tbody>'+(hist||'<tr><td colspan="3" style="color:var(--faint)">No purchases yet</td></tr>')+'</tbody></table></div>'
   +'<div class="sec"><div class="sec-t">Re-engage cadence</div>'+steps+'</div></div>';
  document.getElementById('overlay').classList.add('open');panel.classList.add('open');
 }
@@ -3224,7 +3224,7 @@ function msgAudienceLabel(v){
 var MSG_BLOCKED=/owe|owing|outstanding|overdue|arrears|balance|pay immediately|last warning/i;
 function msgToStudent(id){
  var c=DB.get('customers').find(function(x){return x.id===id;});if(!c)return;
- MSG.toStudent={id:c.id,name:c.name};
+ MSG.toStudent={id:c.id,name:c.name};MSG._keep=true;
  var panel=document.getElementById('panel');if(panel)panel.classList.remove('open');
  go('messages');
  var t=document.getElementById('msgTitle');if(t)t.focus();
@@ -3265,6 +3265,10 @@ var MSG={armed:false,toStudent:null,
 };
 function renderMessages(){
  var el=document.getElementById('msgBody2');if(!el)return;
+ /* a per-student lock only survives the jump from the student record, never
+    an ordinary visit: that is how the select and the preview stop disagreeing */
+ if(!MSG._keep)MSG.toStudent=null;
+ MSG._keep=false;
  var ms=DB.get('messages')||[];
  var sent=ms.filter(function(m){return m.status==='sent';});
  var sched=ms.filter(function(m){return m.status==='scheduled';});
@@ -3404,7 +3408,7 @@ function receiptDoc(id,ym){
    '<div class="rf">Received From</div><div class="nm">'+x.name+'</div>'+
    '<div class="meta"><span>'+cohortLabel(x.cohort)+'</span><span class="dot">|</span><span>'+(c.program||'')+'</span><span class="dot">|</span><span>'+(c.co||'')+'</span></div>'+
    '<div class="tbar"><span>Description</span><span>Amount</span></div>'+
-   '<div class="trow"><span>Class fee — '+monthLbl(ym)+'</span><span class="amt">'+f(paid)+'</span></div>'+
+   '<div class="trow"><span>Class fee · '+monthLbl(ym)+'</span><span class="amt">'+f(paid)+'</span></div>'+
    '<div class="boxes"><div class="bx"><div class="l">Payment Method</div><div class="v">Cash</div><div class="n">Cash / Bank transfer</div></div>'+
     '<div class="bx"><div class="l">Balance</div><div class="v">'+(bal>0?f(bal):'Nil')+'</div><div class="n">'+(bal>0?'for '+monthLbl(ym):'fully settled')+'</div></div></div>'+
    '<div class="total"><div class="stamp">PAID</div><div class="tp"><div class="l">Total Paid</div><div class="v">'+f(paid)+'</div></div></div>'+

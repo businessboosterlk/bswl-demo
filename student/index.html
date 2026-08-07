@@ -605,6 +605,7 @@ var DB={
    body:'2022 Paper II, questions 1 to 4. Try them untimed first.',
    cta:{label:'Open papers',go:'papers'}}
  ],
+ checkins:[],   /* {month:'2026-06',mood,blocker} · June deliberately unanswered for Nadun */
  progressTask:null   /* resume state for an in-flight task */
 };
 
@@ -936,12 +937,17 @@ function renderNext(){
     +'<span class="tw">'+esc(r.why)+' · '+r.mins+' min</span></span>'
     +'<span class="chev">'+I.chev+'</span></button>';}).join('')+'</div>':'';
 
+ var ci=checkinDue();
+ var ciCard=ci?'<button class="todaymsg" style="width:100%" onclick="openCheckin()">'
+  +'<span class="grow" style="flex:1;min-width:0"><span class="tt">How did '+monthName(ci)+' feel?</span>'
+  +'<span class="tw">Two taps. Leon sees it, the batch never does.</span></span>'
+  +'<span class="chev">'+I.chev+'</span></button>':'';
  var tm=todayMsg();
  var msgCard=tm?'<button class="todaymsg" style="width:100%" onclick="openMsg('+tm.id+')">'
   +'<span class="grow" style="flex:1;min-width:0"><span class="tt">'+esc(tm.title)+'</span>'
   +'<span class="tw">'+esc(IB_TYPES[tm.type])+' \u00b7 tap to open \u00b7 <u>view all updates</u></span></span>'
   +'<span class="chev">'+I.chev+'</span></button>':'';
- el.innerHTML=msgCard+primary+thenList
+ el.innerHTML=msgCard+ciCard+primary+thenList
   +'<div class="sect-h"><h2>Class</h2></div>'
   +'<div class="list">'
    +'<div class="rowbtn" style="cursor:default"><span class="grow"><span class="tt">Next</span>'
@@ -1349,6 +1355,58 @@ function showSplash(){
  /* time-boxed. It never stands between a student and the app. */
  SPLASH_T=setTimeout(hideSplash,1200);
 }
+/* ══ THE MONTHLY CHECK-IN. End of every month the app asks how it felt and
+   answers with one useful next step. Two taps, never a survey. What a student
+   writes here goes quietly to Leon with the live pipe, never to the batch. ══ */
+function prevMonth(){var p=todayISO().split('-');var m=+p[1]-1,y=+p[0];if(m===0){m=12;y--;}
+ return y+'-'+String(m).padStart(2,'0');}
+function checkinDue(){
+ var day=+todayISO().split('-')[2];
+ var cur=todayISO().slice(0,7),prev=prevMonth();
+ var have={};DB.checkins.forEach(function(c){have[c.month]=1;});
+ if(!have[prev])return prev;             /* last month never answered */
+ if(day>=25&&!have[cur])return cur;      /* this month, once it is ending */
+ return null;
+}
+var MONTHS_FULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function monthName(ym){return MONTHS_FULL[+ym.split('-')[1]-1];}
+var CHKIN={month:null,mood:null};
+function openCheckin(){
+ var m=checkinDue();if(!m)return;
+ CHKIN={month:m,mood:null};
+ openSheet('<h3 id="sheetTitle">How did '+monthName(m)+' feel?</h3>'
+  +'<p class="lede">One honest tap. Leon sees this, the batch never does.</p>'
+  +'<div style="margin-top:var(--s4)">'
+  +[['steady','Steady','I kept up'],['heavy','Heavy','I kept up, but it cost me'],['struggling','Struggling','I fell behind']]
+   .map(function(o){return '<button class="qopt" role="radio" aria-checked="false" onclick="checkinMood(\''+o[0]+'\')">'
+    +'<span class="mk">'+I.check+'</span><span><b>'+o[1]+'</b><span class="meta" style="display:block">'+o[2]+'</span></span></button>';}).join('')
+  +'</div>');
+}
+function checkinMood(mood){
+ CHKIN.mood=mood;
+ openSheet('<h3 id="sheetTitle">What got in the way most?</h3>'
+  +'<p class="lede">Pick the biggest one.</p>'
+  +'<div style="margin-top:var(--s4)">'
+  +[['none','Nothing much'],['time','Finding the time'],['topics','Some topics did not land'],
+    ['motivation','Keeping the energy up'],['personal','Something outside studies']]
+   .map(function(o){return '<button class="qopt" role="radio" aria-checked="false" onclick="checkinDone(\''+o[0]+'\')">'
+    +'<span class="mk">'+I.check+'</span><span>'+o[1]+'</span></button>';}).join('')
+  +'</div>');
+}
+function checkinDone(blocker){
+ DB.checkins.push({month:CHKIN.month,mood:CHKIN.mood,blocker:blocker});
+ var help,act='',lbl='';
+ if(blocker==='topics'){help='Then the fix is specific, not more hours. Your Needs attention list is exactly those topics.';act="closeSheet();show('learn');seg('syllabus');setFilter('attention')";lbl='See the topics';}
+ else if(blocker==='time'){help='Short beats long. Most tasks on Today fit inside ten minutes, and ten minutes counts.';act="closeSheet();show('next')";lbl='See today\u2019s ten minutes';}
+ else if(blocker==='motivation'){help='Look at what is already behind you. The road does not reset because a week was flat.';act="closeSheet();show('progress')";lbl='See how far you are';}
+ else if(blocker==='personal'){help='Studies can wait a beat when life is loud. If you want to talk, Leon reads these and his door is open.';act="closeSheet();window.open(document.getElementById('waLeon')?document.getElementById('waLeon').href:'#','_blank')";lbl='Message Leon';}
+ else{help='Noted. Keep the rhythm that got you here.';act="closeSheet();show('next')";lbl='Back to today';}
+ openSheet('<h3 id="sheetTitle">Noted, quietly.</h3>'
+  +'<p class="lede">'+help+'</p>'
+  +'<button class="btn btn-primary" style="margin-top:var(--s5)" onclick="'+act.replace(/"/g,'&quot;')+'">'+lbl+'</button>');
+ renderNext();say('Check-in recorded');
+}
+
 /* ══ UPDATES (inbox) ══ */
 var IB_FILTER='all';
 var IB_TYPES={all:'All',class:'Classes',learning:'Learning',seminar:'Seminars',delivery:'Deliveries',payment:'Payments'};
@@ -1430,13 +1488,17 @@ function applyStudent(st){
          '3.1':{s:'demonstrated',d:'2026-07-11'},'3.2':{s:'demonstrated',d:'2026-07-11'},
          '4.1':{s:'demonstrated',d:'2026-07-11'},'4.2':{s:'demonstrated',d:'2026-07-11'}};
   DB.tutes={'1':'done','2':'done','3':'done','4':'done'};
+  DB.checkins=[{month:'2026-06',mood:'steady',blocker:'none'}];
  }else if(st.user==='Kavindu'){
   DB.conf={'1.1':'shaky','1.2':'lost','2.1':'lost','2.3':'shaky','3.2':'lost'};
   DB.ev={'1.1':{s:'developing',d:'2026-05-30'}};
   DB.tutes={'1':'fix','2':'assigned','3':'assigned','4':'assigned'};
   DB.papers=[{date:'2026-05-16',paper:'2019 Paper I',q:'Q1',score:8,max:20,timed:false,marker:'self',err:'Knowledge gap'},
              {date:'2026-06-20',paper:'2020 Paper I',q:'Q2',score:9,max:20,timed:false,marker:'self',err:'Knowledge gap'}];
+
+  DB.checkins=[];
  }
+ if(st.user==='Nadun')DB.checkins=[];
  DB.progressTask=null;
 }
 function doLogin(e){
@@ -1611,7 +1673,7 @@ function BSWL_TEST(){
   var u0=unreadCount();
   ok('Unread badge matches the data',(function(){renderBell();var bb=document.getElementById('bellBadge');
     return (u0===0)===bb.hidden&&(u0===0||bb.textContent==String(u0));})(),u0+' unread');
-  ok('Today carries exactly one message card',document.querySelectorAll('.todaymsg').length===(todayMsg()?1:0));
+  ok('Today carries one card per due prompt',document.querySelectorAll('.todaymsg').length===((todayMsg()?1:0)+(checkinDue()?1:0)));
   var mm=DB.inbox.filter(function(m){return !m.read;})[0];
   if(mm){openMsg(mm.id);
    ok('Opening a message marks it read',mm.read===true);
@@ -1623,6 +1685,15 @@ function BSWL_TEST(){
   ok('No debt wording in any student message',!DB.inbox.some(function(m){
     return /owe|owing|outstanding|overdue|arrears|balance due|pay immediately/i.test(m.title+' '+m.body);}));
   ok('No internal staff notes reach the app',!/internal_note|internalNote/.test(JSON.stringify(DB.inbox)));
+  /* THE MONTHLY CHECK-IN */
+  var savedCk=JSON.parse(JSON.stringify(DB.checkins));
+  DB.checkins=[];
+  ok('An unanswered month makes the check-in due',checkinDue()===prevMonth(),checkinDue());
+  CHKIN={month:prevMonth(),mood:'heavy'};checkinDone('topics');
+  ok('Answering records mood and blocker',DB.checkins.length===1&&DB.checkins[0].blocker==='topics');
+  ok('And the card stands down for that month',checkinDue()!==prevMonth());
+  closeSheet();DB.checkins=savedCk;renderNext();
+  ok('Check-in copy never shames',!/\b(lazy|blame|disappointed|excuses)\b/i.test(document.body.innerText));
   ok('Courier message carries tracking details',(function(){var c=DB.inbox.filter(function(m){return m.courier;})[0];
     return !!(c&&c.courier.no&&c.courier.co&&c.courier.url);})());
  }catch(e){F++;out.push('FAIL · harness crashed · '+(e&&e.message));}
