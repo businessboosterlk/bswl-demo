@@ -96,7 +96,8 @@ svg{display:block;flex:none}
  overflow-y:auto}
 .login.gone{display:none}
 .login-in{width:100%;max-width:340px}
-.lg-mark{width:44px;height:44px;color:var(--text-2);margin-bottom:var(--s5)}
+.lg-stage{position:relative;width:100%;height:136px;margin-bottom:var(--s4)}
+.lg-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .lg-t{font-size:var(--t-2xl);font-weight:680;letter-spacing:-.02em;line-height:1.1}
 .lg-s{font-size:var(--t-sm);color:var(--text-2);margin:var(--s1) 0 var(--s6)}
 .lg-err{font-size:var(--t-sm);color:var(--text);font-weight:600;margin-top:var(--s3);min-height:1.2em}
@@ -357,7 +358,7 @@ label{display:block;font-size:var(--t-sm);font-weight:600;margin-bottom:var(--s2
 <!-- LOGIN. Demo credentials only, see the STUDENTS note in the script. -->
 <div class="login" id="login">
  <div class="login-in">
-  <svg class="lg-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.7 1 1.6 1 2.5h6c0-.9.2-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>
+  <div class="lg-stage" aria-hidden="true"><canvas id="lgField"></canvas></div>
   <h1 class="lg-t">BS With Leon</h1>
   <p class="lg-s">Sign in to your study app</p>
   <form id="lgForm" autocomplete="off">
@@ -574,6 +575,12 @@ var DB={
   {date:'2026-07-04',paper:'2021 Paper I',q:'Q1',score:16,max:20,timed:true,marker:'self',err:''}
  ],
  batch:{n:50,tuteRate:71,median:14},
+ /* Competition without a ladder: the honours list celebrates the top of
+    verified attendance and stops there; nobody below it is listed anywhere.
+    The race is location against location, so the unit that competes is the
+    group a student belongs to, never the student. Leon-marked data only. */
+ honours:[{name:'Sithumi F.',att:100},{name:'Amaya P.',att:98},{name:'Ruwan C.',att:97}],
+ race:[{loc:'Kings',pct:91},{loc:'Residence',pct:88},{loc:'JMC',pct:84}],
  /* messages from the OS. Demo transport: seeded here, one clock with the OS.
     Live delivery arrives with the backend; the shapes below match the shared
     schema (messages, courier_deliveries, seminars) so it drops in unchanged.
@@ -1240,6 +1247,17 @@ function renderProgress(){
     +'<span><span style="display:block;font-weight:550">'+esc(nxt[0])+'</span><span class="meta">Next up</span></span></div>':'')
    +'<button class="btn btn-secondary btn-sm" style="margin-top:var(--s3);width:100%" onclick="openRoadmap()">See all 14</button></div>'
 
+  +'<div class="sect-h"><h2>This term’s race</h2></div>'
+  +'<div class="card"><div class="lede" style="margin-bottom:var(--s3)">Location against location on turnout, and the honours list for attendance. Marked in class, so it cannot be gamed, and nobody is ever ranked from the bottom.</div>'
+  +DB.race.map(function(r){
+    return '<div class="row" style="padding:5px 0"><span style="width:86px;flex:none;font-size:13px;font-weight:600">'+esc(r.loc)+'</span>'
+     +'<div class="track grow"><i style="width:'+r.pct+'%"></i></div>'
+     +'<span class="meta num" style="flex:none;width:36px;text-align:right">'+r.pct+'%</span></div>';}).join('')
+  +'<div style="border-top:1px solid var(--line);margin-top:var(--s3);padding-top:var(--s3)">'
+  +'<div class="meta" style="margin-bottom:var(--s2)">Honours · perfect and near-perfect attendance</div>'
+  +DB.honours.map(function(h){
+    return '<span class="pill" style="margin:0 6px 6px 0">'+esc(h.name)+' · '+h.att+'%</span>';}).join('')
+  +'</div></div>'
   +'<div class="sect-h"><h2>You</h2></div>'
   +'<div class="list">'
    +'<div class="rowbtn" style="cursor:default"><span class="grow"><span class="tt" style="font-weight:550">'+esc(ME.name)+'</span>'
@@ -1326,13 +1344,13 @@ window.addEventListener('online',syncOffline);window.addEventListener('offline',
    Deterministic by date: two students opening it the same morning see the
    same line, and there is no randomness anywhere in this app. ══ */
 var SPLASH_LINES=[
- 'The topic you keep avoiding is the one on the paper.',
- 'Ten honest minutes beat an hour of pretending.',
- 'You do not have to feel ready. You have to start.',
- 'Every mistake you fix now is a mark you keep later.',
- 'Understanding is quiet. Memorising is loud, and it forgets.',
- 'Small, repeated, unglamorous. That is the whole method.',
- 'The work is boring. Walking in prepared is not.'
+ 'One weak topic is easier to fix than five.',
+ 'Your next useful action is ready.',
+ 'Read the question twice. Answer it once.',
+ 'Paper practice shows you what to revise.',
+ 'Ask before a small gap becomes a large one.',
+ 'Ten focused minutes count. Start there.',
+ 'Understanding is quiet. Memorising is loud, and it forgets.'
 ];
 function splashLine(){
  var p=todayISO().split('-');
@@ -1474,6 +1492,95 @@ function registerSeminar(id){
 function todayMsg(){var u=DB.inbox.filter(function(m){return !m.read;});
  if(!u.length)return null;u.sort(function(a,b){return a.prio-b.prio;});return u[0];}
 
+/* ══ THE LOGIN MARK. Loose light gathers into Leon's bulb, switches on in
+   WHITE, and settles: the settled particles ARE the logo, so the formed shape
+   and the final mark can never disagree. Quick by design, an intro not a
+   ceremony, and reduced motion gets the finished mark with no cinema at all.
+   Physics and the seek harness are inherited from the standalone piece. ══ */
+var LGP=(function(){
+ var PTS=[467,770,572,643,414,736,306,285,428,91,522,724,495,675,352,196,450,48,365,896,424,200,358,871,254,513,309,510,750,355,298,435,634,390,338,249,290,542,302,437,495,755,616,387,330,382,375,152,478,835,376,865,408,644,573,243,552,314,395,759,478,306,181,421,290,825,232,427,613,365,493,798,561,638,261,421,316,309,198,533,326,412,639,280,613,702,668,346,466,208,595,298,555,552,278,741,298,627,311,813,484,906,269,446,588,289,435,243,558,538,215,501,638,679,348,356,595,384,616,738,386,260,509,629,609,711,214,440,311,207,456,271,203,307,352,243,520,865,543,536,525,692,166,423,264,582,440,798,596,317,564,346,328,318,563,649,444,705,715,134,774,351,448,987,353,804,610,208,468,981,654,459,252,503,561,261,389,188,599,344,540,633,474,721,343,380,353,798,223,384,304,733,438,861,702,462,372,230,375,781,319,262,476,908,299,298,612,555,598,252,235,533,244,582,422,648,387,732,502,659,544,602,504,259,483,281,662,460,314,471,561,326,817,356,424,749,475,690,478,840,596,729,307,830,247,221,643,558,511,224,623,421,279,232,454,41,558,409,542,261,573,529,237,604,614,450,445,153,223,458,296,333,440,736,268,230,329,224,402,300,221,143,437,963,525,239,445,853,348,620,579,541,404,679,415,170,169,428,658,542,293,214,497,733,420,798,367,229,322,358,577,627,376,192,529,170,380,634,396,765,677,333,162,460,548,344,498,655,411,782,278,766,677,457,456,262,174,118,218,439,686,456,462,884,657,568,435,953,532,355,317,324,664,302,498,799,421,881,411,744,311,178,291,807,655,320,226,495,162,433,588,458,578,445,618,538,632,252,293,294,590,404,306,371,777,357,358,208,535,413,387,903,503,673,348,318,331,350,210,398,244,250,261,492,473,795,527,234,670,447,532,627,616,514,586,799,468,750,527,691,393,201,373,334,523,330,562,375,252,384,424,838,317,439,165,463,620,257,348,852,209,143,594,603,235,288,378,275,636,588,426,800,478,972,354,696,554,483,535,170,766,377,564,433,616,369,652,695,447,61,616,236,490,847,336,582,242,517,584,618,199,414,327,688,396,875,643,390,478,668,535,195,198,385,305,820,385,293,596,631,570,623,635,255,354,738,544,428,620,725,566,371,537,350,487,749,359,229,633,352,617,606,414,675,645,249,408,242,642,459,207,357,612,484,385,729,507,756,250,369,529,740,283,786,414,663,280,221,544,412,677,141,692,450,321,254,686,423,585,213,298,734,496,752,313,589,233,506,219,370,693,499,439,11,379,151,368,790,252,592,412,771,202,540,560,429,396,769,243,239,361,775,216,429,495,230,502,740,283,501,829,346,319,282,595,444,290,555,619,271,227,333,342,283,445,980,299,391,260,501,225,586,555,670,254,597,448,868,360,616,219,514,617,401,507,835,694,435,525,666,669,316,314,678,584,316,628,325,585,217,232,350,176,409,384,272,522,220,288,385,353,873,465,879,253,324,695,134,232,488,565,376,606,694,561,627,288,227,340,294,488,716,446,57,465,952,505,699,424,693,475,297,201,340,557,336,549,441,564,657,572,539,207,153,478,199,548,195,402,903,255,352,374,757,354,161,448,881,591,555,478,750,357,301,477,991,390,894,302,370,351,250,438,710,294,323,378,175,637,442,566,549,180,378,533,743,218,553,470,895,399,294,375,669,473,214,582,545,574,655,644,344,585,554,567,313,442,895,402,728,392,700,409,741,529,183,190,140,356,604,454,757,636,423,191,352,500,290,456,281,401,204,480,321,233,463,315,396,402,294,318,186,302,773,663,408,482,841,451,76,259,480,434,290,267,352,385,210,535,600,396,685,283,342,447,51,322,480,522,350,510,669,445,767,811,370,641,675,373,900,619,510,478,782,501,279,334,691,507,194,420,865,607,436,489,637,574,785,462,980,555,320,361,658,674,146,225,557,305,669,516,781,410,666,608,562,466,760,450,173,450,644,394,653,364,636,566,493,513,798,692,145,445,835,369,870,520,616,525,588,426,985,561,542,477,758,543,310,651,694,592,455,561,283,261,604,481,724,338,676,448,43,571,518,458,987,617,500,291,511,487,906,545,224,418,858,284,509,428,944,483,882,693,371,396,936,434,21,596,776,634,446,639,577,187,490,288,399,315,612,505,612,442,997,211,167,406,241,532,324,331,250,681,340,441,254,414,935,436,59,220,396,649,572,243,540,809,376,483,215,462,313,564,451,420,986,553,329,656,365,446,966,500,839,182,103,415,789,377,713,507,170,422,73,613,475,442,745,674,133,651,576,369,295,400,807,250,268,434,167,438,250,661,480,421,50,517,333,355,224,328,231,492,256,188,111,571,325,314,630,219,352,410,262,454,876,434,10,430,106,290,218,493,663,315,284,446,15,450,199,441,280,301,247,447,759,260,476,345,571,555,306,456,751,371,685,426,853,295,441,421,232,447,236,308,531,475,744,360,835,621,487,452,71,230,404,429,663,492,169,390,209,177,390,358,709,437,707,639,469,298,191,199,355,280,748,685,406,421,44,204,274,361,678,179,378,573,258,660,360,466,848,323,519,547,302,344,165,338,189,417,874,650,417,702,388,395,883,460,731,269,462,391,715,348,168,218,342,220,489,480,929,403,239,379,650,422,846,288,585,534,697,295,566,246,337,686,472,388,770,679,151,651,469,454,779,560,323,372,777,428,156,500,717,320,536,438,836,560,214,291,840,340,396,240,430,357,356,435,947,321,381,535,617,229,387,206,291,448,221,607,226,318,304,571,401,407,275,355,764,309,330,704,453,339,220,576,409,456,847,548,492,639,507,630,460,332,388,279,383,308,740,702,415,462,804,286,818,309,233,194,498,454,210,560,647,262,252,438,193,421,68,631,388,390,750,325,258,560,442,325,549,807,352,361,238,445,994,554,459,493,313,219,153,426,777,562,225,516,712,303,424,552,674,548,643,705,379,410,203,449,975,392,290,443,291,590,418,553,297,354,782,349,653,331,697,340,733,643,378,813,346,360,631,280,612,593,735,393,278,460,231,385,756,183,490,610,620,165,401,461,789,573,596,414,688,412,881,223,425,549,309,491,281,591,601,442,4,479,896,228,167,512,322,580,519,229,176,429,805,389,962,510,808,541,345,627,709,516,693,451,267,283,811,314,371,169,368,337,569,692,354,449,100,427,667,249,322,662,270,577,385,327,705,270,399,518,322,706,135,468,877,428,727,437,210,583,482,414,216,486,778,510,290,419,153,597,442,441,46,473,808,212,310,351,600,661,333,294,448,480,888,462,697,663,367,340,564,170,360,472,231,380,228,422,181,296,269,497,266,470,208,461,888,399,729,555,617,625,540,472,267,325,342,416,763,520,235,436,986,199,498,343,698,781,376,429,991,457,690,266,209,400,980,546,328,616,730,492,328,412,962,604,373,406,866,459,212,402,656,680,360,245,260,349,377,368,314,421,852,361,746,507,625,427,251,503,878,326,440,309,595,574,451,704,397,200,506,558,503,390,852,432,865,644,316,546,200,316,304,656,368,186,434,524,183,406,267,221,297,241,231,514,630,394,229,600,308,396,710,576,254,572,474,504,670,348,304,702,129,242,525,442,793,503,351,494,199,437,92,328,415,530,677,556,495,311,256,623,271,440,71,513,339,290,302,298,459,257,525,620,612,650,519,234,482,639,565,581,511,479,648,399,193,679,388,320,232,482,181,296,642,311,665,634,547,479,935,534,340,451,738,479,903,470,724,576,788,600,508,600,322,316,606,524,657,420,658,300,611,747,369,427,29,535,587,543,688,331,626,602,313,191,478,233,275,673,285,615,495,658,265,273,199,513,614,328,631,567,487,667,173,574,316,262,308,685,362,385,870,264,612,574,603,302,440,195,508,551,489,432,786,308,241,370,854,424,31,234,525,321,352,537,537,306,478,516,882,674,528,530,269,620,462,604,364,590,334,345,307,512,883,543,355,213,420,301,272,438,728,289,340,746,358,674,418,666,148,243,476,342,614,271,361,410,145,388,969,510,333,341,712,517,271,475,855,189,395,255,343,390,234,268,249,234,422,561,588,483,956,370,212,265,535,589,578,697,490,585,609,372,726,226,246,593,766,231,515,384,944,618,553,564,255,446,799,509,607,355,340,276,408,684,462,271,607,354,885,583,486,564,277,536,571,385,907,779,371,562,471,652,396,454,727,235,460,459,777,518,755,311,433,442,980,167,131,488,891,469,254,301,494,516,655,577,282,347,361,570,463,236,301,618,458,325,582,614,409,278,642,472,966,569,537,430,10,305,313,347,624,562,669,242,375,500,252,676,440,530,726,201,454,616,304,478,656,679,390,425,955,249,606,524,626,245,570,261,276,202,494,329,391,404,166,609,234,366,626,573,507,834,356,478,302,171,468,278,238,237,320,422,258,438,55,360,601,408,888,530,277,610,516,234,237,507,652,283,757,602,743,799,356,265,325,400,918,655,556,450,650,185,404,550,184,221,363,697,141,656,284,360,607,630,369,525,645,268,360,369,777,319,489,579,451,450,774,172,116,372,889,682,356,441,274,453,682,543,675,552,566,429,873,521,307,220,453,238,494,226,506,607,327,625,476,385,206,171,412,541,626,380,625,485,630,337,316,496,333,439,311,558,513,764,351,606,375,498,631,571,201,271,441,322,365,602,239,249,343,655,386,626,418,581,368,363,884,305,755,420,667,504,884,572,334,548,431,252,242,549,606,178,354,418,994,549,502,289,655,428,310,627,299,361,649,264,332,398,265,471,938,469,797,393,838,549,455,492,262,626,316,306,536,517,762,418,801,448,693,401,749,238,157,686,387,572,303,218,517,399,780,623,613,534,276,236,338,310,770,477,195,556,175,660,403,328,364,227,428,409,159,450,177,305,506,704,406,576,565,542,395,284,610,434,147,638,362,363,718,367,768,531,622,307,779,292,836,524,225,613,713,585,462,201,409,345,639,351,667,585,258,290,765,190,450,292,502,287,565,422,93,235,564,483,794,190,517,261,429,427,195,204,384,208,353,266,376,406,737,356,234,187,464,688,508,462,895,819,365,257,219,660,145,202,382,323,319,356,220,606,412,396,901,358,661,586,518,492,885,338,717,448,176,339,347,367,899,511,781,416,781,543,230,699,420,610,488,520,250,261,353,210,320,503,667,421,732,604,704,584,308,465,297,607,386,264,391,562,597,771,343,236,488,468,843,613,340,296,598,432,259,378,199,324,480,343,264,550,357,345,312,279,264,650,164,632,516,498,320,687,415,512,285,227,176,337,254,355,666,446,949,526,360,261,446,226,383,324,349,529,568,393,846,238,546,417,922,301,557,677,541,264,541,547,349,453,804,516,228,460,307,618,586,598,433,222,370,665,413,441,714,496,730,664,492,662,317,637,453,285,239,558,302,555,421,830,373,580,422,376,625,554,614,414,215,362,803,671,290,421,235,338,334,333,208,380,249,438,854,477,253,306,381,403,963,512,743,460,670,566,193,608,477,603,404,286,824,368,791,540,591,376,856,478,643,304,411,409,227,552,608,464,800,334,528,493,901,468,667,480,868,357,278,618,328,181,434,297,375,456,294,623,366,493,205,661,506,430,238,699,455,359,350,181,445,297,349,575,417,214,349,474,662,438,807,612,270,677,535,362,282,425,870,282,553,577,560,274,327,295,185,547,471,466,905,564,444,475,287,642,515,211,287,464,852,579,549,444,902,489,806,508,229,769,366,577,796,441,885,571,489,590,742,270,351,638,586,501,260,626,536,554,625,589,322,396,851,344,357,391,739,368,661,537,346,633,404,594,566,416,191,402,806,500,275,488,872,586,224,435,72,564,258,432,994,267,226,391,938,306,544,272,313,472,664,561,382,194,432,422,267,357,685,648,368,191,458,686,520,526,178,303,640,396,260,540,660,574,308,533,372,409,216,243,388,612,616,571,778,219,386,469,948,510,749,472,745,698,404,303,220,615,253,348,674,385,691,370,706,190,442,453,676,492,702,273,319,541,562,346,658,181,321,416,699,285,459,629,267,274,336,423,695,452,307,327,477,553,520,505,680,300,808,466,262,492,179,392,303,427,859,584,501,613,286,438,185,559,195,512,868,427,274,354,214,697,390,695,378,701,478,640,433,430,757,480,152,514,657,648,521,328,670,415,161,466,835,480,262,248,544,611,586,535,327,559,189,573,442,696,400,270,433,306,647,576,650,621,317,580,391,530,589,662,500,417,847,207,452,554,214,381,657,526,681,242,600,358,288,504,707,296,197,558,371,379,770,649,484,621,407,479,939,683,497,517,595,320,437,686,370,424,861,709,112,303,652,380,710,321,599,607,522,619,333,286,321,514,696,416,145,634,488,447,7,264,503,264,302,514,240,594,575,622,357,268,257,447,32,412,272,503,746,296,825,321,345,324,526,545,618,301,791,428,172,454,26,610,753,326,357,300,771,421,962,412,843,691,472,550,231,579,238,231,495,601,338,177,466,689,324,242,409,599,451,620,318,544,548,510,355,290,530,462,839,391,245,310,726,597,772,535,249,411,863,171,459,264,258,438,751,470,145,526,569,283,466,396,190,374,656,447,929,344,323,301,305,480,968,406,247,240,325,288,346,513,672,291,433,192,147,667,337,287,613,400,199,498,736,348,773,209,374,306,316,520,806,475,190,698,493,595,456,480,733,508,315,327,697,589,517,368,858,252,406,328,192,490,686,465,953,559,203,643,438,594,399,560,228,612,559,450,984,588,613,794,345,391,775,436,688];
+ var ASPECT=0.6881;
+ var CFGP={particles:900,driftMs:240,gatherMs:820,glowLead:220,glowRamp:260,
+  glowStrength:0.42,glowScale:1.05,attraction:0.16,damping:0.78,drift:0.07,size:1.4,scatter:1.6,maxDpr:2};
+ var INK='#f5f5f5';
+ var canvas=null,ctx=null,W=0,H=0,DPR=1,raf=0,t0=0,running=false;
+ var N=CFGP.particles;
+ var px=new Float32Array(N),py=new Float32Array(N),vx=new Float32Array(N),vy=new Float32Array(N);
+ var tx=new Float32Array(N),ty=new Float32Array(N),ox=new Float32Array(N),oy=new Float32Array(N);
+ var dl=new Float32Array(N),sp=new Uint8Array(N);
+ var sprites=[],glowSprite=null;
+ var T1=CFGP.driftMs,T2=T1+CFGP.gatherMs,TEND=T2+260;
+ function easeOut(t){t=t<0?0:t>1?1:t;var u=1-t;return 1-u*u*u*u;}
+ function box(){var h=Math.min(H*0.92,120),w=h*ASPECT;return {x:(W-w)/2,y:(H-h)/2,w:w,h:h};}
+ function spritesBuild(){
+  sprites.length=0;
+  var r=CFGP.size*DPR,d=Math.ceil(r*2)+2,levels=[0.45,0.75,1];
+  for(var k=0;k<3;k++){var c=document.createElement('canvas');c.width=c.height=d;
+   var g=c.getContext('2d');var grd=g.createRadialGradient(d/2,d/2,0,d/2,d/2,r);
+   grd.addColorStop(0,INK);grd.addColorStop(1,'rgba(255,255,255,0)');
+   g.globalAlpha=levels[k];g.fillStyle=grd;g.beginPath();g.arc(d/2,d/2,r,0,Math.PI*2);g.fill();
+   sprites.push(c);}
+  /* the switch-on is WHITE light, sized from the bulb, never the screen */
+  var b=box(),gs=Math.max(2,Math.round(b.h*CFGP.glowScale*DPR));
+  var gc=document.createElement('canvas');gc.width=gc.height=gs;
+  var gg=gc.getContext('2d');var rg=gg.createRadialGradient(gs/2,gs/2,0,gs/2,gs/2,gs/2);
+  rg.addColorStop(0,'rgba(255,255,255,.95)');rg.addColorStop(0.3,'rgba(255,255,255,.28)');
+  rg.addColorStop(0.62,'rgba(255,255,255,.07)');rg.addColorStop(1,'rgba(255,255,255,0)');
+  gg.fillStyle=rg;gg.fillRect(0,0,gs,gs);glowSprite=gc;
+ }
+ function layout(){var b=box();for(var i=0;i<N;i++){var j=(i*2)%(PTS.length-1);
+  tx[i]=b.x+(PTS[j]/1000)*b.w;ty[i]=b.y+(PTS[j+1]/1000)*b.h;}}
+ function seedP(){var b=box(),s=Math.max(b.w,b.h)*CFGP.scatter;
+  for(var i=0;i<N;i++){var a=(i*2.399963)%(Math.PI*2);
+   var r=s*(0.18+0.82*Math.sqrt(((i*97)%100)/100));
+   px[i]=tx[i]+Math.cos(a)*r;py[i]=ty[i]+Math.sin(a)*r;ox[i]=px[i];oy[i]=py[i];
+   vx[i]=0;vy[i]=0;dl[i]=((i*53)%100)/100*140;sp[i]=i%3;}}
+ function resize(){if(!canvas)return;var r=canvas.getBoundingClientRect();
+  W=r.width||300;H=r.height||136;DPR=Math.min(devicePixelRatio||1,CFGP.maxDpr);
+  canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);layout();spritesBuild();}
+ function render(t){
+  ctx.clearRect(0,0,W,H);
+  var gather=easeOut((t-T1)/CFGP.gatherMs),loose=1-gather;
+  if(glowSprite&&t>T2-CFGP.glowLead){
+   var gOn=Math.min(1,(t-(T2-CFGP.glowLead))/CFGP.glowRamp);
+   var b=box(),gw=glowSprite.width/DPR,gh=glowSprite.height/DPR;
+   ctx.globalAlpha=gOn*CFGP.glowStrength;
+   ctx.drawImage(glowSprite,b.x+b.w/2-gw/2,b.y+b.h/2-gh/2,gw,gh);
+   ctx.globalAlpha=1;}
+  for(var i=0;i<N;i++){
+   var local=easeOut((t-CFGP.driftMs-dl[i])/CFGP.gatherMs);
+   var gx=ox[i]+(tx[i]-ox[i])*local,gy=oy[i]+(ty[i]-oy[i])*local;
+   vx[i]+=(gx-px[i])*CFGP.attraction;vy[i]+=(gy-py[i])*CFGP.attraction;
+   if(loose>0.001){vx[i]+=Math.sin(t*0.0012+i)*CFGP.drift*loose;
+    vy[i]+=Math.cos(t*0.0015+i)*CFGP.drift*loose;}
+   vx[i]*=CFGP.damping;vy[i]*=CFGP.damping;px[i]+=vx[i];py[i]+=vy[i];}
+  for(var k=0;k<3;k++){var s2=sprites[k],hw=s2.width/DPR/2;
+   for(var j2=0;j2<N;j2++){if(sp[j2]!==k)continue;
+    ctx.drawImage(s2,px[j2]-hw,py[j2]-hw,s2.width/DPR,s2.height/DPR);}}
+ }
+ function frame(now){var t=now-t0;render(t);
+  if(t<TEND){raf=requestAnimationFrame(frame);}
+  else{running=false;still();}}
+ function still(){ /* the finished mark: particles pinned to their targets */
+  for(var i=0;i<N;i++){px[i]=tx[i];py[i]=ty[i];vx[i]=0;vy[i]=0;}
+  render(TEND+999);}
+ function start(){
+  canvas=document.getElementById('lgField');if(!canvas)return;
+  ctx=canvas.getContext('2d',{alpha:true});
+  cancelAnimationFrame(raf);resize();seedP();
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){still();return;}
+  t0=performance.now();running=true;raf=requestAnimationFrame(frame);}
+ addEventListener('resize',function(){
+  if(canvas&&!document.getElementById('login').classList.contains('gone')){resize();still();}},{passive:true});
+ return {start:start,still:still,
+  seek:function(ms){canvas=document.getElementById('lgField');ctx=canvas.getContext('2d',{alpha:true});
+   cancelAnimationFrame(raf);running=false;resize();seedP();
+   for(var t=0;t<=ms;t+=16.7)render(t);return {at:ms,W:W,H:H};},
+  err:function(){var e=0;for(var i=0;i<N;i++){var a=px[i]-tx[i],b2=py[i]-ty[i];e+=Math.sqrt(a*a+b2*b2);}return e/N;},
+  centreOffset:function(){var b=box();return Math.abs((b.x+b.w/2)-W/2)+Math.abs((b.y+b.h/2)-H/2);}};
+})();
+
 /* ══ LOGIN. Demo gate only. Real auth arrives with the backend. ══ */
 function applyStudent(st){
  ME=st;
@@ -1519,6 +1626,7 @@ function doLogin(e){
  return false;
 }
 function doLogout(){
+ LGP.start();
  document.getElementById('lgUser').value='';
  document.getElementById('lgPin').value='';
  document.getElementById('lgErr').textContent='';
@@ -1527,7 +1635,7 @@ function doLogout(){
 }
 document.getElementById('lgForm').addEventListener('submit',doLogin);
 
-renderAll();seg('syllabus');syncOffline();
+renderAll();seg('syllabus');syncOffline();LGP.start();
 if(location.hash==='#learn'){seg('syllabus');show('learn');}
 if(location.hash==='#papers'){seg('papers');show('learn');}
 if(location.hash==='#progress')show('progress');
@@ -1694,6 +1802,29 @@ function BSWL_TEST(){
   ok('And the card stands down for that month',checkinDue()!==prevMonth());
   closeSheet();DB.checkins=savedCk;renderNext();
   ok('Check-in copy never shames',!/\b(lazy|blame|disappointed|excuses)\b/i.test(document.body.innerText));
+  /* COMPETITION WITHOUT A LADDER */
+  ok('Honours lists three names at most',DB.honours.length<=3);
+  ok('The race compares locations, never students',DB.race.every(function(r){return !!r.loc&&!r.name;}));
+  ok('No full ranking exists anywhere',document.body.innerText.indexOf('rank')<0&&document.body.innerText.indexOf('Rank')<0);
+  ok('Splash lines carry the calm set',SPLASH_LINES.indexOf('Your next useful action is ready.')>=0&&SPLASH_LINES.every(function(l){return l.indexOf('5 a.m')<0;}));
+  /* THE LOGIN MARK */
+  var lgVisible=!document.getElementById('login').classList.contains('gone');
+  if(document.getElementById('lgField')){
+   var wasGone=document.getElementById('login').classList.contains('gone');
+   document.getElementById('login').classList.remove('gone');
+   LGP.seek(0);var spread0=LGP.err();
+   LGP.seek(2000);var spreadEnd=LGP.err();
+   ok('Particles gather into the mark',spreadEnd<spread0*0.05,Math.round(spread0)+'px -> '+Math.round(spreadEnd*10)/10+'px');
+   ok('The finished mark sits dead centre',LGP.centreOffset()<2,LGP.centreOffset()+'px off');
+   var cv2=document.getElementById('lgField');
+   var d2=cv2.getContext('2d').getImageData(0,0,cv2.width,cv2.height).data;
+   var tinted=0,painted=0;
+   for(var i2=0;i2<d2.length;i2+=4){if(d2[i2+3]>40){painted++;
+    if(Math.abs(d2[i2]-d2[i2+1])>6||Math.abs(d2[i2+1]-d2[i2+2])>6)tinted++;}}
+   ok('The light is white, never yellow',tinted===0,tinted+' tinted of '+painted);
+   ok('The settled mark is actually drawn',painted>400,painted+' px');
+   if(wasGone)document.getElementById('login').classList.add('gone');
+  }
   ok('Courier message carries tracking details',(function(){var c=DB.inbox.filter(function(m){return m.courier;})[0];
     return !!(c&&c.courier.no&&c.courier.co&&c.courier.url);})());
  }catch(e){F++;out.push('FAIL · harness crashed · '+(e&&e.message));}

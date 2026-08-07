@@ -1067,22 +1067,82 @@ body.dark .stat-kpi .val{color:#fff}
            BB. Demo scope: everything is recorded here; it reaches the app with
            the live connection. ══ -->
       <div class="page" id="page-app">
-        <div class="card"><div class="card-h"><h3>Student logins</h3><span class="hint">Create a login when a student joins. Reset it when one is forgotten.</span></div>
-          <div class="card-b" style="padding:8px 18px 14px">
-            <table class="tbl"><thead><tr><th>Student</th><th>Username</th><th>Password</th><th></th></tr></thead><tbody id="appLoginRows"></tbody></table>
-            <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
-              <select class="filter" id="appNewStudent" style="flex:1;min-width:180px"></select>
-              <button class="btn-primary" onclick="APP.addLogin()">Create login</button>
+        <div class="tabbar" id="appTabs">
+          <button class="tab active" data-at2="access" onclick="APP.tab('access')">Access</button>
+          <button class="tab" data-at2="experience" onclick="APP.tab('experience')">Experience</button>
+          <button class="tab" data-at2="content" onclick="APP.tab('content')">Content</button>
+          <button class="tab" data-at2="health" onclick="APP.tab('health')">Health</button>
+        </div>
+
+        <!-- ══ ACCESS. No password is ever stored or shown. A code appears once
+             at the moment it is made, then it is gone: the pattern real
+             authentication will enforce, taught to the team from day one. ══ -->
+        <div id="appTab-access">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px" id="accStats"></div>
+          <div class="card"><div class="card-h"><h3>Student access</h3><span class="hint">Reset sends a fresh one-time code. Nobody, including BB, can see a current password.</span></div>
+            <div class="card-b" style="padding:10px 18px 14px">
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+                <input class="filter" id="accSearch" placeholder="Search students…" style="flex:2;min-width:160px" oninput="APP.renderAccess()">
+                <select class="filter" id="accFilter" style="flex:1;min-width:130px" onchange="APP.renderAccess()">
+                  <option value="all">All statuses</option><option value="active">Active</option>
+                  <option value="never">Never signed in</option><option value="locked">Locked</option>
+                </select>
+              </div>
+              <table class="tbl"><thead><tr><th>Student</th><th>Username</th><th>Status</th><th>Last active</th><th></th></tr></thead><tbody id="accRows"></tbody></table>
+              <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+                <select class="filter" id="appNewStudent" style="flex:1;min-width:180px"></select>
+                <button class="btn-primary" onclick="APP.addLogin()">Create access</button>
+              </div>
+            </div>
+          </div>
+          <div class="card" id="accManage" style="display:none"></div>
+        </div>
+
+        <!-- ══ EXPERIENCE: what students see, scoped, with the effect stated ══ -->
+        <div id="appTab-experience" style="display:none">
+          <div class="card"><div class="card-h"><h3>Features</h3><span class="hint">Every change states its effect and lands in the activity log</span></div>
+            <div class="card-b" id="expFeatures" style="padding:6px 18px 12px"></div>
+          </div>
+          <div class="card"><div class="card-h"><h3>Road to an A</h3><span class="hint">Names and wording are yours. Steps keep their numbers so no student history is lost.</span></div>
+            <div class="card-b" id="expRoad" style="padding:6px 18px 12px"></div>
+          </div>
+          <div class="card"><div class="card-h"><h3>Rewards</h3><span class="hint">Prizes and wording are editable now. Attendance bars change next term only, never mid-race.</span></div>
+            <div class="card-b" id="expRewards" style="padding:6px 18px 12px"></div>
+          </div>
+          <div class="card"><div class="card-h"><h3>Self-checks</h3><span class="hint">Staff never edit a student’s own answers, from here or anywhere</span></div>
+            <div class="card-b" id="expChecks" style="padding:6px 18px 12px"></div>
+          </div>
+          <div class="card"><div class="card-h"><h3>Support</h3><span class="hint">Where Ask Leon points, and what help says</span></div>
+            <div class="card-b" id="expSupport" style="padding:6px 18px 12px"></div>
+          </div>
+        </div>
+
+        <!-- ══ CONTENT ══ -->
+        <div id="appTab-content" style="display:none">
+          <div class="card"><div class="card-h"><h3>Splash lines</h3><span class="hint">One shows each morning. Short, useful, never preachy and never shaming.</span></div>
+            <div class="card-b" id="ctSplash" style="padding:6px 18px 12px"></div>
+          </div>
+          <div class="card"><div class="card-h"><h3>Student commitment</h3><span class="hint">Every student signs this on day one</span></div>
+            <div class="card-b" style="padding:10px 18px 14px">
+              <textarea class="filter" id="ctOath" style="width:100%;min-height:84px;resize:vertical"></textarea>
+              <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
+                <button class="btn-primary" onclick="APP.saveOath()">Publish</button>
+                <span class="hint" id="ctOathMeta"></span>
+              </div>
+            </div>
+          </div>
+          <div class="card"><div class="card-h"><h3>Help wording</h3><span class="hint">Shown when a student is stuck or locked out</span></div>
+            <div class="card-b" style="padding:10px 18px 14px">
+              <textarea class="filter" id="ctHelp" style="width:100%;min-height:64px;resize:vertical"></textarea>
+              <button class="btn-primary" style="margin-top:8px" onclick="APP.saveHelp()">Save</button>
             </div>
           </div>
         </div>
-        <div class="card"><div class="card-h"><h3>App settings</h3><span class="hint">What every student sees. Changes travel with the live connection.</span></div>
-          <div class="card-b" id="appToggles" style="padding:8px 18px 14px"></div>
-        </div>
-        <div class="card"><div class="card-h"><h3>Splash lines</h3><span class="hint">One line shows each day when the app opens. Keep them short and never preachy.</span></div>
-          <div class="card-b" style="padding:8px 18px 14px">
-            <textarea class="filter" id="appSplash" style="width:100%;min-height:110px;resize:vertical"></textarea>
-            <button class="btn-primary" style="margin-top:10px" onclick="APP.saveSplash()">Save lines</button>
+
+        <!-- ══ HEALTH: every number is a door, not a decoration ══ -->
+        <div id="appTab-health" style="display:none">
+          <div class="card"><div class="card-h"><h3>App health</h3><span class="hint">Adoption figures are demo values until the live connection; the structure is real</span></div>
+            <div class="card-b" id="hlRows" style="padding:6px 18px 12px"></div>
           </div>
         </div>
       </div>
@@ -1502,18 +1562,45 @@ function seedData(){
    {id:5,type:'learning',title:'New past-paper set for Unit 3',body:'2022 Paper II, questions 1 to 4. Untimed first.',aud:'2027 Batch',sentAt:ym+'-08 17:20',by:1,sent:81,opened:70,status:'sent'},
    {id:6,type:'class',title:'Term test reminder',body:'Term test on 2 August. Bring your own paper set.',aud:'Whole academy',sentAt:'',by:1,sent:0,opened:0,status:'scheduled',schedFor:ym+'-20 08:00'}
   ],
+  /* No pin field exists any more. A one-time code is generated, shown once
+     and never stored: the pattern real authentication enforces. */
   appLogins:[
-   {id:1,studentId:1,name:'Nadun Perera',user:'Nadun',pin:'1010'},
-   {id:2,studentId:2,name:'Ishara Silva',user:'Ishara',pin:'2020'},
-   {id:3,studentId:3,name:'Kavindu Fernando',user:'Kavindu',pin:'3030'}
+   {id:1,studentId:1,name:'Nadun Perera',user:'Nadun',status:'active',lastActive:ym+'-14',sessions:1,failed:0},
+   {id:2,studentId:2,name:'Ishara Silva',user:'Ishara',status:'active',lastActive:ym+'-15',sessions:2,failed:0},
+   {id:3,studentId:3,name:'Kavindu Fernando',user:'Kavindu',status:'never',lastActive:null,sessions:0,failed:0},
+   {id:4,studentId:9,name:'Amaya Gunawardena',user:'Amaya',status:'locked',lastActive:ym+'-02',sessions:0,failed:5}
   ],
-  appConfig:{rewards:true,batchStats:true,seminars:true,
-   splash:['The syllabus does not care how you feel at 5 a.m. Turn up anyway.',
-    'One topic done properly beats three topics skimmed.',
-    'You are not behind. You are one honest hour from level.',
+  appConfig:{
+   features:{
+    rewards:{on:true,aud:'all',by:'Leon',when:'2026-07-01'},
+    batchStats:{on:true,aud:'all',by:'Leon',when:'2026-07-01'},
+    seminars:{on:true,aud:'all',by:'Leon',when:'2026-07-01'},
+    weeklyPlan:{on:true,aud:'all',by:'Leon',when:'2026-07-08'},
+    competition:{on:true,aud:'all',by:'Leon',when:'2026-07-12'}
+   },
+   checks:{recheckDays:42,minBatch:10,allowNotes:false},
+   road:[
+    ['Set your goal','Lit by signing your commitment','leon',1],['Attend regularly','Lights at 90% verified attendance','system',1],
+    ['Rate your topics','Lights once 8 topics are rated honestly','self',1],['Finish a tute','Lights with the first finished tute','self',1],
+    ['Log an attempt','Lights with the first logged attempt','self',2],['Get one marked by Leon','Lights when Leon marks an attempt','leon',2],
+    ['Fix a repeated error','Lights when an attempt comes back clean','self',2],['Three timed attempts','Lights at three timed attempts','self',2],
+    ['Clear every Lost topic','Lights when nothing is marked Lost','self',2],['Ask before you are stuck','Lights the term a question comes early','self',2],
+    ['Beat your first score','Lights when the latest beats the first','self',3],['Five topics shown','Lights at five topics demonstrated','system',3],
+    ['Whole syllabus covered','Lights when coverage reaches 100%','leon',3],['Sit the exam','The outcome, not an app milestone','outcome',3]
+   ],
+   rewardTiers:[
+    {t:'Four in a row',prize:'BSWL merch',claim:'Collect from Bihandu at class',state:'confirmed'},
+    {t:'A term at 90%',prize:'BSWL t-shirt',claim:'Handed over at the term test',state:'confirmed'},
+    {t:'A year at 90%',prize:'10% off at the partner university',claim:'Written confirmation first',state:'pending'}
+   ],
+   support:{wa:'077 139 6173',hours:'Weekdays 4 to 8 pm',help:'Forgotten password? Ask Leon or Bihandu at class for a new code. Nothing is lost.'},
+   oath:{text:'I chose an A. I will turn up, do the work when it is set, fix what I get wrong and ask early when I am stuck.',since:'2026-07-01',version:1},
+   splash:['One weak topic is easier to fix than five.',
+    'Your next useful action is ready.',
     'Read the question twice. Answer it once.',
-    'Marks follow method. Method follows habit.',
-    'The exam hall is quiet. Prepare somewhere noisy.',
+    'Paper practice shows you what to revise.',
+    'Ask before a small gap becomes a large one.',
+    'Ten focused minutes count. Start there.',
     'Understanding is quiet. Memorising is loud, and it forgets.']},
   products:[],
  };
@@ -3286,68 +3373,278 @@ function renderMessages(){
  MSG.preview();
 }
 if(typeof RENDERERS!=='undefined')RENDERERS.messages=renderMessages;
-/* ===== STUDENT APP CONTROL: the manager runs this, not BB ===== */
+/* ===== STUDENT APP CONTROL v2: access, experience, content, health =====
+   The manager runs the app without BB. No password is ever stored or shown;
+   a one-time code exists for one toast and is gone. Every sensitive action
+   writes the audit trail. Rankings do not exist here: competition means the
+   honours list and the batch race, both on Leon-marked attendance only. */
+function appAudit(action,detail){
+ DB.get('activity').unshift({id:DB.nextId('activity'),who:CURRENT.id,t:action,m:detail,when:todayISO()+' 09:41'});
+ DB.commit();
+}
+function oneTimeCode(){var s='';for(var i=0;i<6;i++)s+='23456789'[ (Date.now()+i*7919)%8 ];return s;}
 var APP={
+ tabName:'access',
+ tab:function(t){APP.tabName=t;
+  document.querySelectorAll('#appTabs .tab').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-at2')===t);});
+  ['access','experience','content','health'].forEach(function(k){
+   document.getElementById('appTab-'+k).style.display=k===t?'':'none';});
+  renderApp2();
+ },
+ /* ── ACCESS ── */
  addLogin:function(){
-  var sel=document.getElementById('appNewStudent');
-  var sid=+sel.value;if(!sid){toast(I.warn+' Pick a student first.');return;}
+  var sel=document.getElementById('appNewStudent');var sid=+sel.value;
+  if(!sid){toast(I.warn+' Pick a student first.');return;}
   var c=DB.get('customers').find(function(x){return x.id===sid;});if(!c)return;
   var logins=DB.get('appLogins');
-  if(logins.some(function(l){return l.studentId===sid;})){toast(I.warn+' '+c.name.split(' ')[0]+' already has a login.');return;}
-  var user=c.name.split(' ')[0];
-  var n=2;while(logins.some(function(l){return l.user.toLowerCase()===user.toLowerCase();})){user=c.name.split(' ')[0]+n;n++;}
-  /* deterministic demo pin, never a real secret */
-  var pin=String(1000+((sid*37)%9000));
-  logins.push({id:DB.nextId('appLogins'),studentId:sid,name:c.name,user:user,pin:pin});
-  DB.commit();renderApp2();
-  toast(I.check+' Login created. '+user+' / '+pin+'. Share it in person, never in a group chat.');
+  if(logins.some(function(l){return l.studentId===sid;})){toast(I.warn+' '+c.name.split(' ')[0]+' already has access.');return;}
+  var user=c.name.split(' ')[0];var n=2;
+  while(logins.some(function(l){return l.user.toLowerCase()===user.toLowerCase();})){user=c.name.split(' ')[0]+n;n++;}
+  var code=oneTimeCode();
+  logins.push({id:DB.nextId('appLogins'),studentId:sid,name:c.name,user:user,status:'never',lastActive:null,sessions:0,failed:0});
+  appAudit('App access created',c.name+' · by '+CURRENT.name);
+  renderApp2();
+  toast(I.check+' Access for '+user+'. One-time code '+code+' — shown once, share it in person.');
  },
- resetPin:function(id){
+ manage:function(id){
   var l=DB.get('appLogins').find(function(x){return x.id===id;});if(!l)return;
-  l.pin=String(1000+((l.id*53+l.studentId*7)%9000));
+  var c=DB.get('customers').find(function(x){return x.id===l.studentId})||{};
+  var box=document.getElementById('accManage');
+  box.style.display='';
+  box.innerHTML='<div class="card-h"><h3>'+l.name+'</h3><span class="hint">'+(c.type||'')+' · '+(c.co||'')+'</span></div>'
+   +'<div class="card-b" style="padding:10px 18px 16px">'
+   +'<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;font-size:12.5px;margin-bottom:12px">'
+   +'<div><span class="hint">Status</span><br><b>'+APP.statusLabel(l.status)+'</b></div>'
+   +'<div><span class="hint">Last active</span><br><b>'+(l.lastActive||'Never')+'</b></div>'
+   +'<div><span class="hint">Devices signed in</span><br><b>'+l.sessions+'</b></div>'
+   +'<div><span class="hint">Recent failed logins</span><br><b>'+l.failed+'</b></div></div>'
+   +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+   +'<button class="btn-primary" onclick="APP.sendCode('+l.id+')">Send one-time code</button>'
+   +(l.status==='locked'
+     ?'<button class="btn-ghost" onclick="APP.lock('+l.id+',false)">Unlock</button>'
+     :'<button class="btn-ghost" onclick="APP.lock('+l.id+',true)">Lock account</button>')
+   +'<button class="btn-ghost" onclick="APP.signOutAll('+l.id+')">Sign out all devices</button>'
+   +'<button class="btn-ghost" onclick="APP.removeAccess('+l.id+')">Remove app access</button>'
+   +'</div>'
+   +'<div class="hint" style="margin-top:10px">Every action here lands in the activity log with your name on it. A current password cannot be viewed, by anyone.</div>'
+   +'</div>';
+  box.scrollIntoView({block:'nearest'});
+ },
+ statusLabel:function(st){return {active:'Active',never:'Never signed in',locked:'Locked',invited:'Invitation sent'}[st]||st;},
+ sendCode:function(id){
+  var l=DB.get('appLogins').find(function(x){return x.id===id;});if(!l)return;
+  var code=oneTimeCode();
+  if(l.status==='never')l.status='invited';
+  appAudit('One-time code issued',l.name+' · by '+CURRENT.name);
+  DB.commit();renderApp2();APP.manage(id);
+  toast(I.check+' Code for '+l.user+': '+code+' — shown once. It replaces the old password.');
+ },
+ lock:function(id,on){
+  var l=DB.get('appLogins').find(function(x){return x.id===id;});if(!l)return;
+  var prev=l.status;
+  l.status=on?'locked':(l.lastActive?'active':'never');
+  if(!on)l.failed=0;
+  appAudit(on?'Account locked':'Account unlocked',l.name+' · was '+prev+' · by '+CURRENT.name);
+  DB.commit();renderApp2();APP.manage(id);
+  toast(I.check+' '+l.user+' is now '+APP.statusLabel(l.status).toLowerCase()+'.');
+ },
+ signOutAll:function(id){
+  var l=DB.get('appLogins').find(function(x){return x.id===id;});if(!l)return;
+  l.sessions=0;
+  appAudit('Signed out of all devices',l.name+' · by '+CURRENT.name);
+  DB.commit();renderApp2();APP.manage(id);
+  toast(I.check+' '+l.user+' is signed out everywhere. Their data is untouched.');
+ },
+ removeAccess:function(id){
+  var ls=DB.get('appLogins');var i=ls.findIndex(function(x){return x.id===id;});if(i<0)return;
+  var l=ls[i];
+  if(!APP._confirmRemove||APP._confirmRemove!==id){APP._confirmRemove=id;
+   toast(I.warn+' Removes '+l.user+'’s app access only, never the student record. Tap again to confirm.');return;}
+  APP._confirmRemove=null;ls.splice(i,1);
+  appAudit('App access removed',l.name+' · by '+CURRENT.name);
+  DB.commit();document.getElementById('accManage').style.display='none';renderApp2();
+  toast(I.check+' Access removed. '+l.name+' stays in Students, untouched.');
+ },
+ renderAccess:function(){
+  var q=(document.getElementById('accSearch').value||'').toLowerCase();
+  var f=document.getElementById('accFilter').value;
+  var logins=DB.get('appLogins')||[];
+  var stats=[['Access created',logins.length],
+   ['Active',logins.filter(function(l){return l.status==='active';}).length],
+   ['Never signed in',logins.filter(function(l){return l.status==='never'||l.status==='invited';}).length],
+   ['Locked',logins.filter(function(l){return l.status==='locked';}).length]];
+  document.getElementById('accStats').innerHTML=stats.map(function(k){
+   return '<div class="card" style="margin:0;padding:12px 14px"><div class="hint">'+k[0]+'</div><div style="font-size:20px;font-weight:700;font-variant-numeric:tabular-nums">'+k[1]+'</div></div>';}).join('');
+  var list=logins.filter(function(l){
+   if(q&&l.name.toLowerCase().indexOf(q)<0&&l.user.toLowerCase().indexOf(q)<0)return false;
+   if(f==='active')return l.status==='active';
+   if(f==='never')return l.status==='never'||l.status==='invited';
+   if(f==='locked')return l.status==='locked';
+   return true;});
+  document.getElementById('accRows').innerHTML=list.map(function(l){
+   return '<tr><td><b>'+l.name+'</b></td><td>'+l.user+'</td><td>'+APP.statusLabel(l.status)+'</td>'
+    +'<td>'+(l.lastActive||'—').replace('—','Never')+'</td>'
+    +'<td style="text-align:right"><button class="btn-ghost" onclick="APP.manage('+l.id+')">Manage</button></td></tr>';
+  }).join('')||'<tr><td colspan="5" class="hint">No accounts match.</td></tr>';
+  var sel=document.getElementById('appNewStudent');
+  var have={};logins.forEach(function(l){have[l.studentId]=1;});
+  sel.innerHTML='<option value="">Choose a student…</option>'+DB.get('customers')
+   .filter(function(c){return c.status==='active'&&!have[c.id];}).slice(0,80)
+   .map(function(c){return '<option value="'+c.id+'">'+c.name+' · '+(c.type||'')+'</option>';}).join('');
+ },
+ /* ── EXPERIENCE ── */
+ FEAT_META:{
+  rewards:['Rewards ladder','Attendance rewards and the university benefit','Hides the ladder. Attendance records are kept, nothing is deleted.'],
+  batchStats:['Batch figures','Percentages from the whole batch, with sample size, never rankings','Hides batch percentages from every student.'],
+  seminars:['Seminars','Invitations and one-tap registration','Hides seminars in the app. Existing registrations are kept.'],
+  weeklyPlan:['Weekly plan','The Do next queue and the ten-minute tasks','Hides the plan. Coverage and evidence records are kept.'],
+  competition:['Honours and the batch race','Top attendance names and location v location turnout, never a full ranking','Hides both. Nobody is ever ranked bottom in this app, on or off.']
+ },
+ setAud:function(k,v){var f=DB.get('appConfig').features[k];f.aud=v;f.by=CURRENT.name;f.when=todayISO();
+  appAudit('App feature scoped',k+' → '+v+' · by '+CURRENT.name);DB.commit();renderApp2();},
+ toggle:function(k){
+  var f=DB.get('appConfig').features[k];var meta=APP.FEAT_META[k];
+  f.on=!f.on;f.by=CURRENT.name;f.when=todayISO();
+  appAudit('App feature '+(f.on?'enabled':'disabled'),meta[0]+' · by '+CURRENT.name);
   DB.commit();renderApp2();
-  toast(I.check+' New password for '+l.user+': '+l.pin);
+  var n=msgAudienceCount(f.aud==='all'?'all':f.aud);
+  toast(I.check+' '+meta[0]+' is '+(f.on?'on':'off')+' for '+n+' students. '+(f.on?'':meta[2]));
  },
- removeLogin:function(id){
-  var ls=DB.get('appLogins');var i=ls.findIndex(function(x){return x.id===id;});
-  if(i<0)return;var gone=ls.splice(i,1)[0];DB.commit();renderApp2();
-  toast(I.check+' '+gone.user+' can no longer sign in.');
+ saveRoadStep:function(i,field,val){
+  var r=DB.get('appConfig').road[i];if(!r)return;
+  r[field==='t'?0:1]=val;
+  appAudit('Road step edited','Step '+(i+1)+' · by '+CURRENT.name);DB.commit();
  },
- toggle:function(k){var cfg=DB.get('appConfig');cfg[k]=!cfg[k];DB.commit();renderApp2();
-  toast(I.check+' '+(cfg[k]?'On':'Off')+'. Students see it after the next connection.');},
- saveSplash:function(){
-  var lines=document.getElementById('appSplash').value.split('\n')
-   .map(function(l){return l.trim();}).filter(function(l){return l.length>0&&l.length<90;});
-  if(!lines.length){toast(I.warn+' At least one line, under 90 characters.');return;}
-  DB.get('appConfig').splash=lines;DB.commit();
-  toast(I.check+' Saved. '+lines.length+' lines rotate by date.');
+ setRoadSrc:function(i,v){var r=DB.get('appConfig').road[i];if(!r)return;r[2]=v;
+  appAudit('Road step source set','Step '+(i+1)+' → '+v+' · by '+CURRENT.name);DB.commit();renderApp2();},
+ saveTier:function(i,field,val){var t=DB.get('appConfig').rewardTiers[i];if(!t)return;
+  t[field]=val;appAudit('Reward tier edited',t.t+' · by '+CURRENT.name);DB.commit();},
+ tierState:function(i){var t=DB.get('appConfig').rewardTiers[i];if(!t)return;
+  t.state=t.state==='confirmed'?'pending':'confirmed';
+  appAudit('Reward tier marked '+t.state,t.t+' · by '+CURRENT.name);DB.commit();renderApp2();},
+ setCheck:function(k,v){var c=DB.get('appConfig').checks;c[k]=+v||v;
+  appAudit('Self-check setting changed',k+' → '+v+' · by '+CURRENT.name);DB.commit();
+  toast(I.check+' Saved.');},
+ saveSupport:function(){
+  var sup=DB.get('appConfig').support;
+  sup.wa=document.getElementById('supWa').value.trim();
+  sup.hours=document.getElementById('supHours').value.trim();
+  appAudit('Support details changed','by '+CURRENT.name);DB.commit();
+  toast(I.check+' Saved. Ask Leon now points at '+sup.wa+'.');
+ },
+ /* ── CONTENT ── */
+ addSplash:function(){
+  var inp=document.getElementById('ctNewLine');var v=(inp.value||'').trim();
+  if(!v||v.length>90){toast(I.warn+' One line, under 90 characters.');return;}
+  if(/lazy|shame|stupid|fail(ure)?s?\b|excuse/i.test(v)){toast(I.warn+' Not that tone. Useful and calm, never shaming.');return;}
+  DB.get('appConfig').splash.push(v);inp.value='';
+  appAudit('Splash line added','by '+CURRENT.name);DB.commit();renderApp2();
+ },
+ delSplash:function(i){var sp=DB.get('appConfig').splash;
+  if(sp.length<=3){toast(I.warn+' Keep at least three lines in rotation.');return;}
+  sp.splice(i,1);appAudit('Splash line removed','by '+CURRENT.name);DB.commit();renderApp2();},
+ saveOath:function(){
+  var o=DB.get('appConfig').oath;var v=document.getElementById('ctOath').value.trim();
+  if(!v){toast(I.warn+' The commitment cannot be empty.');return;}
+  o.text=v;o.version++;o.since=todayISO();
+  appAudit('Student commitment published','v'+o.version+' · by '+CURRENT.name);DB.commit();renderApp2();
+  toast(I.check+' Published as version '+o.version+'. New students sign this one.');
+ },
+ saveHelp:function(){
+  DB.get('appConfig').support.help=document.getElementById('ctHelp').value.trim();
+  appAudit('Help wording changed','by '+CURRENT.name);DB.commit();
+  toast(I.check+' Saved.');
  }
 };
 function renderApp2(){
- var rows=document.getElementById('appLoginRows');if(!rows)return;
- var logins=DB.get('appLogins')||[];
- rows.innerHTML=logins.map(function(l){
-  return '<tr><td><b>'+l.name+'</b></td><td>'+l.user+'</td><td class="tnum">'+l.pin+'</td>'
-   +'<td style="white-space:nowrap"><button class="btn-ghost" onclick="APP.resetPin('+l.id+')">Reset</button> '
-   +'<button class="btn-ghost" onclick="APP.removeLogin('+l.id+')">Remove</button></td></tr>';
- }).join('')||'<tr><td colspan="4" class="hint">No logins yet. Create the first one below.</td></tr>';
- var sel=document.getElementById('appNewStudent');
- var have={};logins.forEach(function(l){have[l.studentId]=1;});
- sel.innerHTML='<option value="">Choose a student…</option>'+DB.get('customers')
-  .filter(function(c){return c.status==='active'&&!have[c.id];}).slice(0,80)
-  .map(function(c){return '<option value="'+c.id+'">'+c.name+' · '+(c.type||'')+'</option>';}).join('');
- var cfg=DB.get('appConfig');
- document.getElementById('appToggles').innerHTML=[
-  ['rewards','Rewards ladder','Attendance rewards and the university benefit'],
-  ['batchStats','Batch figures','Percentages from the whole batch, never rankings'],
-  ['seminars','Seminars','Invitations and registration in the app']
- ].map(function(t){
-  return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--hair)">'
-   +'<div style="flex:1"><b style="font-size:13.5px">'+t[1]+'</b><div class="hint">'+t[2]+'</div></div>'
-   +'<button class="btn-ghost" onclick="APP.toggle(\''+t[0]+'\')">'+(cfg[t[0]]?'On':'Off')+'</button></div>';
- }).join('');
- var ta=document.getElementById('appSplash');
- if(ta&&document.activeElement!==ta)ta.value=cfg.splash.join('\n');
+ if(!document.getElementById('appTabs'))return;
+ var t=APP.tabName;
+ if(t==='access'){APP.renderAccess();}
+ else if(t==='experience'){
+  var cfg=DB.get('appConfig');
+  document.getElementById('expFeatures').innerHTML=Object.keys(APP.FEAT_META).map(function(k){
+   var f=cfg.features[k],m=APP.FEAT_META[k];
+   var audSel='<select class="filter" style="font-size:12px;padding:4px 8px" onchange="APP.setAud(\''+k+'\',this.value)">'
+    +[['all','Everyone'],['c0','2027 Batch'],['c1','2028 Batch']].map(function(o){
+      return '<option value="'+o[0]+'"'+(f.aud===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>';
+   return '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair)">'
+    +'<div style="flex:1;min-width:0"><b style="font-size:13.5px">'+m[0]+'</b><div class="hint">'+m[1]+'</div>'
+    +'<div class="hint" style="margin-top:3px">Visible to '+(f.aud==='all'?'everyone':(f.aud==='c0'?'the 2027 batch':'the 2028 batch'))
+    +' · last changed by '+f.by+' on '+f.when+'</div></div>'
+    +'<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">'
+    +'<button class="'+(f.on?'btn-primary':'btn-ghost')+'" style="min-width:56px" onclick="APP.toggle(\''+k+'\')">'+(f.on?'On':'Off')+'</button>'
+    +audSel+'</div></div>';
+  }).join('');
+  var PH=['','Build the foundation','Turn knowledge into marks','Enter exam mode'];
+  var road=cfg.road;var html='';var lastPh=0;
+  road.forEach(function(r,i){
+   if(r[3]!==lastPh){lastPh=r[3];html+='<div style="margin:12px 0 4px;font-weight:700;font-size:12.5px;color:var(--muted)">'+PH[lastPh]+'</div>';}
+   html+='<div style="display:flex;gap:10px;align-items:center;padding:7px 0">'
+    +'<span class="hint" style="width:20px">'+String(i+1).padStart(2,'0')+'</span>'
+    +'<input class="filter" style="flex:1;font-size:12.5px;padding:6px 8px" value="'+r[0].replace(/"/g,'&quot;')+'" onchange="APP.saveRoadStep('+i+',\'t\',this.value)">'
+    +'<select class="filter" style="font-size:11.5px;padding:4px 6px" onchange="APP.setRoadSrc('+i+',this.value)">'
+    +[['leon','Leon verified'],['system','System verified'],['self','Student recorded'],['outcome','Exam outcome']].map(function(o){
+      return '<option value="'+o[0]+'"'+(r[2]===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></div>';
+  });
+  document.getElementById('expRoad').innerHTML=html
+   +'<div class="hint" style="margin-top:8px">Step numbers never change, so every student’s lit history survives any rewording.</div>';
+  document.getElementById('expRewards').innerHTML=cfg.rewardTiers.map(function(tr,i){
+   return '<div style="padding:10px 0;border-bottom:1px solid var(--hair)">'
+    +'<div style="display:flex;gap:10px;align-items:center"><b style="font-size:13px;flex:1">'+tr.t+'</b>'
+    +'<button class="btn-ghost" style="font-size:11.5px" onclick="APP.tierState('+i+')">'+(tr.state==='confirmed'?'Confirmed':'Pending confirmation')+'</button></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">'
+    +'<input class="filter" style="font-size:12px;padding:6px 8px" value="'+tr.prize.replace(/"/g,'&quot;')+'" onchange="APP.saveTier('+i+',\'prize\',this.value)">'
+    +'<input class="filter" style="font-size:12px;padding:6px 8px" value="'+tr.claim.replace(/"/g,'&quot;')+'" onchange="APP.saveTier('+i+',\'claim\',this.value)">'
+    +'</div></div>';
+  }).join('')+'<div class="hint" style="margin-top:8px">The attendance bars themselves are locked mid-term. Moving a goalpost students are running at breaks the ladder’s whole promise.</div>';
+  var ck=cfg.checks;
+  document.getElementById('expChecks').innerHTML=
+   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+   +'<div><label class="hint">Recheck a topic after (days)</label><input class="filter" type="number" min="14" max="90" value="'+ck.recheckDays+'" onchange="APP.setCheck(\'recheckDays\',this.value)"></div>'
+   +'<div><label class="hint">Smallest batch shown in figures</label><input class="filter" type="number" min="5" max="50" value="'+ck.minBatch+'" onchange="APP.setCheck(\'minBatch\',this.value)"></div>'
+   +'</div><div class="hint" style="margin-top:8px">Below '+ck.minBatch+' students, batch figures hide themselves: small groups make individuals guessable.</div>';
+  var sup=cfg.support;
+  document.getElementById('expSupport').innerHTML=
+   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+   +'<div><label class="hint">Ask Leon points at</label><input class="filter" id="supWa" value="'+sup.wa+'"></div>'
+   +'<div><label class="hint">Support hours</label><input class="filter" id="supHours" value="'+sup.hours+'"></div></div>'
+   +'<button class="btn-primary" style="margin-top:10px" onclick="APP.saveSupport()">Save</button>';
+ }
+ else if(t==='content'){
+  var cfg2=DB.get('appConfig');
+  document.getElementById('ctSplash').innerHTML=cfg2.splash.map(function(l,i){
+   return '<div style="display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--hair)">'
+    +'<span style="flex:1;font-size:13px">'+l+'</span>'
+    +'<button class="btn-ghost" style="font-size:11.5px" onclick="APP.delSplash('+i+')">Remove</button></div>';
+  }).join('')
+  +'<div style="display:flex;gap:10px;margin-top:10px"><input class="filter" id="ctNewLine" placeholder="A new line, under 90 characters" style="flex:1">'
+  +'<button class="btn-primary" onclick="APP.addSplash()">Add</button></div>'
+  +'<div class="hint" style="margin-top:6px">Lines rotate by date, one per day, the same line for the whole batch. Shaming language is refused automatically.</div>';
+  var o=cfg2.oath;
+  var ta=document.getElementById('ctOath');if(document.activeElement!==ta)ta.value=o.text;
+  document.getElementById('ctOathMeta').textContent='Version '+o.version+' · in force since '+o.since;
+  var th=document.getElementById('ctHelp');if(document.activeElement!==th)th.value=cfg2.support.help;
+ }
+ else if(t==='health'){
+  var logins=DB.get('appLogins')||[];var never=logins.filter(function(l){return l.status==='never'||l.status==='invited';});
+  var locked=logins.filter(function(l){return l.status==='locked';});
+  var failedMsgs=0;(DB.get('messages')||[]).forEach(function(m){failedMsgs+=(m.failed||0);});
+  var rowsH=[
+   ['Accounts created',logins.length+' of '+DB.get('customers').filter(function(c){return c.status==='active';}).length+' active students',logins.length?null:['Create the first, in Access','access']],
+   ['Never signed in',never.length+(never.length===1?' student':' students'),never.length?['View them','access']:null],
+   ['Locked accounts',locked.length+(locked.length===1?' account':' accounts'),locked.length?['Resolve, in Access','access']:null],
+   ['Failed deliveries',failedMsgs+' messages','Delivery figures arrive with the live connection'],
+   ['Student app version','student v3, deployed '+todayISO(),null],
+   ['Staff OS version',CFG.app.version,null]
+  ];
+  document.getElementById('hlRows').innerHTML=rowsH.map(function(r){
+   var act='';
+   if(Array.isArray(r[2]))act='<button class="btn-ghost" onclick="APP.tab(\''+r[2][1]+'\')">'+r[2][0]+'</button>';
+   else if(typeof r[2]==='string')act='<span class="hint">'+r[2]+'</span>';
+   return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--hair)">'
+    +'<div style="flex:1"><b style="font-size:13px">'+r[0]+'</b><div class="hint">'+r[1]+'</div></div>'+act+'</div>';
+  }).join('');
+ }
 }
 if(typeof RENDERERS!=='undefined')RENDERERS.app=renderApp2;
 /* ===== BSWL tuition extras: knowledge signal + Starter Guide PDF + Receipt ===== */
