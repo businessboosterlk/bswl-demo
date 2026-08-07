@@ -101,6 +101,28 @@ svg{display:block;flex:none}
 .lg-s{font-size:var(--t-sm);color:var(--text-2);margin:var(--s1) 0 var(--s6)}
 .lg-err{font-size:var(--t-sm);color:var(--text);font-weight:600;margin-top:var(--s3);min-height:1.2em}
 .lg-foot{font-size:var(--t-xs);color:var(--text-3);margin-top:var(--s5)}
+/* ── UPDATES (inbox). In-app delivery first; push is a later channel. ── */
+.bell{width:40px;height:40px;border-radius:var(--r-pill);background:var(--surface-2);
+ display:flex;align-items:center;justify-content:center;position:relative;flex:none}
+.bell svg{width:20px;height:20px}
+.bell .bb{position:absolute;top:6px;right:6px;min-width:16px;height:16px;border-radius:var(--r-pill);
+ background:var(--accent);color:var(--on-accent);font-size:10px;font-weight:800;
+ display:flex;align-items:center;justify-content:center;padding:0 4px}
+.inboxw{position:fixed;inset:0;z-index:65;background:var(--bg);display:none;flex-direction:column;overflow-y:auto}
+.inboxw.on{display:flex;animation:sIn var(--m-base) var(--ease)}
+.ib-top{position:sticky;top:0;z-index:2;background:var(--bg);
+ padding:calc(var(--s3) + var(--sat)) var(--s4) var(--s3);display:flex;align-items:center;gap:var(--s3)}
+.ib-body{flex:1;max-width:600px;width:100%;margin:0 auto;padding:0 var(--s4) var(--s10)}
+.msg{border-top:1px solid var(--line);padding:var(--s3) 0;display:flex;gap:var(--s3);align-items:flex-start;width:100%}
+.msg:first-child{border-top:none}
+.msg .dotu{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;margin-top:7px}
+.msg.read .dotu{background:transparent}
+.msg .m-t{font-size:var(--t-base);font-weight:650;line-height:var(--lh-snug)}
+.msg.read .m-t{font-weight:500}
+.msg .m-b{font-size:var(--t-sm);color:var(--text-2);margin-top:2px}
+.msg .m-m{font-size:var(--t-xs);color:var(--text-3);margin-top:4px;display:flex;gap:var(--s2);align-items:center}
+.todaymsg{border:1px solid var(--line-2);border-radius:var(--r-lg);padding:var(--s3) var(--s4);
+ display:flex;gap:var(--s3);align-items:center;background:var(--surface)}
 .shell{max-width:600px;margin:0 auto;padding:0 var(--s4)}
 .hdr{
  position:sticky;top:0;z-index:40;max-width:600px;margin:0 auto;
@@ -355,7 +377,24 @@ label{display:block;font-size:var(--t-sm);font-weight:600;margin-bottom:var(--s2
 <header class="hdr">
  <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.7 1 1.6 1 2.5h6c0-.9.2-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>
  <div class="grow" style="flex:1"><h1 id="hdrTitle">Today</h1><div class="sub" id="hdrSub"></div></div>
+ <button class="bell" aria-label="Updates" onclick="openInbox()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9a6 6 0 1 0-12 0c0 6-2.5 7-2.5 7h17S18 15 18 9"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg>
+  <span class="bb" id="bellBadge" hidden></span>
+ </button>
 </header>
+
+<!-- UPDATES -->
+<div class="inboxw" id="inboxw" role="dialog" aria-modal="true" aria-label="Updates">
+ <div class="ib-top">
+  <button class="ic-btn" style="width:40px;height:40px;border-radius:var(--r-pill);background:var(--surface-2);display:flex;align-items:center;justify-content:center" aria-label="Back" onclick="closeInbox()">
+   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <h2 style="flex:1">Updates</h2>
+ </div>
+ <div class="ib-body">
+  <div class="chipbar" id="ibChips" role="group" aria-label="Filter updates"></div>
+  <div id="ibList" style="margin-top:var(--s3)"></div>
+ </div>
+</div>
 
 <main class="shell" id="main">
 
@@ -535,6 +574,37 @@ var DB={
   {date:'2026-07-04',paper:'2021 Paper I',q:'Q1',score:16,max:20,timed:true,marker:'self',err:''}
  ],
  batch:{n:50,tuteRate:71,median:14},
+ /* messages from the OS. Demo transport: seeded here, one clock with the OS.
+    Live delivery arrives with the backend; the shapes below match the shared
+    schema (messages, courier_deliveries, seminars) so it drops in unchanged.
+    RULE: nothing in here may state a balance, arrears or debt. */
+ inbox:[
+  {id:1,type:'class',prio:1,read:false,date:'2026-07-14',
+   title:'Saturday class starts at 9.00',
+   body:'This week only, the Kings class moves from 8.00 to 9.00. Same hall.',
+   cta:{label:'View class details',go:'next'}},
+  {id:2,type:'delivery',prio:5,read:false,date:'2026-07-13',
+   title:'Your Unit 4 revision pack is on its way',
+   body:'Sent through Fardar Express. Tap to follow it.',
+   courier:{co:'Fardar Express',no:'FD1284563',url:'https://www.fardar.com/track',
+    sent:'2026-07-13',eta:'2026-07-16',status:'In transit'},
+   cta:{label:'Track package',go:'courier'}},
+  {id:3,type:'seminar',prio:3,read:false,date:'2026-07-12',
+   title:'Paper-technique seminar',
+   body:'Two hours on structured answers before the term test. 2027 batch.',
+   seminar:{when:'Sunday 26 July, 9.00 to 11.00',where:'Kings, Nugegoda',
+    deadline:'Register by 22 July',registered:false},
+   cta:{label:'Register',go:'seminar'}},
+  {id:4,type:'payment',prio:6,read:true,date:'2026-07-10',
+   title:'July payment recorded',
+   body:'Thank you. Receipt BSWL-2041 is ready to view.',
+   receipt:{no:'BSWL-2041',month:'July 2026'},
+   cta:{label:'View receipt',go:'receipt'}},
+  {id:5,type:'learning',prio:4,read:true,date:'2026-07-08',
+   title:'New past-paper set for Unit 3',
+   body:'2022 Paper II, questions 1 to 4. Try them untimed first.',
+   cta:{label:'Open papers',go:'papers'}}
+ ],
  progressTask:null   /* resume state for an in-flight task */
 };
 
@@ -646,6 +716,7 @@ document.getElementById('scrim').addEventListener('click',function(e){if(e.targe
 document.addEventListener('keydown',function(e){
  if(e.key!=='Escape')return;
  if(document.getElementById('scrim').classList.contains('on'))closeSheet();
+ else if(document.getElementById('inboxw').classList.contains('on'))closeInbox();
  else if(document.getElementById('flow').classList.contains('on'))exitFlow();
 });
 
@@ -865,7 +936,12 @@ function renderNext(){
     +'<span class="tw">'+esc(r.why)+' · '+r.mins+' min</span></span>'
     +'<span class="chev">'+I.chev+'</span></button>';}).join('')+'</div>':'';
 
- el.innerHTML=primary+thenList
+ var tm=todayMsg();
+ var msgCard=tm?'<button class="todaymsg" style="width:100%" onclick="openMsg('+tm.id+')">'
+  +'<span class="grow" style="flex:1;min-width:0"><span class="tt">'+esc(tm.title)+'</span>'
+  +'<span class="tw">'+esc(IB_TYPES[tm.type])+' \u00b7 tap to open \u00b7 <u>view all updates</u></span></span>'
+  +'<span class="chev">'+I.chev+'</span></button>':'';
+ el.innerHTML=msgCard+primary+thenList
   +'<div class="sect-h"><h2>Class</h2></div>'
   +'<div class="list">'
    +'<div class="rowbtn" style="cursor:default"><span class="grow"><span class="tt">Next</span>'
@@ -1232,7 +1308,7 @@ document.querySelectorAll('#learnSeg button').forEach(function(b){
  b.addEventListener('click',function(){seg(b.getAttribute('data-seg'));});
 });
 
-function renderAll(){renderNext();renderSyllabus();renderTutes();renderPapers();renderProgress();}
+function renderAll(){renderNext();renderSyllabus();renderTutes();renderPapers();renderProgress();renderBell();}
 
 /* ══ OFFLINE ══ */
 function syncOffline(){document.getElementById('offlineBar').style.display=navigator.onLine?'none':'block';}
@@ -1273,6 +1349,73 @@ function showSplash(){
  /* time-boxed. It never stands between a student and the app. */
  SPLASH_T=setTimeout(hideSplash,1200);
 }
+/* ══ UPDATES (inbox) ══ */
+var IB_FILTER='all';
+var IB_TYPES={all:'All',class:'Classes',learning:'Learning',seminar:'Seminars',delivery:'Deliveries',payment:'Payments'};
+function unreadCount(){return DB.inbox.filter(function(m){return !m.read;}).length;}
+function renderBell(){var b=document.getElementById('bellBadge');var n=unreadCount();
+ b.hidden=n===0;b.textContent=n>9?'9+':n;}
+function openInbox(){document.getElementById('inboxw').classList.add('on');
+ document.body.style.overflow='hidden';renderInbox();}
+function closeInbox(){document.getElementById('inboxw').classList.remove('on');
+ document.body.style.overflow='';renderBell();renderNext();}
+function renderInbox(){
+ document.getElementById('ibChips').innerHTML=Object.keys(IB_TYPES).map(function(k){
+  var n=k==='all'?DB.inbox.length:DB.inbox.filter(function(m){return m.type===k;}).length;
+  if(k!=='all'&&!n)return '';
+  return '<button class="chip" aria-pressed="'+(IB_FILTER===k?'true':'false')+'" onclick="IB_FILTER=\''+k+'\';renderInbox()">'
+   +IB_TYPES[k]+'<span class="num" style="opacity:.6">'+n+'</span></button>';}).join('');
+ var list=DB.inbox.filter(function(m){return IB_FILTER==='all'||m.type===IB_FILTER;})
+  .slice().sort(function(x,y){return x.date<y.date?1:-1;});
+ document.getElementById('ibList').innerHTML=list.length?list.map(function(m){
+  return '<button class="msg'+(m.read?' read':'')+'" onclick="openMsg('+m.id+')">'
+   +'<span class="dotu" aria-hidden="true"></span>'
+   +'<span class="grow" style="flex:1;min-width:0"><span class="m-t" style="display:block">'+esc(m.title)+'</span>'
+   +'<span class="m-b" style="display:block">'+esc(m.body)+'</span>'
+   +'<span class="m-m"><span class="pill">'+IB_TYPES[m.type]+'</span>'+fmtD(m.date)
+   +(m.read?'':' \u00b7 new')+'</span></span>'
+   +'<span class="chev">'+I.chev+'</span></button>';}).join('')
+  :emptyState('Nothing here yet','Updates from Leon arrive in this list.');
+}
+function msgById(id){var hit=null;DB.inbox.forEach(function(m){if(m.id===id)hit=m;});return hit;}
+function openMsg(id){
+ var m=msgById(id);if(!m)return;
+ if(!m.read){m.read=true;renderBell();renderInbox();say('Marked as read');}
+ var extra='';
+ if(m.courier){var c=m.courier;
+  extra='<div class="list" style="margin-top:var(--s4)">'
+   +row('Courier',c.co)+row('Tracking number',c.no)+row('Sent',fmtD(c.sent))
+   +row('Estimated arrival',fmtD(c.eta))+row('Status',c.status)+'</div>'
+   +'<a class="btn btn-primary" style="margin-top:var(--s4)" href="'+c.url+'" target="_blank" rel="noopener">Track package</a>';}
+ else if(m.seminar){var sm=m.seminar;
+  extra='<div class="list" style="margin-top:var(--s4)">'
+   +row('When',sm.when)+row('Where',sm.where)+row('Deadline',sm.deadline)
+   +row('Your place',sm.registered?'Registered':'Not registered yet')+'</div>'
+   +(sm.registered
+     ?'<div class="banner" style="margin-top:var(--s4)">You are registered. It goes on Leon\u2019s list.</div>'
+     :'<button class="btn btn-primary" style="margin-top:var(--s4)" onclick="registerSeminar('+m.id+')">Register</button>');}
+ else if(m.receipt){
+  extra='<div class="list" style="margin-top:var(--s4)">'
+   +row('Receipt',m.receipt.no)+row('For',m.receipt.month)+row('Recorded','By the academy')+'</div>'
+   +'<p class="meta" style="margin-top:var(--s3)">Questions about a payment go to Leon directly, never through the app.</p>';}
+ else if(m.cta&&m.cta.go&&!m.courier&&!m.seminar){
+  extra='<button class="btn btn-primary" style="margin-top:var(--s4)" onclick="msgGo(\''+m.cta.go+'\')">'+esc(m.cta.label)+'</button>';}
+ openSheet('<h3 id="sheetTitle">'+esc(m.title)+'</h3><p class="lede">'+esc(m.body)+'</p>'
+  +'<p class="meta" style="margin-top:var(--s2)">'+IB_TYPES[m.type]+' \u00b7 '+fmtD(m.date)+'</p>'+extra);
+}
+function msgGo(where){closeSheet();closeInbox();
+ if(where==='papers'){show('learn');seg('papers');}
+ else if(where==='learn'){show('learn');seg('syllabus');}
+ else show('next');}
+function registerSeminar(id){
+ var m=msgById(id);if(!m||!m.seminar)return;
+ m.seminar.registered=true;closeSheet();renderInbox();renderNext();
+ toast('Registered. Leon\u2019s list has your name.',function(){m.seminar.registered=false;renderInbox();renderNext();});
+}
+/* the highest-priority unread message earns one slim card on Today */
+function todayMsg(){var u=DB.inbox.filter(function(m){return !m.read;});
+ if(!u.length)return null;u.sort(function(a,b){return a.prio-b.prio;});return u[0];}
+
 /* ══ LOGIN. Demo gate only. Real auth arrives with the backend. ══ */
 function applyStudent(st){
  ME=st;
@@ -1464,6 +1607,24 @@ function BSWL_TEST(){
   ok('No API keys',!/eyJ[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9]{20,}/.test(src));
   ok('Zero em dashes',src.indexOf('\u2014')<0&&src.indexOf('\u2013')<0);
   ok('Draft lesson content is labelled',JSON.stringify(LESSON).length>0&&src.indexOf('pending Leon')>=0);
+  /* THE MESSAGING LAYER */
+  var u0=unreadCount();
+  ok('Unread badge matches the data',(function(){renderBell();var bb=document.getElementById('bellBadge');
+    return (u0===0)===bb.hidden&&(u0===0||bb.textContent==String(u0));})(),u0+' unread');
+  ok('Today carries exactly one message card',document.querySelectorAll('.todaymsg').length===(todayMsg()?1:0));
+  var mm=DB.inbox.filter(function(m){return !m.read;})[0];
+  if(mm){openMsg(mm.id);
+   ok('Opening a message marks it read',mm.read===true);
+   ok('And the badge falls',unreadCount()===u0-1);closeSheet();}
+  var sem=DB.inbox.filter(function(m){return m.seminar;})[0];
+  if(sem){var was=sem.seminar.registered;registerSeminar(sem.id);
+   ok('Registering flips the seminar state',sem.seminar.registered===true);
+   sem.seminar.registered=was;}
+  ok('No debt wording in any student message',!DB.inbox.some(function(m){
+    return /owe|owing|outstanding|overdue|arrears|balance due|pay immediately/i.test(m.title+' '+m.body);}));
+  ok('No internal staff notes reach the app',!/internal_note|internalNote/.test(JSON.stringify(DB.inbox)));
+  ok('Courier message carries tracking details',(function(){var c=DB.inbox.filter(function(m){return m.courier;})[0];
+    return !!(c&&c.courier.no&&c.courier.co&&c.courier.url);})());
  }catch(e){F++;out.push('FAIL · harness crashed · '+(e&&e.message));}
  finally{restore();}
  console.log(out.join('\n'));console.log(P+' passed, '+F+' failed');

@@ -834,6 +834,8 @@ body.dark .stat-kpi .val{color:#fff}
         <button class="nav-item" data-pg="inventory" data-role="all" data-module="inventory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Inventory<span class="badge" id="nbInventory"></span></button>
         <button class="nav-item" data-pg="attendance" data-role="owner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/><path d="M9 15l2 2 4-4"/></svg>Attendance</button>
         <button class="nav-item" data-pg="classes" data-role="owner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/></svg>Classes</button>
+        <button class="nav-item" data-pg="messages" data-role="manager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Messages</button>
+        <button class="nav-item" data-pg="app" data-role="manager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>Student app</button>
         <button class="nav-item" data-pg="tasks" data-role="all" data-module="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Task Book<span class="badge" id="nbTasks"></span></button>
       </div>
       <div class="nav-group" data-group="money">
@@ -1025,6 +1027,64 @@ body.dark .stat-kpi .val{color:#fff}
         <div class="card"><div class="card-h"><h3>Coverage so far</h3><span class="hint">How much of the syllabus each batch has seen</span></div><div class="card-b" id="clsProgress" style="padding:10px 18px 16px"></div></div>
         <div class="card"><div class="card-h"><h3>Batch signals</h3><span class="hint">Where this batch is struggling and what to teach next</span></div><div class="card-b" id="clsIntel" style="padding:10px 18px 16px"></div></div>
         <div class="card"><div class="card-h"><h3>Worth a look</h3><span class="hint">At most ten students, each with a reason and one action</span></div><div class="card-b" id="clsQueue" style="padding:6px 18px 14px"></div></div>
+      </div>
+      <!-- ══ MESSAGES: the OS is the control centre, the student app is the
+           delivery surface. Demo transport: sends are recorded here and the
+           student app carries matching seeded messages on the same clock.
+           The live pipe is the backend, and nothing here pretends otherwise. ══ -->
+      <div class="page" id="page-messages">
+        <div class="kpi-row" id="msgStats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px"></div>
+        <div class="card"><div class="card-h"><h3>Send an update</h3><span class="hint">It lands in each student’s app, on their dashboard when it matters</span></div>
+          <div class="card-b" style="padding:12px 18px 16px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div><label class="hint" for="msgType">Type</label>
+                <select class="filter" id="msgType" style="width:100%" onchange="MSG.preview()">
+                  <option value="class">Class notice</option><option value="learning">New tute or paper</option>
+                  <option value="seminar">Seminar</option><option value="delivery">Courier dispatch</option>
+                  <option value="payment">Payment confirmation</option><option value="general">General announcement</option>
+                </select></div>
+              <div><label class="hint" for="msgAud">Send to</label>
+                <select class="filter" id="msgAud" style="width:100%" onchange="MSG.preview()">
+                  <option value="all">Whole academy</option><option value="c0">2027 Batch</option><option value="c1">2028 Batch</option>
+                  <option value="Kings · Nugegoda">Kings, Nugegoda</option><option value="JMC · Kiribathgoda">JMC, Kiribathgoda</option>
+                  <option value="Sasik · Gampaha">Sasik, Gampaha</option><option value="Residence">Residence</option><option value="Online">Online students</option>
+                </select></div>
+            </div>
+            <div style="margin-top:10px"><label class="hint" for="msgTitle">Title</label>
+              <input class="filter" id="msgTitle" style="width:100%" maxlength="80" placeholder="Saturday class starts at 9.00" oninput="MSG.preview()"></div>
+            <div style="margin-top:10px"><label class="hint" for="msgBody">Message</label>
+              <textarea class="filter" id="msgBody" style="width:100%;min-height:74px;resize:vertical" maxlength="400" placeholder="Short and clear. Students read this on a phone." oninput="MSG.preview()"></textarea></div>
+            <div class="hint" id="msgPreview" style="margin-top:10px"></div>
+            <div class="hint" id="msgWarn" style="margin-top:6px;font-weight:700"></div>
+            <button class="btn-primary" id="msgSendBtn" style="margin-top:12px" onclick="MSG.send()">Review and send</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-h"><h3>Sent and scheduled</h3><span class="hint">Delivery and read figures are demo values until the live pipe connects</span></div>
+          <table class="tbl"><thead><tr><th>Message</th><th>Audience</th><th class="tnum">Sent to</th><th class="tnum">Opened</th><th>Status</th></tr></thead><tbody id="msgBody2"></tbody></table>
+        </div>
+      </div>
+      <!-- ══ STUDENT APP CONTROL: Bihandu runs logins and app settings without
+           BB. Demo scope: everything is recorded here; it reaches the app with
+           the live connection. ══ -->
+      <div class="page" id="page-app">
+        <div class="card"><div class="card-h"><h3>Student logins</h3><span class="hint">Create a login when a student joins. Reset it when one is forgotten.</span></div>
+          <div class="card-b" style="padding:8px 18px 14px">
+            <table class="tbl"><thead><tr><th>Student</th><th>Username</th><th>Password</th><th></th></tr></thead><tbody id="appLoginRows"></tbody></table>
+            <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+              <select class="filter" id="appNewStudent" style="flex:1;min-width:180px"></select>
+              <button class="btn-primary" onclick="APP.addLogin()">Create login</button>
+            </div>
+          </div>
+        </div>
+        <div class="card"><div class="card-h"><h3>App settings</h3><span class="hint">What every student sees. Changes travel with the live connection.</span></div>
+          <div class="card-b" id="appToggles" style="padding:8px 18px 14px"></div>
+        </div>
+        <div class="card"><div class="card-h"><h3>Splash lines</h3><span class="hint">One line shows each day when the app opens. Keep them short and never preachy.</span></div>
+          <div class="card-b" style="padding:8px 18px 14px">
+            <textarea class="filter" id="appSplash" style="width:100%;min-height:110px;resize:vertical"></textarea>
+            <button class="btn-primary" style="margin-top:10px" onclick="APP.saveSplash()">Save lines</button>
+          </div>
+        </div>
       </div>
       <div class="page" id="page-team">
         <div class="team-grid" id="teamGrid"></div>
@@ -1432,7 +1492,30 @@ function seedData(){
   recurringPayments:recurringPayments,
   activity:activity,
   loginAudit:loginAudit,
-  attendance:BSWL_seedAttendance(customers),classLog:BSWL_seedClassLog(),products:[],
+  attendance:BSWL_seedAttendance(customers),classLog:BSWL_seedClassLog(),
+  messages:[
+   {id:1,type:'class',title:'Saturday class starts at 9.00',body:'This week only, the Kings class moves from 8.00 to 9.00. Same hall.',aud:'Kings · Nugegoda',sentAt:ym+'-14 08:05',by:1,sent:57,opened:44,status:'sent'},
+   {id:2,type:'delivery',title:'Unit 4 revision pack dispatched',body:'Fardar Express, tracking FD1284563.',aud:'Nadun Perera',sentAt:ym+'-13 15:40',by:2,sent:1,opened:1,status:'sent',
+    courier:{co:'Fardar Express',no:'FD1284563',note:'Second attempt, first parcel returned'}},
+   {id:3,type:'seminar',title:'Paper-technique seminar',body:'Two hours on structured answers before the term test.',aud:'2027 Batch',sentAt:ym+'-12 10:00',by:1,sent:81,opened:63,status:'sent',registered:12},
+   {id:4,type:'payment',title:'July payment recorded',body:'Receipt BSWL-2041 is ready to view.',aud:'Nadun Perera',sentAt:ym+'-10 09:15',by:1,sent:1,opened:1,status:'sent'},
+   {id:5,type:'learning',title:'New past-paper set for Unit 3',body:'2022 Paper II, questions 1 to 4. Untimed first.',aud:'2027 Batch',sentAt:ym+'-08 17:20',by:1,sent:81,opened:70,status:'sent'},
+   {id:6,type:'class',title:'Term test reminder',body:'Term test on 2 August. Bring your own paper set.',aud:'Whole academy',sentAt:'',by:1,sent:0,opened:0,status:'scheduled',schedFor:ym+'-20 08:00'}
+  ],
+  appLogins:[
+   {id:1,studentId:1,name:'Nadun Perera',user:'Nadun',pin:'1010'},
+   {id:2,studentId:2,name:'Ishara Silva',user:'Ishara',pin:'2020'},
+   {id:3,studentId:3,name:'Kavindu Fernando',user:'Kavindu',pin:'3030'}
+  ],
+  appConfig:{rewards:true,batchStats:true,seminars:true,
+   splash:['The syllabus does not care how you feel at 5 a.m. Turn up anyway.',
+    'One topic done properly beats three topics skimmed.',
+    'You are not behind. You are one honest hour from level.',
+    'Read the question twice. Answer it once.',
+    'Marks follow method. Method follows habit.',
+    'The exam hall is quiet. Prepare somewhere noisy.',
+    'Understanding is quiet. Memorising is loud, and it forgets.']},
+  products:[],
  };
 }
 
@@ -1518,7 +1601,7 @@ function buildTitles(){TITLES={
  customers:[CFG.contactWord.plural,'Enrolled students, batches and referrals'],
  quotes:['Quotes','Build and send branded quotations'],
  inventory:['Inventory','Stock, low-stock and dead-stock at a glance'],
- tasks:['Task Book','Assign and track work'],attendance:['Attendance','Mark who came to class'],classes:['Classes','Mark what each class covered'],
+ tasks:['Task Book','Assign and track work'],attendance:['Attendance','Mark who came to class'],classes:['Classes','Mark what each class covered'],messages:['Messages','Send updates to the student app'],app:['Student app','Logins and settings, run by your team'],
  finance:['Finance','Fee invoices, collections and aging'],
  recurring:[CFG.recurring.label+' collection','Who paid, collected vs expected, who owes'],
  forecast:['Forecast','Month-by-month revenue recognition'],
@@ -2349,7 +2432,7 @@ function openCustomer(id){
  const hist=(c.history||[]).map(h=>'<tr><td style="font-size:12.5px">'+h.item+'</td><td class="tm">'+fmtDate(h.date)+'</td><td class="tnum" style="font-size:12.5px">'+lkr(h.value)+'</td></tr>').join('');
  const panel=document.getElementById('panel');
  panel.innerHTML='<div class="pn-head"><button class="pn-close" onclick="closePanel()">✕</button><div class="pn-nm">'+c.name+'</div><div class="pn-co">'+(c.co||'')+'</div><div class="pn-badges"><span class="bdg '+(c.type==='B2B'?'bdg-blue':'bdg-amber')+'">'+(c.type||'')+'</span><span class="bdg '+(c.status==='alumni'?'bdg-blue':done?'bdg-green':due?'bdg-action':'bdg-grey')+'">'+(c.status==='alumni'?'Alumni':done?'Cadence complete':due?cadLabel(c.sent)+' due':'Next: '+cadLabel(c.sent))+'</span></div></div>'
-  +'<div class="pn-actions"><button class="pa primary" onclick="custSend('+id+')">'+I.phone+' WhatsApp</button>'+(due?'<button class="pa" onclick="custDone('+id+')">'+I.check+' Mark done</button>':'')+'<button class="pa" onclick="onboardingDoc('+id+')">Starter guide</button><button class="pa" onclick="receiptDoc('+id+')">Receipt</button></div>'
+  +'<div class="pn-actions"><button class="pa primary" onclick="custSend('+id+')">'+I.phone+' WhatsApp</button><button class="pa" onclick="msgToStudent('+id+')">'+I.inbox+' Message app</button>'+(due?'<button class="pa" onclick="custDone('+id+')">'+I.check+' Mark done</button>':'')+'<button class="pa" onclick="onboardingDoc('+id+')">Starter guide</button><button class="pa" onclick="receiptDoc('+id+')">Receipt</button></div>'
   +'<div class="pn-body">'
   +'<div class="sec"><div class="sec-t">Knowledge level</div><div class="lvl-set"><button class="lvl-btn lv-good'+(c.level==='good'?' on':'')+'" onclick="setLevel('+id+',\'good\')">Strong</button><button class="lvl-btn lv-okay'+((c.level||'okay')==='okay'?' on':'')+'" onclick="setLevel('+id+',\'okay\')">Okay</button><button class="lvl-btn lv-bad'+(c.level==='bad'?' on':'')+'" onclick="setLevel('+id+',\'bad\')">Needs work</button></div></div>'
   +'<div class="sec"><div class="sec-t">Summary</div><div class="info-grid"><div class="info"><div class="il">Lifetime value</div><div class="iv" style="color:var(--green)">'+lkr(ltv)+'</div></div><div class="info"><div class="il">Orders</div><div class="iv">'+(c.history?c.history.length:0)+'</div></div><div class="info"><div class="il">First order</div><div class="iv">'+fmtDate(custFirst(c))+'</div></div><div class="info"><div class="il">Last contact</div><div class="iv">'+fmtDate(c.last)+'</div></div></div></div>'
@@ -3125,6 +3208,144 @@ function renderClassesIntel(){
  }).join(''):'<div class="hint" style="padding:8px 0">Nobody needs chasing in this batch. Rare and good.</div>';
 }
 if(typeof RENDERERS!=='undefined')RENDERERS.classes=function(){renderClasses();renderClassesIntel();};
+/* ===== MESSAGES: compose, audience resolution, the privacy wall ===== */
+function msgAudienceCount(v){
+ var cs=DB.get('customers').filter(function(c){return c.status==='active';});
+ if(v==='all')return cs.length;
+ if(v==='c0')return cs.filter(function(c){return c.cohort===0;}).length;
+ if(v==='c1')return cs.filter(function(c){return c.cohort===1;}).length;
+ return cs.filter(function(c){return c.co===v;}).length;
+}
+function msgAudienceLabel(v){
+ return v==='all'?'Whole academy':v==='c0'?'2027 Batch':v==='c1'?'2028 Batch':v;
+}
+/* Debt wording never enters a student's app. Reminders about money owed are a
+   parent conversation and belong on the Fees screen, not here. */
+var MSG_BLOCKED=/owe|owing|outstanding|overdue|arrears|balance|pay immediately|last warning/i;
+function msgToStudent(id){
+ var c=DB.get('customers').find(function(x){return x.id===id;});if(!c)return;
+ MSG.toStudent={id:c.id,name:c.name};
+ var panel=document.getElementById('panel');if(panel)panel.classList.remove('open');
+ go('messages');
+ var t=document.getElementById('msgTitle');if(t)t.focus();
+ MSG.preview();
+}
+var MSG={armed:false,toStudent:null,
+ clearStudent:function(){MSG.toStudent=null;MSG.preview();},
+ preview:function(){MSG.armed=false;var btn=document.getElementById('msgSendBtn');btn.textContent='Review and send';
+  var v=document.getElementById('msgAud').value;
+  var n=MSG.toStudent?1:msgAudienceCount(v);
+  var lbl=MSG.toStudent?MSG.toStudent.name+' only · <button class="hint" style="text-decoration:underline" onclick="MSG.clearStudent()">clear</button>':msgAudienceLabel(v);
+  document.getElementById('msgPreview').innerHTML='Reaches '+n+' active student'+(n===1?'':'s')+' · '+lbl;
+  document.getElementById('msgAud').disabled=!!MSG.toStudent;
+  var txt=(document.getElementById('msgTitle').value+' '+document.getElementById('msgBody').value);
+  document.getElementById('msgWarn').textContent=MSG_BLOCKED.test(txt)
+   ?'This reads like a payment demand. Debt wording never goes to a student. Use the Fees screen for parent-facing reminders.':'';
+ },
+ send:function(){
+  var t=document.getElementById('msgTitle').value.trim();
+  var bdy=document.getElementById('msgBody').value.trim();
+  if(!t||!bdy){toast(I.warn+' A message needs a title and a body.');return;}
+  if(MSG_BLOCKED.test(t+' '+bdy)){toast(I.warn+' Blocked: debt wording never goes to a student app.');MSG.preview();return;}
+  var v=document.getElementById('msgAud').value;
+  var n=MSG.toStudent?1:msgAudienceCount(v);
+  if(n===0){toast(I.warn+' That audience has no active students.');return;}
+  var btn=document.getElementById('msgSendBtn');
+  if(!MSG.armed){MSG.armed=true;btn.textContent='Send to '+n+' student'+(n===1?'':'s')+'?';return;}
+  DB.get('messages').unshift({id:DB.nextId('messages'),type:document.getElementById('msgType').value,
+   title:t,body:bdy,aud:MSG.toStudent?MSG.toStudent.name:msgAudienceLabel(v),
+   studentId:MSG.toStudent?MSG.toStudent.id:null,
+   sentAt:todayISO()+' '+'09:41',by:CURRENT.id,
+   sent:n,opened:0,status:'sent'});
+  DB.commit();MSG.armed=false;MSG.toStudent=null;
+  document.getElementById('msgTitle').value='';document.getElementById('msgBody').value='';
+  renderMessages();
+  toast(I.check+' Sent to '+n+' students. It reaches their apps when the live pipe connects.');
+ }
+};
+function renderMessages(){
+ var el=document.getElementById('msgBody2');if(!el)return;
+ var ms=DB.get('messages')||[];
+ var sent=ms.filter(function(m){return m.status==='sent';});
+ var sched=ms.filter(function(m){return m.status==='scheduled';});
+ var reach=sent.reduce(function(a,m){return a+m.sent;},0);
+ var opened=sent.reduce(function(a,m){return a+m.opened;},0);
+ document.getElementById('msgStats').innerHTML=[
+  ['Sent this month',sent.length],['Scheduled',sched.length],
+  ['Read rate',reach?Math.round(opened/reach*100)+'%':'–']
+ ].map(function(k){return '<div class="card" style="margin:0;padding:14px 16px"><div class="hint">'+k[0]+'</div><div style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums">'+k[1]+'</div></div>';}).join('');
+ el.innerHTML=ms.map(function(m){
+  return '<tr><td><b>'+m.title+'</b><div class="hint">'+m.body.slice(0,60)+(m.body.length>60?'…':'')+'</div></td>'
+   +'<td>'+m.aud+'</td><td class="tnum">'+(m.sent||'–')+'</td><td class="tnum">'+(m.status==='sent'?m.opened:'–')+'</td>'
+   +'<td>'+(m.status==='scheduled'?'<span class="hint">Scheduled · '+(m.schedFor||'')+'</span>':'Sent')+'</td></tr>';
+ }).join('');
+ MSG.preview();
+}
+if(typeof RENDERERS!=='undefined')RENDERERS.messages=renderMessages;
+/* ===== STUDENT APP CONTROL: the manager runs this, not BB ===== */
+var APP={
+ addLogin:function(){
+  var sel=document.getElementById('appNewStudent');
+  var sid=+sel.value;if(!sid){toast(I.warn+' Pick a student first.');return;}
+  var c=DB.get('customers').find(function(x){return x.id===sid;});if(!c)return;
+  var logins=DB.get('appLogins');
+  if(logins.some(function(l){return l.studentId===sid;})){toast(I.warn+' '+c.name.split(' ')[0]+' already has a login.');return;}
+  var user=c.name.split(' ')[0];
+  var n=2;while(logins.some(function(l){return l.user.toLowerCase()===user.toLowerCase();})){user=c.name.split(' ')[0]+n;n++;}
+  /* deterministic demo pin, never a real secret */
+  var pin=String(1000+((sid*37)%9000));
+  logins.push({id:DB.nextId('appLogins'),studentId:sid,name:c.name,user:user,pin:pin});
+  DB.commit();renderApp2();
+  toast(I.check+' Login created. '+user+' / '+pin+'. Share it in person, never in a group chat.');
+ },
+ resetPin:function(id){
+  var l=DB.get('appLogins').find(function(x){return x.id===id;});if(!l)return;
+  l.pin=String(1000+((l.id*53+l.studentId*7)%9000));
+  DB.commit();renderApp2();
+  toast(I.check+' New password for '+l.user+': '+l.pin);
+ },
+ removeLogin:function(id){
+  var ls=DB.get('appLogins');var i=ls.findIndex(function(x){return x.id===id;});
+  if(i<0)return;var gone=ls.splice(i,1)[0];DB.commit();renderApp2();
+  toast(I.check+' '+gone.user+' can no longer sign in.');
+ },
+ toggle:function(k){var cfg=DB.get('appConfig');cfg[k]=!cfg[k];DB.commit();renderApp2();
+  toast(I.check+' '+(cfg[k]?'On':'Off')+'. Students see it after the next connection.');},
+ saveSplash:function(){
+  var lines=document.getElementById('appSplash').value.split('\n')
+   .map(function(l){return l.trim();}).filter(function(l){return l.length>0&&l.length<90;});
+  if(!lines.length){toast(I.warn+' At least one line, under 90 characters.');return;}
+  DB.get('appConfig').splash=lines;DB.commit();
+  toast(I.check+' Saved. '+lines.length+' lines rotate by date.');
+ }
+};
+function renderApp2(){
+ var rows=document.getElementById('appLoginRows');if(!rows)return;
+ var logins=DB.get('appLogins')||[];
+ rows.innerHTML=logins.map(function(l){
+  return '<tr><td><b>'+l.name+'</b></td><td>'+l.user+'</td><td class="tnum">'+l.pin+'</td>'
+   +'<td style="white-space:nowrap"><button class="btn-ghost" onclick="APP.resetPin('+l.id+')">Reset</button> '
+   +'<button class="btn-ghost" onclick="APP.removeLogin('+l.id+')">Remove</button></td></tr>';
+ }).join('')||'<tr><td colspan="4" class="hint">No logins yet. Create the first one below.</td></tr>';
+ var sel=document.getElementById('appNewStudent');
+ var have={};logins.forEach(function(l){have[l.studentId]=1;});
+ sel.innerHTML='<option value="">Choose a student…</option>'+DB.get('customers')
+  .filter(function(c){return c.status==='active'&&!have[c.id];}).slice(0,80)
+  .map(function(c){return '<option value="'+c.id+'">'+c.name+' · '+(c.type||'')+'</option>';}).join('');
+ var cfg=DB.get('appConfig');
+ document.getElementById('appToggles').innerHTML=[
+  ['rewards','Rewards ladder','Attendance rewards and the university benefit'],
+  ['batchStats','Batch figures','Percentages from the whole batch, never rankings'],
+  ['seminars','Seminars','Invitations and registration in the app']
+ ].map(function(t){
+  return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--hair)">'
+   +'<div style="flex:1"><b style="font-size:13.5px">'+t[1]+'</b><div class="hint">'+t[2]+'</div></div>'
+   +'<button class="btn-ghost" onclick="APP.toggle(\''+t[0]+'\')">'+(cfg[t[0]]?'On':'Off')+'</button></div>';
+ }).join('');
+ var ta=document.getElementById('appSplash');
+ if(ta&&document.activeElement!==ta)ta.value=cfg.splash.join('\n');
+}
+if(typeof RENDERERS!=='undefined')RENDERERS.app=renderApp2;
 /* ===== BSWL tuition extras: knowledge signal + Starter Guide PDF + Receipt ===== */
 function studentStanding(s){const lv=(s&&s.level)||'okay';if(lv==='good')return{key:'good',label:'Strong',color:'var(--green)'};if(lv==='bad')return{key:'bad',label:'Needs work',color:'var(--danger)'};return{key:'okay',label:'Okay',color:'var(--amber)'};}
 function setLevel(id,lv){const c=DB.get('customers').find(x=>x.id===id);if(!c)return;c.level=lv;DB.commit();var cp=document.getElementById('page-customers');if(cp&&cp.classList.contains('active'))renderCustomers();var rp2=document.getElementById('page-recurring');if(rp2&&rp2.classList.contains('active')&&typeof renderRecurring==='function')renderRecurring();if(document.getElementById('panel').classList.contains('open'))openCustomer(id);toast(I.check+' '+c.name.split(' ')[0]+' set to '+studentStanding(c).label);}
