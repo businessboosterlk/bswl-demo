@@ -826,6 +826,9 @@ body.dark .stat-kpi .val{color:#fff}
       <div class="nav-group" data-group="work">
         <button class="nav-label" onclick="toggleGroup(this)">Daily<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span></button>
         <button class="nav-item" data-pg="records" data-role="all" data-module="records"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Leads<span class="badge" id="nbRecords"></span></button>
+        <!-- Pipeline: the kanban board. Built, wired and module-enabled, but it had
+             no nav item, so it was unreachable. Same class as the hidden CC pages. -->
+        <button class="nav-item" data-pg="pipeline" data-role="all" data-module="pipeline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="11" rx="1"/><rect x="17" y="4" width="4" height="7" rx="1"/></svg>Pipeline</button>
         <button class="nav-item" data-pg="customers" data-role="all" data-module="customers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>Customers<span class="badge" id="nbCustomers"></span></button>
         <button class="nav-item" data-pg="quotes" data-role="all" data-module="quotes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>Quotes</button>
         <button class="nav-item" data-pg="inventory" data-role="all" data-module="inventory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Inventory<span class="badge" id="nbInventory"></span></button>
@@ -836,6 +839,8 @@ body.dark .stat-kpi .val{color:#fff}
       <div class="nav-group" data-group="money">
         <button class="nav-label" onclick="toggleGroup(this)">Money<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span></button>
         <button class="nav-item" data-pg="recurring" data-role="manager" data-module="recurring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Recurring</button>
+        <!-- Finance: same story, built and wired with no way to reach it. -->
+        <button class="nav-item" data-pg="finance" data-role="manager" data-module="finance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Invoices</button>
         <button class="nav-item" data-pg="forecast" data-role="manager" data-module="forecast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Forecast</button>
       </div>
       <div class="nav-group" data-group="manage">
@@ -2823,6 +2828,20 @@ async function runSelfTest(opts){
  const bootLog=window.__ST_LOG.slice();
  try{
   /* ── A0 · boot integrity ── */
+  /* L-BSWL-021: a page can be fully built, wired and module-enabled yet have no
+     nav item, which makes it invisible forever. Pipeline and Finance were both
+     lost this way. Every enabled page must be reachable. */
+  (function(){
+   var navs={};document.querySelectorAll('.nav-item[data-pg]').forEach(function(b){navs[b.getAttribute('data-pg')]=1;});
+   var orphans=[];
+   document.querySelectorAll('.page[id^="page-"]').forEach(function(pg){
+    var k=pg.id.replace('page-','');
+    if(!RENDERERS[k])return;                       /* no renderer, not a real page */
+    if(CFG.modules[k]===false)return;              /* deliberately switched off */
+    if(!navs[k])orphans.push(k);
+   });
+   ok('Every enabled page is reachable from the nav',orphans.length===0,orphans.join(', ')||'none orphaned');
+  })();
   ok('Boot: core globals present',typeof CFG==='object'&&typeof DB==='object'&&!!DB._d&&typeof RENDERERS==='object'&&typeof applyConfig==='function');
   ok('Boot: zero console errors/warnings since load',bootLog.length===0,bootLog.length?bootLog[0].kind+': '+bootLog[0].msg:'');
   /* duplicate top-level identifiers — reads the script's own source */

@@ -89,6 +89,18 @@ svg{display:block;flex:none}
 
 /* ── SHELL ──────────────────────────────────────────────────────────── */
 .statusfill{position:fixed;top:0;left:0;right:0;height:var(--sat);background:var(--bg);z-index:60;pointer-events:none}
+/* ── LOGIN ─────────────────────────────────────────────────── */
+.login{position:fixed;inset:0;z-index:150;background:var(--bg);display:flex;
+ align-items:center;justify-content:center;padding:var(--s5);
+ padding-top:calc(var(--s5) + var(--sat));padding-bottom:calc(var(--s5) + var(--sab));
+ overflow-y:auto}
+.login.gone{display:none}
+.login-in{width:100%;max-width:340px}
+.lg-mark{width:44px;height:44px;color:var(--text-2);margin-bottom:var(--s5)}
+.lg-t{font-size:var(--t-2xl);font-weight:680;letter-spacing:-.02em;line-height:1.1}
+.lg-s{font-size:var(--t-sm);color:var(--text-2);margin:var(--s1) 0 var(--s6)}
+.lg-err{font-size:var(--t-sm);color:var(--text);font-weight:600;margin-top:var(--s3);min-height:1.2em}
+.lg-foot{font-size:var(--t-xs);color:var(--text-3);margin-top:var(--s5)}
 .shell{max-width:600px;margin:0 auto;padding:0 var(--s4)}
 .hdr{
  position:sticky;top:0;z-index:40;max-width:600px;margin:0 auto;
@@ -319,6 +331,25 @@ label{display:block;font-size:var(--t-sm);font-weight:600;margin-bottom:var(--s2
  <div class="sp-foot" id="spFoot"></div>
 </div>
 <div class="statusfill" aria-hidden="true"></div>
+
+<!-- LOGIN. Demo credentials only, see the STUDENTS note in the script. -->
+<div class="login" id="login">
+ <div class="login-in">
+  <svg class="lg-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.7 1 1.6 1 2.5h6c0-.9.2-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>
+  <h1 class="lg-t">BS With Leon</h1>
+  <p class="lg-s">Sign in to your study app</p>
+  <form id="lgForm" autocomplete="off">
+   <label for="lgUser">Your name</label>
+   <input id="lgUser" name="lgUser" autocapitalize="words" autocomplete="username" placeholder="Nadun">
+   <label for="lgPin" style="margin-top:var(--s4)">Password</label>
+   <input id="lgPin" name="lgPin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="4 digits">
+   <p class="lg-err" id="lgErr" role="alert"></p>
+   <button class="btn btn-primary" type="submit" style="margin-top:var(--s5)">Sign in</button>
+  </form>
+  <p class="lg-foot">Ask Leon if you have forgotten your password.</p>
+ </div>
+</div>
+
 <div class="offline-bar" id="offlineBar" role="status">Offline. Your work is saved on this device.</div>
 
 <header class="hdr">
@@ -469,8 +500,24 @@ function seedClassLog(){var flat=flatTopics(),dates=classDates(),out=[],done=0,t
  dates.forEach(function(d,i){var upto=Math.round(per*(i+1));var slice=flat.slice(done,Math.min(upto,total));done=Math.min(upto,total);
   if(slice.length)out.push({date:d,topics:slice});});return out;}
 
-var ME={name:'Senuki Perera',batch:'2027',loc:'Kings, Nugegoda',program:'Theory',joined:'2026-01-10',level:'okay'};
-function seedAttendance(){var o=[];classDates().forEach(function(d,i){var w=9-i;o.push({date:d,present:((1*7+w*3)%10)!==0});});return o;}
+/* ── STUDENT LOGINS. Demo only: these credentials sit in the page source, so
+   this is NOT authentication. Real student logins need the backend and proper
+   auth before any real child's name, marks or attendance goes in. Three
+   accounts on purpose, so the team can see three different states. ── */
+var STUDENTS=[
+ {user:'Nadun',pin:'1010',name:'Nadun Perera',batch:'2027',loc:'Kings, Nugegoda',
+  program:'Theory',joined:'2026-01-10',level:'okay',seed:1,
+  note:'Missed a class and has two gaps. The normal case.'},
+ {user:'Ishara',pin:'2020',name:'Ishara Silva',batch:'2027',loc:'Residence',
+  program:'Combined',joined:'2026-02-14',level:'good',seed:4,
+  note:'Up to date. Shows what the app looks like with nothing owed.'},
+ {user:'Kavindu',pin:'3030',name:'Kavindu Fernando',batch:'2028',loc:'JMC, Kiribathgoda',
+  program:'Theory',joined:'2026-04-02',level:'bad',seed:2,
+  note:'Behind on several topics. Shows the catch-up list working hard.'}
+];
+var ME=STUDENTS[0];
+function seedAttendance(){var o=[];classDates().forEach(function(d,i){var w=9-i;
+ o.push({date:d,present:((ME.seed*7+w*3)%10)!==0});});return o;}
 
 var DB={
  classLog:seedClassLog(),
@@ -1120,7 +1167,9 @@ function renderProgress(){
     +(ME.level==='good'?'Strong':ME.level==='bad'?'Needs work':'Okay')+'</span></div>'
    +'<button class="rowbtn" onclick="openBatch()"><span class="grow"><span class="tt">Your batch</span>'
     +'<span class="tw">How the 2027 group is going</span></span><span class="chev">'+I.chev+'</span></button>'
-   +'<button class="rowbtn" onclick="toggleTheme()"><span class="grow"><span class="tt">Appearance</span>'
+   +'<button class="rowbtn" onclick="doLogout()"><span class="grow"><span class="tt">Sign out</span>'
+   +'<span class="tw">'+esc(ME.name)+'</span></span><span class="chev">'+I.chev+'</span></button>'
+  +'<button class="rowbtn" onclick="toggleTheme()"><span class="grow"><span class="tt">Appearance</span>'
     +'<span class="tw">'+(document.documentElement.getAttribute('data-theme')||'Match your phone')+'</span></span>'
     +'<span class="chev">'+I.chev+'</span></button>'
   +'</div>'
@@ -1224,7 +1273,54 @@ function showSplash(){
  /* time-boxed. It never stands between a student and the app. */
  SPLASH_T=setTimeout(hideSplash,1200);
 }
-showSplash();
+/* ══ LOGIN. Demo gate only. Real auth arrives with the backend. ══ */
+function applyStudent(st){
+ ME=st;
+ DB.attendance=seedAttendance();
+ /* each account starts from a different place so the team can see three states */
+ if(st.user==='Ishara'){
+  DB.conf={'1.1':'got','1.2':'got','1.3':'got','1.4':'got','2.1':'got','2.2':'got','2.3':'got','2.4':'got','3.1':'got','3.2':'got','4.1':'got','4.2':'got'};
+  DB.ev={'1.1':{s:'demonstrated',d:'2026-06-06'},'1.2':{s:'demonstrated',d:'2026-06-13'},
+         '1.3':{s:'demonstrated',d:'2026-06-20'},'1.4':{s:'demonstrated',d:'2026-06-27'},
+         '2.1':{s:'demonstrated',d:'2026-07-04'},'2.2':{s:'demonstrated',d:'2026-07-04'},
+         '2.3':{s:'demonstrated',d:'2026-07-11'},'2.4':{s:'demonstrated',d:'2026-07-11'},
+         '3.1':{s:'demonstrated',d:'2026-07-11'},'3.2':{s:'demonstrated',d:'2026-07-11'},
+         '4.1':{s:'demonstrated',d:'2026-07-11'},'4.2':{s:'demonstrated',d:'2026-07-11'}};
+  DB.tutes={'1':'done','2':'done','3':'done','4':'done'};
+ }else if(st.user==='Kavindu'){
+  DB.conf={'1.1':'shaky','1.2':'lost','2.1':'lost','2.3':'shaky','3.2':'lost'};
+  DB.ev={'1.1':{s:'developing',d:'2026-05-30'}};
+  DB.tutes={'1':'fix','2':'assigned','3':'assigned','4':'assigned'};
+  DB.papers=[{date:'2026-05-16',paper:'2019 Paper I',q:'Q1',score:8,max:20,timed:false,marker:'self',err:'Knowledge gap'},
+             {date:'2026-06-20',paper:'2020 Paper I',q:'Q2',score:9,max:20,timed:false,marker:'self',err:'Knowledge gap'}];
+ }
+ DB.progressTask=null;
+}
+function doLogin(e){
+ if(e)e.preventDefault();
+ var u=(document.getElementById('lgUser').value||'').trim().toLowerCase();
+ var pin=(document.getElementById('lgPin').value||'').trim();
+ var hit=null;
+ STUDENTS.forEach(function(st){if(st.user.toLowerCase()===u&&st.pin===pin)hit=st;});
+ if(!hit){
+  document.getElementById('lgErr').textContent='That name and password do not match. Check with Leon.';
+  return false;
+ }
+ applyStudent(hit);
+ document.getElementById('login').classList.add('gone');
+ renderAll();seg('syllabus');show('next');
+ showSplash();
+ say('Signed in as '+hit.name);
+ return false;
+}
+function doLogout(){
+ document.getElementById('lgUser').value='';
+ document.getElementById('lgPin').value='';
+ document.getElementById('lgErr').textContent='';
+ document.getElementById('login').classList.remove('gone');
+ window.scrollTo(0,0);
+}
+document.getElementById('lgForm').addEventListener('submit',doLogin);
 
 renderAll();seg('syllabus');syncOffline();
 if(location.hash==='#learn'){seg('syllabus');show('learn');}
@@ -1239,6 +1335,15 @@ if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceW
 function BSWL_TEST(){
  var P=0,F=0,out=[];
  function ok(n,c,x){if(c)P++;else F++;out.push((c?'PASS':'FAIL')+' · '+n+(x?' · '+x:''));}
+ /* L-GYM-008: a harness that mutates shared state must restore it, or a second
+    run reports failures that are only the first run's leftovers. */
+ var SNAP=JSON.stringify(DB), SNAP_ME=ME, SNAP_IN=document.getElementById('login').classList.contains('gone');
+ function restore(){
+  var d=JSON.parse(SNAP);Object.keys(d).forEach(function(k){DB[k]=d[k];});
+  ME=SNAP_ME;
+  document.getElementById('login').classList.toggle('gone',SNAP_IN);
+  try{renderAll();}catch(e){}
+ }
  try{
   /* THE defect this redesign existed to fix */
   var recs=recommend();
@@ -1312,6 +1417,20 @@ function BSWL_TEST(){
   ok('Splash can be dismissed',(function(){var e=document.getElementById('splash');
      if(!e)return true; hideSplash(); return e.classList.contains('gone');})());
 
+  /* login: three demo accounts, wrong password refused, right one lets you in */
+  ok('Login screen is present and blocks the app',!!document.getElementById('login'));
+  ok('Three student accounts exist',STUDENTS.length===3);
+  doLogout();                                   /* start from a known state */
+  document.getElementById('lgUser').value='Nadun';document.getElementById('lgPin').value='9999';
+  doLogin();
+  ok('A wrong password is refused',document.getElementById('lgErr').textContent.length>10
+     &&!document.getElementById('login').classList.contains('gone'));
+  document.getElementById('lgPin').value='1010';doLogin();
+  ok('Nadun 1010 signs in',document.getElementById('login').classList.contains('gone')&&ME.user==='Nadun');
+  ok('The signed-in student drives the app',document.querySelector('#progressSlot').textContent.indexOf('Nadun')>=0);
+  doLogout();
+  ok('Sign out returns to the login screen',!document.getElementById('login').classList.contains('gone'));
+  document.getElementById('lgUser').value='Nadun';document.getElementById('lgPin').value='1010';doLogin();
   /* a11y */
   var unlabelled=0;
   document.querySelectorAll('button').forEach(function(b){
@@ -1346,6 +1465,7 @@ function BSWL_TEST(){
   ok('Zero em dashes',src.indexOf('\u2014')<0&&src.indexOf('\u2013')<0);
   ok('Draft lesson content is labelled',JSON.stringify(LESSON).length>0&&src.indexOf('pending Leon')>=0);
  }catch(e){F++;out.push('FAIL · harness crashed · '+(e&&e.message));}
+ finally{restore();}
  console.log(out.join('\n'));console.log(P+' passed, '+F+' failed');
  return {pass:P,fail:F,lines:out};
 }
