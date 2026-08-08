@@ -349,7 +349,7 @@ label{display:block;font-size:var(--t-sm);font-weight:600;margin-bottom:var(--s2
 </style>
 </head>
 <body>
-<div class="splash" id="splash" role="status" aria-live="polite" onclick="hideSplash()">
+<div class="splash gone" id="splash" role="status" aria-live="polite" onclick="hideSplash()">
  <svg class="sp-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.7 1 1.6 1 2.5h6c0-.9.2-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>
  <div class="sp-name">BS With Leon</div>
  <div class="sp-line" id="spLine"></div>
@@ -1369,6 +1369,7 @@ function hideSplash(){
 }
 function showSplash(){
  var el=document.getElementById('splash');if(!el)return;
+ el.classList.remove('gone');
  document.getElementById('spLine').textContent=splashLine();
  var d=daysBetween(todayISO(),CFG.exam.date);
  document.getElementById('spFoot').textContent=d>0?d+' days to the exam':'Exam time';
@@ -1809,6 +1810,8 @@ function BSWL_TEST(){
   ok('The race compares locations, never students',DB.race.every(function(r){return !!r.loc&&!r.name;}));
   ok('No full ranking exists anywhere',document.body.innerText.indexOf('rank')<0&&document.body.innerText.indexOf('Rank')<0);
   ok('Splash lines carry the calm set',SPLASH_LINES.indexOf('Your next useful action is ready.')>=0&&SPLASH_LINES.every(function(l){return l.indexOf('5 a.m')<0;}));
+  ok('The splash starts hidden in the markup itself',
+     document.documentElement.outerHTML.indexOf('class=\"splash gone\"')>=0||document.documentElement.outerHTML.indexOf('splash gone')>=0);
   /* THE LOGIN MARK */
   var lgVisible=!document.getElementById('login').classList.contains('gone');
   if(document.getElementById('lgField')){
