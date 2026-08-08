@@ -1564,11 +1564,14 @@ function seedData(){
   ],
   /* No pin field exists any more. A one-time code is generated, shown once
      and never stored: the pattern real authentication enforces. */
+  /* A login carries NO name. It points at a student record and the name is read
+     from there, so a login can never address the wrong person. Usernames are the
+     student's own first name, which is what the demo credentials use. */
   appLogins:[
-   {id:1,studentId:1,name:'Nadun Perera',user:'Nadun',status:'active',lastActive:ym+'-14',sessions:1,failed:0},
-   {id:2,studentId:2,name:'Ishara Silva',user:'Ishara',status:'active',lastActive:ym+'-15',sessions:2,failed:0},
-   {id:3,studentId:3,name:'Kavindu Fernando',user:'Kavindu',status:'never',lastActive:null,sessions:0,failed:0},
-   {id:4,studentId:9,name:'Amaya Gunawardena',user:'Amaya',status:'locked',lastActive:ym+'-02',sessions:0,failed:5}
+   {id:1,studentId:customers[0].id,user:customers[0].name.split(' ')[0],status:'active',lastActive:ym+'-14',sessions:1,failed:0},
+   {id:2,studentId:customers[1].id,user:customers[1].name.split(' ')[0],status:'active',lastActive:ym+'-15',sessions:2,failed:0},
+   {id:3,studentId:customers[2].id,user:customers[2].name.split(' ')[0],status:'never',lastActive:null,sessions:0,failed:0},
+   {id:4,studentId:customers[3].id,user:customers[3].name.split(' ')[0],status:'locked',lastActive:ym+'-02',sessions:0,failed:5}
   ],
   appConfig:{
    features:{
@@ -3401,7 +3404,7 @@ var APP={
   var user=c.name.split(' ')[0];var n=2;
   while(logins.some(function(l){return l.user.toLowerCase()===user.toLowerCase();})){user=c.name.split(' ')[0]+n;n++;}
   var code=oneTimeCode();
-  logins.push({id:DB.nextId('appLogins'),studentId:sid,name:c.name,user:user,status:'never',lastActive:null,sessions:0,failed:0});
+  logins.push({id:DB.nextId('appLogins'),studentId:sid,user:user,status:'never',lastActive:null,sessions:0,failed:0});
   appAudit('App access created',c.name+' · by '+CURRENT.name);
   renderApp2();
   toast(I.check+' Access for '+user+'. One-time code '+code+' — shown once, share it in person.');
@@ -3411,13 +3414,20 @@ var APP={
   var c=DB.get('customers').find(function(x){return x.id===l.studentId})||{};
   var box=document.getElementById('accManage');
   box.style.display='';
-  box.innerHTML='<div class="card-h"><h3>'+l.name+'</h3><span class="hint">'+(c.type||'')+' · '+(c.co||'')+'</span></div>'
+  box.innerHTML='<div class="card-h"><h3>'+APP.nameOf(l)+'</h3><span class="hint">'+(c.type||'')+' · '+(c.co||'')+'</span></div>'
    +'<div class="card-b" style="padding:10px 18px 16px">'
    +'<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;font-size:12.5px;margin-bottom:12px">'
    +'<div><span class="hint">Status</span><br><b>'+APP.statusLabel(l.status)+'</b></div>'
    +'<div><span class="hint">Last active</span><br><b>'+(l.lastActive||'Never')+'</b></div>'
    +'<div><span class="hint">Devices signed in</span><br><b>'+l.sessions+'</b></div>'
    +'<div><span class="hint">Recent failed logins</span><br><b>'+l.failed+'</b></div></div>'
+   +'<div style="font-size:12px;font-weight:700;color:var(--muted);margin:2px 0 6px">Contact</div>'
+   +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'
+   +'<button class="btn-primary" onclick="APP.msgStudent('+l.id+')">'+I.inbox+' Message their app</button>'
+   +'<button class="btn-ghost" onclick="APP.payNote('+l.id+')">Payment received</button>'
+   +'<button class="btn-ghost" onclick="APP.wa('+l.id+')">'+I.phone+' WhatsApp</button>'
+   +'</div>'
+   +'<div style="font-size:12px;font-weight:700;color:var(--muted);margin:2px 0 6px">Account</div>'
    +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
    +'<button class="btn-primary" onclick="APP.sendCode('+l.id+')">Send one-time code</button>'
    +(l.status==='locked'
@@ -3430,12 +3440,38 @@ var APP={
    +'</div>';
   box.scrollIntoView({block:'nearest'});
  },
+ /* Contact from the app centre. One student, straight to their app. */
+ msgStudent:function(id){
+  var l=DB.get('appLogins').find(function(x){return x.id===id;});if(!l)return;
+  msgToStudent(l.studentId);
+ },
+ /* Payment CONFIRMATION only. A balance owed is a parent conversation and the
+    compose refuses debt wording anyway; this shortcut cannot carry one. */
+ payNote:function(id){
+  var l=DB.get('appLogins').find(function(x){return x.id===id;});if(!l)return;
+  msgToStudent(l.studentId);
+  document.getElementById('msgType').value='payment';
+  document.getElementById('msgTitle').value=monthLbl(ymNow())+' payment recorded';
+  document.getElementById('msgBody').value='Thank you. Your receipt is ready to view.';
+  MSG.preview();
+  toast(I.check+' Drafted for '+APP.nameOf(l).split(' ')[0]+'. Check it, then send.');
+ },
+ wa:function(id){
+  var l=DB.get('appLogins').find(function(x){return x.id===id;});if(!l)return;
+  var c=DB.get('customers').find(function(x){return x.id===l.studentId;});
+  var num=String((c&&c.phone)||'').replace(/\D/g,'').replace(/^0/,'94');
+  if(!num){toast(I.warn+' No number on that student record.');return;}
+  window.open('https://wa.me/'+num+'?text='+encodeURIComponent('Hi '+APP.nameOf(l).split(' ')[0]+', '),'_blank');
+ },
+ /* the single source of truth for a login's name */
+ nameOf:function(l){var c=DB.get('customers').find(function(x){return x.id===l.studentId;});
+  return c?c.name:'(student record missing)';},
  statusLabel:function(st){return {active:'Active',never:'Never signed in',locked:'Locked',invited:'Invitation sent'}[st]||st;},
  sendCode:function(id){
   var l=DB.get('appLogins').find(function(x){return x.id===id;});if(!l)return;
   var code=oneTimeCode();
   if(l.status==='never')l.status='invited';
-  appAudit('One-time code issued',l.name+' · by '+CURRENT.name);
+  appAudit('One-time code issued',APP.nameOf(l)+' · by '+CURRENT.name);
   DB.commit();renderApp2();APP.manage(id);
   toast(I.check+' Code for '+l.user+': '+code+' — shown once. It replaces the old password.');
  },
@@ -3444,14 +3480,14 @@ var APP={
   var prev=l.status;
   l.status=on?'locked':(l.lastActive?'active':'never');
   if(!on)l.failed=0;
-  appAudit(on?'Account locked':'Account unlocked',l.name+' · was '+prev+' · by '+CURRENT.name);
+  appAudit(on?'Account locked':'Account unlocked',APP.nameOf(l)+' · was '+prev+' · by '+CURRENT.name);
   DB.commit();renderApp2();APP.manage(id);
   toast(I.check+' '+l.user+' is now '+APP.statusLabel(l.status).toLowerCase()+'.');
  },
  signOutAll:function(id){
   var l=DB.get('appLogins').find(function(x){return x.id===id;});if(!l)return;
   l.sessions=0;
-  appAudit('Signed out of all devices',l.name+' · by '+CURRENT.name);
+  appAudit('Signed out of all devices',APP.nameOf(l)+' · by '+CURRENT.name);
   DB.commit();renderApp2();APP.manage(id);
   toast(I.check+' '+l.user+' is signed out everywhere. Their data is untouched.');
  },
@@ -3461,9 +3497,9 @@ var APP={
   if(!APP._confirmRemove||APP._confirmRemove!==id){APP._confirmRemove=id;
    toast(I.warn+' Removes '+l.user+'’s app access only, never the student record. Tap again to confirm.');return;}
   APP._confirmRemove=null;ls.splice(i,1);
-  appAudit('App access removed',l.name+' · by '+CURRENT.name);
+  appAudit('App access removed',APP.nameOf(l)+' · by '+CURRENT.name);
   DB.commit();document.getElementById('accManage').style.display='none';renderApp2();
-  toast(I.check+' Access removed. '+l.name+' stays in Students, untouched.');
+  toast(I.check+' Access removed. '+APP.nameOf(l)+' stays in Students, untouched.');
  },
  renderAccess:function(){
   var q=(document.getElementById('accSearch').value||'').toLowerCase();
@@ -3476,13 +3512,13 @@ var APP={
   document.getElementById('accStats').innerHTML=stats.map(function(k){
    return '<div class="card" style="margin:0;padding:12px 14px"><div class="hint">'+k[0]+'</div><div style="font-size:20px;font-weight:700;font-variant-numeric:tabular-nums">'+k[1]+'</div></div>';}).join('');
   var list=logins.filter(function(l){
-   if(q&&l.name.toLowerCase().indexOf(q)<0&&l.user.toLowerCase().indexOf(q)<0)return false;
+   if(q&&APP.nameOf(l).toLowerCase().indexOf(q)<0&&l.user.toLowerCase().indexOf(q)<0)return false;
    if(f==='active')return l.status==='active';
    if(f==='never')return l.status==='never'||l.status==='invited';
    if(f==='locked')return l.status==='locked';
    return true;});
   document.getElementById('accRows').innerHTML=list.map(function(l){
-   return '<tr><td><b>'+l.name+'</b></td><td>'+l.user+'</td><td>'+APP.statusLabel(l.status)+'</td>'
+   return '<tr><td><b>'+APP.nameOf(l)+'</b></td><td>'+l.user+'</td><td>'+APP.statusLabel(l.status)+'</td>'
     +'<td>'+(l.lastActive||'—').replace('—','Never')+'</td>'
     +'<td style="text-align:right"><button class="btn-ghost" onclick="APP.manage('+l.id+')">Manage</button></td></tr>';
   }).join('')||'<tr><td colspan="5" class="hint">No accounts match.</td></tr>';
