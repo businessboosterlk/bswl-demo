@@ -99,7 +99,14 @@ svg{display:block;flex:none}
 .login-in label{text-align:center}
 .login-in input{text-align:left}
 .lg-stage{position:relative;width:100%;height:136px;margin-bottom:var(--s4)}
-.lg-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.lg-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;
+ transition:opacity 300ms var(--ease)}
+/* the finished logo. Geometry lives here only; the particles read this rect. */
+.lg-logo{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+ height:120px;width:auto;opacity:0;transition:opacity 300ms var(--ease)}
+.lg-stage.revealed .lg-logo{opacity:1}
+.lg-stage.revealed canvas{opacity:0}
+@media(prefers-reduced-motion:reduce){.lg-logo,.lg-stage canvas{transition:none}}
 .lg-t{font-size:var(--t-2xl);font-weight:680;letter-spacing:-.02em;line-height:1.1}
 .lg-s{font-size:var(--t-sm);color:var(--text-2);margin:var(--s1) 0 var(--s6)}
 .lg-err{font-size:var(--t-sm);color:var(--text);font-weight:600;margin-top:var(--s3);min-height:1.2em}
@@ -360,7 +367,7 @@ label{display:block;font-size:var(--t-sm);font-weight:600;margin-bottom:var(--s2
 <!-- LOGIN. Demo credentials only, see the STUDENTS note in the script. -->
 <div class="login" id="login">
  <div class="login-in">
-  <div class="lg-stage" aria-hidden="true"><canvas id="lgField"></canvas></div>
+  <div class="lg-stage" id="lgStage" aria-hidden="true"><canvas id="lgField"></canvas><img class="lg-logo" id="lgLogo" src="mark.png" alt=""></div>
   <h1 class="lg-t">BS With Leon</h1>
   <p class="lg-s">Sign in to your study app</p>
   <form id="lgForm" autocomplete="off">
@@ -1514,7 +1521,13 @@ var LGP=(function(){
  var sprites=[],glowSprite=null;
  var T1=CFGP.driftMs,T2=T1+CFGP.gatherMs,TEND=T2+260;
  function easeOut(t){t=t<0?0:t>1?1:t;var u=1-t;return 1-u*u*u*u;}
- function box(){var h=Math.min(H*0.92,120),w=h*ASPECT;return {x:(W-w)/2,y:(H-h)/2,w:w,h:h};}
+ var _b={x:0,y:0,w:0,h:0};
+ function box(){
+  var el=document.getElementById('lgLogo');
+  if(el&&canvas){var cr=canvas.getBoundingClientRect(),mr=el.getBoundingClientRect();
+   if(mr.width>4&&mr.height>4){_b.x=mr.left-cr.left;_b.y=mr.top-cr.top;_b.w=mr.width;_b.h=mr.height;return _b;}}
+  var h=Math.min(H*0.92,120),w=h*ASPECT;                     /* pre-layout only */
+  _b.x=(W-w)/2;_b.y=(H-h)/2;_b.w=w;_b.h=h;return _b;}
  function spritesBuild(){
   sprites.length=0;
   var r=CFGP.size*DPR,d=Math.ceil(r*2)+2,levels=[0.45,0.75,1];
@@ -1562,7 +1575,10 @@ var LGP=(function(){
    for(var j2=0;j2<N;j2++){if(sp[j2]!==k)continue;
     ctx.drawImage(s2,px[j2]-hw,py[j2]-hw,s2.width/DPR,s2.height/DPR);}}
  }
+ function reveal(on){var st=document.getElementById('lgStage');
+  if(st)st.classList.toggle('revealed',!!on);}
  function frame(now){var t=now-t0;render(t);
+  if(t>=T2-60)reveal(true);                    /* crisp mark takes over as they land */
   if(t<TEND){raf=requestAnimationFrame(frame);}
   else{running=false;still();}}
  function still(){ /* the finished mark: particles pinned to their targets */
@@ -1571,15 +1587,17 @@ var LGP=(function(){
  function start(){
   canvas=document.getElementById('lgField');if(!canvas)return;
   ctx=canvas.getContext('2d',{alpha:true});
-  cancelAnimationFrame(raf);resize();seedP();
-  if(matchMedia('(prefers-reduced-motion: reduce)').matches){still();return;}
+  cancelAnimationFrame(raf);reveal(false);resize();seedP();
+  /* reduced motion gets the finished logo at once, no cinema */
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){still();reveal(true);return;}
   t0=performance.now();running=true;raf=requestAnimationFrame(frame);}
  addEventListener('resize',function(){
   if(canvas&&!document.getElementById('login').classList.contains('gone')){resize();still();}},{passive:true});
  return {start:start,still:still,
   seek:function(ms){canvas=document.getElementById('lgField');ctx=canvas.getContext('2d',{alpha:true});
-   cancelAnimationFrame(raf);running=false;resize();seedP();
-   for(var t=0;t<=ms;t+=16.7)render(t);return {at:ms,W:W,H:H};},
+   cancelAnimationFrame(raf);running=false;reveal(false);resize();seedP();
+   for(var t=0;t<=ms;t+=16.7)render(t);
+   reveal(ms>=T2-60);return {at:ms,W:W,H:H};},
   err:function(){var e=0;for(var i=0;i<N;i++){var a=px[i]-tx[i],b2=py[i]-ty[i];e+=Math.sqrt(a*a+b2*b2);}return e/N;},
   centreOffset:function(){var b=box();return Math.abs((b.x+b.w/2)-W/2)+Math.abs((b.y+b.h/2)-H/2);}};
 })();
@@ -1828,6 +1846,20 @@ function BSWL_TEST(){
     if(Math.abs(d2[i2]-d2[i2+1])>6||Math.abs(d2[i2+1]-d2[i2+2])>6)tinted++;}}
    ok('The light is white, never yellow',tinted===0,tinted+' tinted of '+painted);
    ok('The settled mark is actually drawn',painted>400,painted+' px');
+   LGP.seek(2000);
+   var stg=document.getElementById('lgStage');
+   ok('The crisp logo takes over once they land',stg.classList.contains('revealed'));
+   /* a raw read lands mid-transition and reports 0; finish it first */
+   var lgEl=document.getElementById('lgLogo');
+   lgEl.getAnimations().forEach(function(an){an.finish();});
+   ok('And the crisp logo is really visible',getComputedStyle(lgEl).opacity==='1',getComputedStyle(lgEl).opacity);
+   LGP.seek(300);
+   ok('It is hidden while they are still loose',!stg.classList.contains('revealed'));
+   LGP.seek(2000);
+   var lr=document.getElementById('lgLogo').getBoundingClientRect();
+   var sr=document.getElementById('lgStage').getBoundingClientRect();
+   ok('The finished logo is centred in its stage',
+      Math.abs((lr.left+lr.width/2)-(sr.left+sr.width/2))<1.5&&Math.abs((lr.top+lr.height/2)-(sr.top+sr.height/2))<1.5);
    if(wasGone)document.getElementById('login').classList.add('gone');
   }
   ok('Courier message carries tracking details',(function(){var c=DB.inbox.filter(function(m){return m.courier;})[0];
