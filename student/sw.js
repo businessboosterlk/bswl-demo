@@ -11,9 +11,11 @@
      Static assets        : cache first, refreshed quietly in the background,
                             so icons and the manifest stay instant.
    Bump CACHE whenever the asset list changes. */
-var CACHE='bswl-student-v2';
-var ASSETS=['./','index.html','manifest.json',
+var CACHE='bswl-student-v3';
+var ASSETS=['./','index.html','manifest.json','mark.png',
  'icon-192.png','icon-512.png','icon-maskable-512.png','apple-touch-icon.png'];
+/* mark.png is precached because it is on the LOGIN screen: the first thing a
+   student sees offline should not be a gap where the logo goes. */
 
 self.addEventListener('install',function(e){
  e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(ASSETS);})

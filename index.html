@@ -39,11 +39,12 @@
 /* MONOCHROME CLIENT? set --brand:#141417; --brand-dark:#000; and in
    body.dark set --brand:#f2f2f4; --brand-dark:#fff; --on-accent:#101012; */
 --on-accent:#ffffff;        /* text/icons on accent surfaces (flips for mono-dark) */
-/* ── DERIVED (do not edit) ───────────────────────────────── */
---brand-soft:color-mix(in srgb,var(--brand) 8%,transparent);
---brand-glow:color-mix(in srgb,var(--brand) 28%,transparent);
---accent-grad:linear-gradient(135deg,color-mix(in srgb,var(--brand) 80%,#fff) 0%,var(--brand) 42%,color-mix(in srgb,var(--brand) 70%,#000) 100%);
---ring:0 0 0 3px color-mix(in srgb,var(--brand) 20%,transparent);
+/* ── DERIVED: see the body{} block below. They are NOT declared here.
+   WHY: a custom property that contains var(--brand) resolves --brand at the
+   level it is DECLARED. Declared on :root (html), it bakes in the light
+   brand, and body.dark changing --brand one level down can never reach it.
+   That shipped a dark mode where the hero money block, the accent KPI and
+   the active nav item were all near-black text on a near-black gradient. ── */
 /* ── NEUTRALS (never change per client) ──────────────────── */
 --bg:#f5f5f7;--surface:#ffffff;--surface-2:#fafafb;
 --ink:#141417;--muted:#6e7178;--faint:#9d9fa6;
@@ -64,6 +65,15 @@
 --fs-xs:11px;--fs-sm:12.5px;--fs-base:13.5px;--fs-md:15px;--fs-lg:19px;--fs-xl:24px;--fs-2xl:30px;--fs-3xl:38px;
 --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:20px;--sp-6:24px;--sp-8:32px;
 --ease:cubic-bezier(.16,1,.3,1);--t-fast:.15s;--t-med:.3s;
+}
+/* DERIVED FROM --brand, DECLARED ON BODY so they re-resolve against whichever
+   --brand won on body. Add any future brand-derived token HERE, never on
+   :root, or it will be correct in light mode and invisible in dark. */
+body{
+--brand-soft:color-mix(in srgb,var(--brand) 8%,transparent);
+--brand-glow:color-mix(in srgb,var(--brand) 28%,transparent);
+--accent-grad:linear-gradient(135deg,color-mix(in srgb,var(--brand) 80%,#fff) 0%,var(--brand) 42%,color-mix(in srgb,var(--brand) 70%,#000) 100%);
+--ring:0 0 0 3px color-mix(in srgb,var(--brand) 20%,transparent);
 }
 /* DARK MODE — one class on body flips the whole app. Only neutrals +
    tint strengths change; the brand block stays untouched. */
@@ -266,6 +276,13 @@ body.dark .kpi.accent .val{color:var(--on-accent)}
 .tbl tbody tr:last-child td{border-bottom:none}
 .tbl .tn{font-weight:700}.tbl .tm{font-size:11.5px;color:var(--muted)}
 .tnum{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+/* chart hover: the value appears for the column you are pointing at. The
+   highlighted month keeps its number permanently, so the chart is never blank. */
+.bcol .bval{opacity:0;transition:opacity .14s var(--ease)}
+.bcol.on .bval,.bcol:hover .bval{opacity:1}
+.bcol:hover .bbar{fill:var(--muted)}
+.bcol.on:hover .bbar{fill:var(--brand)}
+.bcol{cursor:default}
 .bdg{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.3px;white-space:nowrap}
 .bdg-action{background:var(--danger-soft);color:var(--danger)}   /* red = needs action */
 .bdg-grey{background:var(--line);color:var(--muted)}             /* grey = plain count/info */
@@ -834,6 +851,7 @@ body.dark .stat-kpi .val{color:#fff}
         <button class="nav-item" data-pg="inventory" data-role="all" data-module="inventory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Inventory<span class="badge" id="nbInventory"></span></button>
         <button class="nav-item" data-pg="attendance" data-role="owner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/><path d="M9 15l2 2 4-4"/></svg>Attendance</button>
         <button class="nav-item" data-pg="classes" data-role="owner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/></svg>Classes</button>
+        <button class="nav-item" data-pg="recordings" data-role="manager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polygon points="10 9 15 12 10 15 10 9"/></svg>Recordings<span class="badge" id="nbRec"></span></button>
         <button class="nav-item" data-pg="messages" data-role="manager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Messages</button>
         <button class="nav-item" data-pg="app" data-role="manager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>Student app</button>
         <button class="nav-item" data-pg="tasks" data-role="all" data-module="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Task Book<span class="badge" id="nbTasks"></span></button>
@@ -941,6 +959,7 @@ body.dark .stat-kpi .val{color:#fff}
           <div class="seg-toggle" id="cusStatusSeg" style="display:none"><button class="segt active" data-cs="active" onclick="cusStatus('active')">Active</button><button class="segt" data-cs="alumni" onclick="cusStatus('alumni')">Alumni</button></div>
           <select class="filter" id="cusCohort" style="display:none" onchange="renderCustomers()"></select>
           <div class="sp"></div>
+          <button class="btn-primary" onclick="ENROL.open(null)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add student</button>
           <button class="btn-ghost imp-btn" onclick="openImport('customers')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import</button>
           <button class="btn-ghost" onclick="exportCustomers()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
         </div>
@@ -1028,6 +1047,46 @@ body.dark .stat-kpi .val{color:#fff}
         <div class="card"><div class="card-h"><h3>Batch signals</h3><span class="hint">Where this batch is struggling and what to teach next</span></div><div class="card-b" id="clsIntel" style="padding:10px 18px 16px"></div></div>
         <div class="card"><div class="card-h"><h3>Worth a look</h3><span class="hint">At most ten students, each with a reason and one action</span></div><div class="card-b" id="clsQueue" style="padding:6px 18px 14px"></div></div>
       </div>
+      <!-- ══ RECORDINGS. Leon records his online class already. This page
+           does the one thing he cannot do from Drive: decide who may open it,
+           and do it from attendance he has already marked. The link is stored,
+           never the video. Owner and manager only. ══ -->
+      <div class="page" id="page-recordings">
+        <div class="card"><div class="card-h"><h3>Add a recording</h3><span class="hint">Paste the link from Drive, YouTube or Zoom. Your team does this, not Business Booster.</span></div>
+          <div class="card-b" style="padding:12px 18px 16px">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px;margin-bottom:10px">
+              <div><label class="hint" for="recDate">Class date</label><input type="date" id="recDate" class="filter" style="width:100%" onchange="REC.previewNew()"></div>
+              <div><label class="hint" for="recCohort">Batch</label><select id="recCohort" class="filter" style="width:100%" onchange="REC.previewNew()"><option value="0">2027 Batch</option><option value="1">2028 Batch</option></select></div>
+              <div><label class="hint" for="recLoc">Class</label><select id="recLoc" class="filter" style="width:100%"></select></div>
+              <div><label class="hint" for="recMins">Length in minutes <span style="opacity:.7">(optional)</span></label><input type="number" id="recMins" class="filter" style="width:100%" min="1" max="600" placeholder="leave blank if you are not sure"></div>
+            </div>
+            <div style="display:grid;gap:10px;margin-bottom:12px">
+              <div><label class="hint" for="recTitle">What the class covered</label><input id="recTitle" class="filter" style="width:100%" placeholder="Unit 4 · Organising and leading" oninput="this.dataset.touched='1'"></div>
+              <div><label class="hint" for="recUrl">Recording link</label><input id="recUrl" class="filter" style="width:100%" placeholder="https://drive.google.com/file/d/..." oninput="REC.checkUrl()"></div>
+            </div>
+            <div class="hint" id="recUrlWarn" style="margin-bottom:10px"></div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:12px">
+              <div><label class="hint" for="recRelease">Who can watch it</label><select id="recRelease" class="filter" style="width:100%" onchange="REC.previewNew()">
+                <option value="absent">Only the students marked absent</option>
+                <option value="batch">The whole batch</option>
+                <option value="picked">Nobody yet, I will choose</option>
+              </select></div>
+              <div><label class="hint" for="recWindow">Available for</label><select id="recWindow" class="filter" style="width:100%" onchange="REC.previewNew()">
+                <option value="14">14 days after the class</option>
+                <option value="7">7 days after the class</option>
+                <option value="30">30 days after the class</option>
+                <option value="0">No limit</option>
+              </select></div>
+            </div>
+            <div class="hint" id="recPreview" style="margin-bottom:12px"></div>
+            <button class="btn-primary" onclick="REC.add()">Add the recording</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-h"><h3>Recordings</h3><span class="hint" id="recCount"></span></div>
+          <div class="card-b" style="padding:10px 18px 16px" id="recList"></div>
+        </div>
+        <div class="card" id="recManage" style="display:none"></div>
+      </div>
       <!-- ══ MESSAGES: the OS is the control centre, the student app is the
            delivery surface. Demo transport: sends are recorded here and the
            student app carries matching seeded messages on the same clock.
@@ -1079,6 +1138,12 @@ body.dark .stat-kpi .val{color:#fff}
              authentication will enforce, taught to the team from day one. ══ -->
         <div id="appTab-access">
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px" id="accStats"></div>
+          <!-- The question Leon actually has, before the roster: who took the
+               app and stopped opening it. A student who goes quiet in the app
+               usually goes quiet in the hall a few weeks later. -->
+          <div class="card"><div class="card-h"><h3>Have it, stopped opening it</h3><span class="hint" id="quietHint"></span></div>
+            <div class="card-b" style="padding:10px 18px 14px" id="quietBody"></div>
+          </div>
           <div class="card"><div class="card-h"><h3>Student access</h3><span class="hint">Reset sends a fresh one-time code. Nobody, including BB, can see a current password.</span></div>
             <div class="card-b" style="padding:10px 18px 14px">
               <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
@@ -1381,6 +1446,21 @@ const ymNow=()=>todayISO().slice(0,7);
 const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MN_FULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DY_FULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+/* Locations and batches, at module level. The seed keeps its own copies
+   because it runs before this file has a DB; renderers run long after it
+   has returned, so they cannot reach into that closure. */
+const LOC_LABEL={Kings:'Kings · Nugegoda',JMC:'JMC · Kiribathgoda',Sasik:'Sasik · Gampaha',Residence:'Residence',Online:'Online'};
+const COHORT_SHORT=['2027','2028'];
+/* LEON'S REAL PRICE LIST. Lives at module level because enrolment happens long
+   after the seed has run. Fee is DERIVED from programme and location, never
+   typed, so nobody enrolling a student is making a money decision. */
+const BSWL_PROGRAMS=['Theory','Revision','Combined'];
+function locClass(loc){return (loc==='Kings'||loc==='JMC'||loc==='Sasik')?'inst':(loc==='Residence'?'res':'online');}
+function bswlFee(program,loc){const c=locClass(loc);
+ if(program==='Combined')return c==='online'?5500:7000;
+ if(program==='Revision')return c==='online'?3000:4000;
+ return c==='res'?6000:(c==='online'?3000:4000);
+}
 const monthLbl=ym=>{const p=ym.split('-');return MN_FULL[+p[1]-1]+' '+p[0];};
 const monthShort=ym=>{const p=ym.split('-');return MN[+p[1]-1]+' '+p[0].slice(2);};
 const ymShift=(ym,n)=>{const p=ym.split('-');const d=new Date(+p[0],+p[1]-1+n,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');};
@@ -1429,12 +1509,7 @@ function seedData(){
  function phone(){return '07'+pick(['1','2','5','6','7','8'])+' '+pad(iRnd(0,999))+' '+pad(iRnd(0,9999));}
  /* ── Leon's REAL fee model: fee = f(program, location) ──
     institutes (Kings/JMC/Sasik) share one price; Residence and Online differ. */
- function locClass(loc){return (loc==='Kings'||loc==='JMC'||loc==='Sasik')?'inst':(loc==='Residence'?'res':'online');}
- function bswlFee(program,loc){const c=locClass(loc);
-  if(program==='Combined')return c==='online'?5500:7000;   /* Theory + Revision */
-  if(program==='Revision')return c==='online'?3000:4000;
-  return c==='res'?6000:(c==='online'?3000:4000);           /* Theory */
- }
+ /* fee model hoisted to module level: see bswlFee() above */
  function pickProgram(loc){if(loc==='Residence')return 'Theory';const r=rnd();return r<0.5?'Theory':(r<0.75?'Revision':'Combined');}
  /* head-counts from Leon (Online not in his table — modest demo figure until confirmed) */
  const ROSTER=[
@@ -1478,8 +1553,7 @@ function seedData(){
  /* recurringPlans = the fee subscribers (same ids as students) */
  const recurringPlans=students.map(s=>({id:s.id,name:s.name,phone:s.phone,cohort:s.cohort,program:s.program,loc:s.loc,fee:s.fee,joined:s.joined,status:s.status}));
  /* customers = the Students roster: cohort + location + active/alumni + fee history (LTV) + referral cadence */
- const COHORT_SHORT=['2027','2028'];
- const LOC_LABEL={Kings:'Kings · Nugegoda',JMC:'JMC · Kiribathgoda',Sasik:'Sasik · Gampaha',Residence:'Residence',Online:'Online'};
+ /* uses the module-level COHORT_SHORT and LOC_LABEL declared above */
  const customers=students.map(s=>{
   const fee=s.fee!=null?s.fee:4000;
   const monthsIn=Math.max(1,Math.round((new Date(ym+'-01')-new Date(s.joined.slice(0,7)+'-01'))/2629800000));
@@ -1567,11 +1641,61 @@ function seedData(){
   /* A login carries NO name. It points at a student record and the name is read
      from there, so a login can never address the wrong person. Usernames are the
      student's own first name, which is what the demo credentials use. */
-  appLogins:[
-   {id:1,studentId:customers[0].id,user:customers[0].name.split(' ')[0],status:'active',lastActive:ym+'-14',sessions:1,failed:0},
-   {id:2,studentId:customers[1].id,user:customers[1].name.split(' ')[0],status:'active',lastActive:ym+'-15',sessions:2,failed:0},
-   {id:3,studentId:customers[2].id,user:customers[2].name.split(' ')[0],status:'never',lastActive:null,sessions:0,failed:0},
-   {id:4,studentId:customers[3].id,user:customers[3].name.split(' ')[0],status:'locked',lastActive:ym+'-02',sessions:0,failed:5}
+  /* App accounts. Deliberately NOT one per student: Leon rolls the app out a
+     batch at a time, and the gap between "on the roster" and "has an account"
+     is a number he needs to see. daysQuiet is derived at read time from
+     lastActive, never stored, so it can never drift out of date. */
+  appLogins:(function(){
+   var rows=[],lid=1;
+   /* Spread across locations, not the first 28 on the roster: Leon rolls the
+      app out hall by hall, and a quiet list where every row reads "Kings"
+      teaches him nothing about where the drop-off is. */
+   var pool=customers.filter(function(c){return c.status==='active';});
+   var byLoc={},order=[];
+   pool.forEach(function(c){if(!byLoc[c.loc]){byLoc[c.loc]=[];order.push(c.loc);}byLoc[c.loc].push(c);});
+   var take=[],round=0;
+   while(take.length<28&&round<40){
+    order.forEach(function(k){if(take.length<28&&byLoc[k][round])take.push(byLoc[k][round]);});
+    round++;
+   }
+   take.forEach(function(c,i){
+    var st='active',la,ses,fail=0;
+    if(i===4){st='never';la=null;ses=0;}
+    else if(i===11){st='never';la=null;ses=0;}
+    else if(i===7){st='locked';la=prev+'-28';ses=3;fail=5;}
+    else if(i===2){la=prev+'-09';ses=6;}        /* ~36 days quiet */
+    else if(i===9){la=prev+'-21';ses=4;}        /* ~24 days quiet */
+    else if(i===15){la=prev+'-27';ses=9;}       /* ~18 days quiet */
+    else if(i===21){la=ym+'-01';ses=2;}         /* ~14 days quiet */
+    else{la=ym+'-'+pad(iRnd(9,15));ses=iRnd(3,40);}
+    rows.push({id:lid++,studentId:c.id,user:c.name.split(' ')[0],status:st,lastActive:la,sessions:ses,failed:fail});
+   });
+   return rows;
+  })(),
+  /* CLASS RECORDINGS. A recording is a LINK, never a file: Leon already
+     records to his own drive and the system's job is to say who may open it.
+     Keyed on date+cohort so it lines up one-to-one with classLog, which is
+     why attaching one is part of marking the class rather than a second job.
+     `release` decides who gets it. 'absent' is the default and reads the
+     attendance Leon has already marked, so the usual case costs nobody a
+     single click. */
+  recordings:[
+   {id:1,date:ym+'-11',cohort:0,loc:'Kings',title:'Unit 4 · Organising and leading',
+    url:'https://drive.google.com/file/d/1kM4nQ7pXbVw2LrT9dAeZ/view',
+    mins:118,addedBy:'Leon',addedOn:ym+'-11',release:'absent',windowDays:14,
+    grants:[],revoked:[],views:0},
+   {id:2,date:ym+'-04',cohort:0,loc:'Kings',title:'Unit 4 · Planning',
+    url:'https://drive.google.com/file/d/1bT8hV3zQwR6yNsK2pLfM/view',
+    mins:124,addedBy:'Leon',addedOn:ym+'-04',release:'absent',windowDays:14,
+    grants:[],revoked:[],views:0},
+   {id:3,date:prev+'-27',cohort:1,loc:'Residence',title:'Unit 3 · Companies',
+    url:'https://drive.google.com/file/d/1pQ2wX9nCvB4mHjD7sYkR/view',
+    mins:96,addedBy:'Bihandu',addedOn:prev+'-27',release:'batch',windowDays:0,
+    grants:[],revoked:[],views:0},
+   {id:4,date:prev+'-20',cohort:0,loc:'Online',title:'Unit 3 · Revision session',
+    url:'https://drive.google.com/file/d/1yR5tG8kNmA3wZxV6qHbP/view',
+    mins:74,addedBy:'Leon',addedOn:prev+'-20',release:'batch',windowDays:0,
+    grants:[],revoked:[],views:0}
   ],
   appConfig:{
    features:{
@@ -1618,11 +1742,23 @@ const init2=s=>s.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
 function fmtNum(v,fmt){if(fmt==='m')return CFG.currency+' '+v.toFixed(2)+'M';if(fmt==='pct')return Math.round(v)+'%';if(fmt==='lkr')return lkr(v);return Math.round(v).toLocaleString();}
 function countUp(el){const to=parseFloat(el.getAttribute('data-to'));const from=parseFloat(el.getAttribute('data-from'))||0;const fmt=el.getAttribute('data-fmt')||'int';const dur=780;let st=null;function tick(now){if(st===null)st=now;const p=Math.min(1,(now-st)/dur);const e=1-Math.pow(1-p,3);el.textContent=fmtNum(from+(to-from)*e,fmt);if(p<1)requestAnimationFrame(tick);else el.textContent=fmtNum(to,fmt);}requestAnimationFrame(tick);}
 function animateCounts(scope){(scope||document).querySelectorAll('[data-to]').forEach(countUp);}
-function barChart(data,h){h=h||140;const W=720;const max=Math.max.apply(null,data.map(d=>d.v).concat([1]));const gap=W/data.length;const bw=Math.min(48,gap*0.5);
- return '<svg viewBox="0 0 '+W+' '+(h+30)+'" style="width:100%;height:auto;display:block" role="img" aria-label="Bar chart">'+data.map(function(d,i){const bh=Math.max(3,d.v/max*h);const cx=i*gap+gap/2;const x=cx-bw/2;
-  return '<rect x="'+x+'" y="'+(h-bh)+'" width="'+bw+'" height="'+bh+'" rx="6" fill="'+(d.hi?'var(--brand)':'var(--line)')+'"><animate attributeName="height" from="0" to="'+bh+'" dur="0.7s" fill="freeze"/><animate attributeName="y" from="'+h+'" to="'+(h-bh)+'" dur="0.7s" fill="freeze"/></rect>'
-  +(d.hi?'<text x="'+cx+'" y="'+(h-bh-8)+'" text-anchor="middle" font-size="14" font-weight="700" fill="var(--brand)">'+d.top+'</text>':'')
-  +'<text x="'+cx+'" y="'+(h+22)+'" text-anchor="middle" font-size="14" fill="var(--muted)">'+d.label+'</text>';}).join('')+'</svg>';}
+/* BAR CHART. Five of six bars used to carry no number at all, so the chart
+   said "something happened in April" and nothing more. Every bar now names its
+   value on hover, and the hit area is the FULL COLUMN, not the bar: a 3px
+   February bar is impossible to point at. The viewBox also starts above zero
+   because the tallest bar's label was being clipped by the top edge. */
+function barChart(data,h){h=h||140;const W=720;const TOP=24;
+ const max=Math.max.apply(null,data.map(d=>d.v).concat([1]));
+ const gap=W/data.length;const bw=Math.min(48,gap*0.5);
+ return '<svg viewBox="0 '+(-TOP)+' '+W+' '+(h+30+TOP)+'" style="width:100%;height:auto;display:block" role="img" aria-label="Bar chart">'
+ +data.map(function(d,i){const bh=Math.max(3,d.v/max*h);const cx=i*gap+gap/2;const x=cx-bw/2;
+  return '<g class="bcol'+(d.hi?' on':'')+'">'
+  +'<title>'+d.label+': '+(d.full||d.top)+'</title>'
+  +'<rect class="bhit" x="'+(cx-gap/2)+'" y="'+(-TOP)+'" width="'+gap+'" height="'+(h+TOP)+'" fill="transparent"/>'
+  +'<rect class="bbar" x="'+x+'" y="'+(h-bh)+'" width="'+bw+'" height="'+bh+'" rx="6" fill="'+(d.hi?'var(--brand)':'var(--line)')+'"><animate attributeName="height" from="0" to="'+bh+'" dur="0.7s" fill="freeze"/><animate attributeName="y" from="'+h+'" to="'+(h-bh)+'" dur="0.7s" fill="freeze"/></rect>'
+  +'<text class="bval" x="'+cx+'" y="'+(h-bh-9)+'" text-anchor="middle" font-size="14" font-weight="700" fill="'+(d.hi?'var(--brand)':'var(--ink)')+'">'+d.top+'</text>'
+  +'<text x="'+cx+'" y="'+(h+22)+'" text-anchor="middle" font-size="14" fill="var(--muted)">'+d.label+'</text>'
+  +'</g>';}).join('')+'</svg>';}
 
 /* ════════════════════════════════════════════════════════════════════
    SECTION 6 — AUTH & ROLES. Roles: owner > manager > staff.
@@ -1691,7 +1827,7 @@ function buildTitles(){TITLES={
  customers:[CFG.contactWord.plural,'Enrolled students, batches and referrals'],
  quotes:['Quotes','Build and send branded quotations'],
  inventory:['Inventory','Stock, low-stock and dead-stock at a glance'],
- tasks:['Task Book','Assign and track work'],attendance:['Attendance','Mark who came to class'],classes:['Classes','Mark what each class covered'],messages:['Messages','Send updates to the student app'],app:['Student app','Logins and settings, run by your team'],
+ tasks:['Task Book','Assign and track work'],attendance:['Attendance','Mark who came to class'],classes:['Classes','Mark what each class covered'],recordings:['Recordings','Class recordings and who can watch them'],messages:['Messages','Send updates to the student app'],app:['Student app','Logins and settings, run by your team'],
  finance:['Finance','Fee invoices, collections and aging'],
  recurring:[CFG.recurring.label+' collection','Who paid, collected vs expected, who owes'],
  forecast:['Forecast','Month-by-month revenue recognition'],
@@ -1884,6 +2020,9 @@ function openRecord(id){
   +'<button class="pa" onclick="openRecordModal('+id+')">Edit</button>'
   +(CFG.modules.quotes?'<button class="pa" onclick="openQuote('+id+')">'+I.doc+' Quote</button>':'')
   +(isOpen(r)?'<button class="pa" onclick="markWon('+id+')">'+I.check+' Mark won</button><button class="pa" onclick="askLost('+id+')">Mark lost</button>':'')
+  +(function(){var st=ENROL.studentFor(r);
+    if(st)return '<button class="pa" onclick="closePanel();go(\'customers\')">'+I.users+' Enrolled as '+esc2(st.name)+'</button>';
+    return isWon(r)?'<button class="pa primary" onclick="ENROL.open('+id+')">'+I.users+' Enrol as a student</button>':'';})()
   +'</div>'
   +'<div class="pn-body">'
   +'<div class="sec" id="lostAsk" hidden><div class="sec-t">Why was it lost?</div><div style="display:flex;flex-wrap:wrap;gap:7px">'
@@ -1900,6 +2039,86 @@ function openRecord(id){
   +'</div></div>';
  document.getElementById('overlay').classList.add('open');panel.classList.add('open');
 }
+/* ═════════════════════════════════════════════════════════════════════════
+   ENROLMENT: the missing link between an enquiry and a student.
+
+   THE BUG THIS FIXES: 39 enquiries were marked Enrolled and not one of them
+   produced a student. Bihandu dragged a card, the money was booked, the card
+   went green, and the person did not exist anywhere. There was no manual
+   "add a student" button either, so the only way in was a bulk import.
+
+   An enquiry does not know batch, location or programme, so enrolment has to
+   ask for those three. It never asks for the fee: that is derived from Leon's
+   own price list, so nobody doing this is making a money decision.
+   ═════════════════════════════════════════════════════════════════════════ */
+var ENROL={rec:null,
+ /* one record enrols once. The link lives on the record, so the answer to
+    "did this become a student" survives a reload and cannot be guessed. */
+ studentFor:function(r){return r&&r.studentId
+   ?DB.get('customers').find(function(c){return c.id===r.studentId;}):null;},
+ open:function(recId){
+  ENROL.rec=recId?DB.get('records').find(function(x){return x.id===recId;}):null;
+  if(recId&&!ENROL.rec)return;
+  var done=ENROL.studentFor(ENROL.rec);
+  if(done){toast(I.check+' Already enrolled as '+done.name+'.');return;}
+  var p=document.getElementById('panel');
+  p.innerHTML='<div class="pn-head"><button class="pn-close" onclick="closePanel()" aria-label="Close">&#10005;</button>'
+   +'<div class="pn-nm">'+esc2(ENROL.rec?ENROL.rec.name:'New student')+'</div>'
+   +'<div class="pn-co">'+(ENROL.rec?'Enrolling from an enquiry':'Adding a student by hand')+'</div></div>'
+   +'<div class="pn-body"><div class="sec">'
+   +(ENROL.rec?'':'<div style="margin-bottom:12px"><label class="hint" for="enName">Full name</label>'
+     +'<input class="filter" id="enName" style="width:100%" placeholder="Student name"></div>'
+     +'<div style="margin-bottom:12px"><label class="hint" for="enPhone">Phone</label>'
+     +'<input class="filter" id="enPhone" style="width:100%" placeholder="07X XXX XXXX"></div>')
+   +'<div style="margin-bottom:12px"><label class="hint" for="enCohort">Batch</label>'
+   +'<select class="filter" id="enCohort" style="width:100%" onchange="ENROL.preview()">'
+   +CFG.cohorts.map(function(c,i){return '<option value="'+i+'">'+esc2(c)+'</option>';}).join('')+'</select></div>'
+   +'<div style="margin-bottom:12px"><label class="hint" for="enLoc">Class</label>'
+   +'<select class="filter" id="enLoc" style="width:100%" onchange="ENROL.preview()">'
+   +Object.keys(LOC_LABEL).map(function(k){return '<option value="'+k+'">'+LOC_LABEL[k]+'</option>';}).join('')+'</select></div>'
+   +'<div style="margin-bottom:12px"><label class="hint" for="enProg">Programme</label>'
+   +'<select class="filter" id="enProg" style="width:100%" onchange="ENROL.preview()">'
+   +BSWL_PROGRAMS.map(function(x){return '<option value="'+x+'">'+x+'</option>';}).join('')+'</select></div>'
+   +'<div class="hint" id="enFee" style="margin-bottom:14px"></div>'
+   +'<button class="btn-primary" onclick="ENROL.save()">'+(ENROL.rec?'Enrol as a student':'Add the student')+'</button>'
+   +'</div></div>';
+  document.getElementById('overlay').classList.add('open');p.classList.add('open');
+  ENROL.preview();
+ },
+ preview:function(){
+  var el=document.getElementById('enFee');if(!el)return;
+  var prog=document.getElementById('enProg').value,loc=document.getElementById('enLoc').value;
+  el.textContent='Monthly fee '+lkr(bswlFee(prog,loc))+', from your price list. '
+   +'They appear in Students straight away and in Fees from this month.';
+ },
+ save:function(){
+  var r=ENROL.rec;
+  var nm=r?r.name:(document.getElementById('enName').value||'').trim();
+  if(!nm){toast(I.warn+' A student needs a name.');return;}
+  var loc=document.getElementById('enLoc').value,prog=document.getElementById('enProg').value;
+  var cohort=+document.getElementById('enCohort').value;
+  var fee=bswlFee(prog,loc);
+  var dup=DB.get('customers').find(function(c){return c.name.toLowerCase()===nm.toLowerCase()&&c.status==='active';});
+  if(dup&&!confirm(nm+' is already an active student. Add a second record anyway?'))return;
+  var c={id:DB.nextId('customers'),name:nm,co:LOC_LABEL[loc]||loc,program:prog,
+   type:COHORT_SHORT[cohort],phone:r?(r.phone||''):(document.getElementById('enPhone').value||'').trim(),
+   email:'',owner:r?r.owner:CURRENT.id,cohort:cohort,loc:loc,joined:todayISO(),
+   sent:0,last:todayISO(),status:'active',level:'okay',fee:fee,history:[]};
+  DB.get('customers').push(c);
+  /* THE FEE LEDGER SHARES THE STUDENT'S ID. recurringPlans and customers are
+     both derived from one student in the seed and keyed on the same id, and
+     recPaid() looks payments up by plan.id. Mint a fresh id here and the
+     student joins the roster but never appears in Fees, which is a student
+     quietly never billed. Field names matter too: joined, fee, status. */
+  DB.get('recurringPlans').push({id:c.id,name:nm,phone:c.phone,cohort:cohort,
+   program:prog,loc:loc,fee:fee,joined:c.joined,status:'active'});
+  if(r){r.studentId=c.id;
+   r.acts.unshift({t:'Enrolled as a student',m:nm+' · '+prog+' · '+(LOC_LABEL[loc]||loc),tm:'just now'});}
+  logFeed(CURRENT.id,'Student enrolled',nm+' · '+prog+' · '+(LOC_LABEL[loc]||loc)+' · '+lkr(fee)+'/month');
+  DB.commit();closePanel();go('customers');renderApp();
+  toast(I.check+' '+nm+' is now a student. Fee '+lkr(fee)+' a month.');
+ }
+};
 function closePanel(){document.getElementById('overlay').classList.remove('open');document.getElementById('panel').classList.remove('open');}
 function logActivity(id){
  const r=DB.get('records').find(x=>x.id===id);if(!r)return;
@@ -1920,8 +2139,24 @@ function markWon(id){
  r.stage=wonK;if(!r.rev&&r.value)r.rev=spread(r.value,ymNow(),1);
  const invUndo=decrementForRecord(r);   // inventory module: auto-decrement matched products
  r.acts.unshift({t:'Deal won',m:'Moved to '+stageLabel(wonK),tm:'just now'});logFeed(CURRENT.id,'Deal won',r.name+(r.value?' · '+lkr(r.value):''));DB.commit();
- closePanel();renderApp();
- toastUndo('&#127881; '+r.name+' won',function(){r.stage=prev;r.acts.shift();if(invUndo)invUndo();DB.commit();renderApp();});
+ renderApp();
+ /* WINNING IS NOT ENROLLING. The card going green used to be the end of it and
+    the student never existed. Ask now, while whoever won it is still here.
+    The undo still stands, and it takes the student back out too: undoing a win
+    that left a billable student behind would be a worse bug than the one this
+    whole feature fixes. */
+ toastUndo('&#127881; '+r.name+' won',function(){
+  r.stage=prev;r.acts.shift();if(invUndo)invUndo();
+  if(r.studentId){
+   const cs=DB.get('customers'),ps=DB.get('recurringPlans');
+   for(let i=cs.length-1;i>=0;i--)if(cs[i].id===r.studentId)cs.splice(i,1);
+   for(let i=ps.length-1;i>=0;i--)if(ps[i].id===r.studentId)ps.splice(i,1);
+   r.acts=r.acts.filter(a=>a.t!=='Enrolled as a student');
+   delete r.studentId;
+  }
+  DB.commit();renderApp();});
+ if(!r.studentId){ENROL.open(id);return;}
+ closePanel();
 }
 
 /* ════════════════════════════════════════════════════════════════════
@@ -1973,7 +2208,7 @@ function renderDashboard(){
  /* chart: won revenue by month, last 6 months, current highlighted */
  const data=[];for(let i=5;i>=0;i--){const m=ymShift(ym,-i);
   const v=DB.get('records').filter(r=>isWon(r)&&r.created.slice(0,7)===m).reduce((s,r)=>s+r.value,0);
-  data.push({label:MN[+m.split('-')[1]-1],v:v,hi:m===ym,top:(v/1e6).toFixed(1)+'M'});}
+  data.push({label:MN[+m.split('-')[1]-1],v:v,hi:m===ym,top:(v/1e6).toFixed(1)+'M',full:lkr(v)});}
  document.getElementById('dashChart').innerHTML=barChart(data,150);
  document.getElementById('chartHint').textContent='Closed deals by month ('+CFG.currency+')';
  /* action queue: due follow-ups first, then biggest open deals */
@@ -2565,7 +2800,7 @@ function renderReports(){
  const cmp=[['Revenue',lkr(rev),lkr(prevRev),pct(rev,prevRev),'%'],['Enrolled',won.length,pwon.length,pct(won.length,pwon.length),'%'],['Avg',lkr(aov),lkr(paov),pct(aov,paov),'%'],['Enrol rate',winRate+'%',pWin+'%',winRate-pWin,'pp']];
  document.getElementById('rpCmp').innerHTML=cmp.map(c=>{const up=c[3]>=0;return '<div class="cmp-item '+(up?'up':'down')+'"><div class="cl">'+c[0]+'</div><div class="cv">'+c[1]+'</div><div class="cvs">vs '+c[2]+'</div><div class="cd '+(up?'up':'down')+'">'+(up?'▲':'▼')+' '+Math.abs(c[3])+c[4]+'</div></div>';}).join('');
  document.getElementById('rpCmpHint').textContent=monthLbl(ym)+' vs '+monthLbl(prev);
- const data=[];for(let i=5;i>=0;i--){const m=ymShift(ym,-i);const v=monthWon(m).reduce((s,r)=>s+r.value,0);data.push({label:MN[+m.split('-')[1]-1],v:v,hi:m===ym,top:(v/1e6).toFixed(1)+'M'});}
+ const data=[];for(let i=5;i>=0;i--){const m=ymShift(ym,-i);const v=monthWon(m).reduce((s,r)=>s+r.value,0);data.push({label:MN[+m.split('-')[1]-1],v:v,hi:m===ym,top:(v/1e6).toFixed(1)+'M',full:lkr(v)});}
  document.getElementById('rpTrend').innerHTML=barChart(data,150);
  const owners=DB.get('staff').filter(s=>s.active);
  const byOwner=owners.map(s=>({name:s.name,v:won.filter(r=>r.owner===s.id).reduce((x,r)=>x+r.value,0)})).filter(o=>o.v>0).sort((a,b)=>b.v-a.v);
@@ -3014,6 +3249,189 @@ async function runSelfTest(opts){
     if(!navs[k])orphans.push(k);
    });
    ok('Every enabled page is reachable from the nav',orphans.length===0,orphans.join(', ')||'none orphaned');
+
+   /* ── bb-alignment: nothing inside a card sits on the card's edge.
+      A container owns its inset once; children never set their own. ── */
+   (function(){
+    var hits=[];
+    function seen(el){return !!(el.offsetParent||el.getClientRects().length);}
+    /* A full-width wrapper that carries its OWN horizontal inset is doing the
+       container's job for its children and is fine: a card header needs a
+       border that spans the card. The bug is a child with no inset sitting on
+       the border. So test for the inset, never for a list of class names. */
+    function ownsInset(el){var cs=getComputedStyle(el);
+     return (parseFloat(cs.paddingLeft)||0)>=8&&(parseFloat(cs.paddingRight)||0)>=8;}
+    /* table plumbing is structure, not content: a table spans its card and the
+       inset lives on the cells, which this check measures on their own */
+    var PLUMBING={TABLE:1,THEAD:1,TBODY:1,TFOOT:1,TR:1,COLGROUP:1,COL:1};
+    /* a zero-padding wrapper is safe only if EVERY child owns its inset; one
+       child that forgets breaks `every` and is caught on its own measurement */
+    function delegates(el){var k=[].slice.call(el.children);
+     return k.length>0&&k.every(function(c){return PLUMBING[c.tagName]||ownsInset(c)||delegates(c);});}
+    Object.keys(RENDERERS).forEach(function(k){
+     if(CFG.modules[k]===false)return;
+     try{go(k);}catch(e){return;}
+     document.querySelectorAll('#page-'+k+' .card').forEach(function(card){
+      var cr=card.getBoundingClientRect(); if(cr.width<40)return;
+      card.querySelectorAll('*').forEach(function(el){
+       var cls=(el.className&&el.className.baseVal!==undefined?el.className.baseVal:el.className)||'';
+       if(PLUMBING[el.tagName])return;               /* structure, cells carry it */
+       if(ownsInset(el)||delegates(el))return;      /* owns or hands down the inset */
+       if(el.closest('svg'))return;                 /* svg marks fill by design */
+       if(!seen(el))return;                         /* hidden rects are stale */
+       var r=el.getBoundingClientRect(); if(r.width<4||r.height<4)return;
+       if(el.parentElement&&el.parentElement.closest('.card')!==card)return;
+       var L=r.left-cr.left,R=cr.right-r.right;
+       if(L<8||R<8)hits.push(k+':'+(String(cls).split(' ')[0]||el.tagName)+' L'+Math.round(L)+' R'+Math.round(R));
+      });});});
+    ok('Layout: nothing inside a card touches its edge',hits.length===0,hits.slice(0,4).join(', ')||'clean');
+   })();
+  })();
+  /* ENROLMENT. 39 enquiries said Enrolled and produced zero students. The
+     checks below pin the whole path, because every one of these silently
+     produced a student nobody could see or bill. */
+  (function(){
+   const C0=DB.get('customers').length,P0=DB.get('recurringPlans').length;
+   const r=DB.get('records').find(x=>isWon(x)&&!x.studentId);
+   ok('Enrolment: a manual Add student door exists',
+      !!document.querySelector('#page-customers button[onclick*="ENROL.open"]'),
+      'before this the only way a student could enter was a bulk CSV import');
+   if(!r){ok('Enrolment: an unenrolled won enquiry exists to test',false);return;}
+   ENROL.open(r.id);
+   document.getElementById('enLoc').value='Kings';
+   document.getElementById('enProg').value='Combined';
+   document.getElementById('enCohort').value='0';
+   ENROL.save();
+   const c=DB.get('customers').find(x=>x.id===r.studentId);
+   ok('Enrolment: a won enquiry becomes a real student',!!c&&c.name===r.name,
+      c?c.name:'no student created');
+   ok('Enrolment: the enquiry remembers who it became',r.studentId===(c||{}).id);
+   ok('Enrolment: the fee comes from the price list, never typed',
+      !!c&&c.fee===bswlFee('Combined','Kings'),c?c.fee:'');
+   /* the one that would have hurt most: a student on the roster and not in Fees */
+   const plan=DB.get('recurringPlans').find(x=>x.id===(c||{}).id);
+   ok('Enrolment: the student is billable, not just listed',
+      !!plan&&plan.status==='active'&&recFee(plan)===c.fee&&recChargedIn(plan,ymNow()),
+      plan?'plan '+plan.id+' fee '+recFee(plan):'NO FEE PLAN, this student would never be billed');
+   ok('Enrolment: the fee plan shares the student id',!!plan&&plan.id===c.id,
+      'recPaid() looks payments up by plan id; a fresh id means payments never match');
+   ok('Enrolment: enrolling twice is refused',(function(){
+      const n=DB.get('customers').length;ENROL.open(r.id);
+      return DB.get('customers').length===n
+        &&!document.getElementById('panel').classList.contains('open');})(),
+      'one enquiry, one student');
+   ok('Enrolment: it lands in the activity log',
+      DB.get('activity').some(a=>/Student enrolled/.test(a.t)&&a.m.indexOf(r.name)>-1));
+   /* leave no footprint */
+   DB.get('customers').length=C0;DB.get('recurringPlans').length=P0;delete r.studentId;
+   r.acts=r.acts.filter(a=>a.t!=='Enrolled as a student');
+   const act=DB.get('activity');for(let i=act.length-1;i>=0;i--)if(act[i].t==='Student enrolled')act.splice(i,1);
+   closePanel();DB.commit();
+  })();
+  /* DARK MODE. A custom property holding var(--brand) bakes --brand in at the
+     level it is DECLARED. Declared on :root, body.dark can never reach it, and
+     the app ships a dark mode where every accent surface is near-black text on
+     a near-black gradient. Nothing caught it because every VARIABLE looked
+     right; only the composed value was stale. So assert the composed value. */
+  (function(){
+   const was=document.body.classList.contains('dark');
+   const read=()=>{const cs=getComputedStyle(document.body);
+    return ['--brand','--brand-soft','--brand-glow','--accent-grad','--ring']
+      .reduce((o,k)=>(o[k]=cs.getPropertyValue(k).trim(),o),{});};
+   document.body.classList.remove('dark');const light=read();
+   document.body.classList.add('dark');const dark=read();
+   if(!was)document.body.classList.remove('dark');
+   const stale=Object.keys(light).filter(k=>light[k]===dark[k]);
+   ok('Dark mode: every brand-derived token actually changes',stale.length===0,
+      stale.length?stale.join(', ')+' identical in both themes':'all 5 flip');
+   ok('Dark mode: the accent gradient carries the dark brand, not the light one',
+      dark['--accent-grad'].indexOf(light['--brand'])<0
+      &&dark['--accent-grad'].indexOf(dark['--brand'])>-1,
+      'a stale gradient is invisible text on the hero, the accent KPI and the active nav item');
+  })();
+  /* RECORDINGS. The thing that can actually hurt here is a recording reaching
+     a student it was never meant to reach, or reaching nobody in silence. */
+  (function(){
+   const R=DB.get('recordings')||[];
+   const r1=R.find(x=>x.release==='absent');
+   ok('Recordings: page is owner and manager only, never sales',
+      document.querySelector('.nav-item[data-pg="recordings"]').dataset.role==='manager',
+      'a sales login has no business releasing class material');
+   ok('Recordings: the absent list comes from marked attendance',
+      !!r1&&REC.audience(r1).length>0
+        &&REC.audience(r1).every(s=>{const a=DB.get('attendance')
+           .find(y=>y.studentId===s.id&&y.date===r1.date);return a&&!a.present;}),
+      r1?REC.audience(r1).length+' absent on '+r1.date:'no absent-release recording seeded');
+   ok('Recordings: audience is the batch, not the hall',
+      !!r1&&REC.audience(r1).every(s=>s.cohort===r1.cohort),
+      'a Kings student who missed Saturday is exactly who the online recording is for');
+   /* a revoke has to beat a grant, or "remove" is a button that lies */
+   (function(){
+    const r=R[0],sid=REC.audience(r)[0].id;
+    const g0=(r.grants||[]).slice(),v0=(r.revoked||[]).slice();
+    REC.grant(r.id,sid);REC.revoke(r.id,sid);
+    ok('Recordings: revoke beats grant',REC.audience(r).every(s=>s.id!==sid),
+       'otherwise Remove looks like it worked and does nothing');
+    r.grants=g0;r.revoked=v0;DB.commit();
+   })();
+   ok('Recordings: availability is computed from the class date, never stored',
+      R.every(x=>x.expired===undefined&&x.availableUntil===undefined)
+        &&REC.daysLeft({date:'2026-07-11',windowDays:0})===null,
+      'a stored expiry is wrong the morning after it is written');
+   ok('Recordings: a closed window actually closes',
+      REC.live({date:'2026-07-11',windowDays:14})===true
+        &&REC.live({date:'2026-01-01',windowDays:14})===false);
+   ok('Recordings: every link is https and none is a bare file path',
+      R.every(x=>/^https:\/\//.test(x.url)),R.map(x=>x.url.slice(0,28)).join(' '));
+   ok('Recordings: every student in the audience carries the rule that let them in',
+      R.every(x=>REC.audience(x).every(s=>!!s.grantWhy)),
+      'a count with no reason is a phone call to Business Booster');
+   /* ONE RULE, TWO SURFACES. Until the backend exists the student app has to
+      answer "can I watch this" on its own, so the rule is written twice and
+      CAN drift. This pins the OS half: absent-release means absent, batch
+      means the whole batch, and a hand grant beats both. The student app
+      pins the same three statements against the same inputs. */
+   (function(){
+    const r=R.find(x=>x.release==='absent');
+    const anAbsentee=REC.audience(r)[0];
+    const aPresentStudent=REC.cohortStudents(r.cohort).find(c=>{
+     const a=DB.get('attendance').find(y=>y.studentId===c.id&&y.date===r.date);
+     return a&&a.present;});
+    const batch=R.find(x=>x.release==='batch'&&x.cohort===r.cohort);
+    ok('Recordings: the rule is absent-in, present-out, hand-grant-wins',
+       !!anAbsentee&&!!aPresentStudent
+       &&REC.audience(r).some(s=>s.id===anAbsentee.id)
+       &&!REC.audience(r).some(s=>s.id===aPresentStudent.id)
+       &&!!batch&&REC.audience(batch).some(s=>s.id===aPresentStudent.id),
+       'the student app states the same three, so drift between them shows up as a failure');
+   })();
+   ok('Recordings: taking access away asks twice',(function(){
+    const r=R.find(x=>x.release==='batch');const was=r.release;
+    REC._armed=null;REC.setRelease(r.id,'picked');
+    const held=r.release===was;                       /* first press must NOT apply */
+    REC.setRelease(r.id,'picked');
+    const applied=r.release==='picked';
+    r.release=was;REC._armed=null;DB.commit();
+    return held&&applied;})(),'granting is one press, removing is two');
+   ok('Recordings: no student can be in the audience twice',
+      R.every(x=>{const a=REC.audience(x).map(s=>s.id);return a.length===new Set(a).size;}));
+  })();
+  /* THE QUIET LIST. Three separate ways it can lie, so three checks:
+     it must be derived not stored, it must exclude the states that look
+     similar but mean something else, and it must actually have names in it
+     or the demo teaches Leon nothing. */
+  (function(){
+   const L=DB.get('appLogins')||[];
+   const q=L.filter(l=>{const d=APP.quietDays(l);return l.status==='active'&&d!==null&&d>=APP.QUIET_AT;});
+   ok('Quiet list: counts days from lastActive, never a stored field',
+      L.every(l=>l.daysQuiet===undefined)&&APP.quietDays({lastActive:null})===null,
+      'a stored day-count is wrong the morning after it is written');
+   ok('Quiet list: excludes locked and never-signed-in',
+      q.every(l=>l.status==='active'&&l.lastActive),
+      'those are different problems with different fixes');
+   ok('Quiet list: has names to ring in the demo',q.length>=3,q.length+' found');
+   ok('Quiet list: every row resolves to a real student record',
+      q.every(l=>APP.nameOf(l).indexOf('missing')<0),'name comes from customers, never a copy on the login');
   })();
   ok('Boot: core globals present',typeof CFG==='object'&&typeof DB==='object'&&!!DB._d&&typeof RENDERERS==='object'&&typeof applyConfig==='function');
   ok('Boot: zero console errors/warnings since load',bootLog.length===0,bootLog.length?bootLog[0].kind+': '+bootLog[0].msg:'');
@@ -3311,6 +3729,231 @@ function msgAudienceLabel(v){
 }
 /* Debt wording never enters a student's app. Reminders about money owed are a
    parent conversation and belong on the Fees screen, not here. */
+/* ═════════════════════════════════════════════════════════════════════════
+   CLASS RECORDINGS. Leon already records his online class. The only thing he
+   cannot do from Drive is decide who may open it, so that is all this does.
+
+   THE DESIGN DECISION, stated out loud: the default audience is READ FROM
+   ATTENDANCE HE HAS ALREADY MARKED. Picking students by hand across 165 names
+   after every class is the friction that kills a feature like this in week
+   two, so 'absent' costs nobody a click and the manual grant stays there for
+   the student who was present and wants another look.
+
+   AUDIENCE IS BY BATCH, NOT BY LOCATION. A Kings student who missed Saturday
+   is exactly who the online recording is for, so filtering by hall would shut
+   out the people it was made for.
+   ═════════════════════════════════════════════════════════════════════════ */
+var REC={pick:null,q:'',
+ all:function(){return DB.get('recordings')||[];},
+ byDate:function(){return REC.all().slice().sort(function(a,b){return a.date<b.date?1:-1;});},
+ /* Availability is COMPUTED from the class date every time it is asked. A
+    stored "expired" flag is wrong the morning after it is written. */
+ daysLeft:function(r){if(!r.windowDays)return null;
+  var end=new Date(r.date+'T09:41:00');end.setDate(end.getDate()+r.windowDays);
+  return Math.ceil((end-AS_OF)/86400000);},
+ live:function(r){var d=REC.daysLeft(r);return d===null||d>0;},
+ cohortStudents:function(c){return DB.get('customers').filter(function(s){
+  return s.status==='active'&&s.cohort===+c;});},
+ absentOn:function(date,c){var ids={};
+  DB.get('attendance').forEach(function(a){if(a.date===date&&!a.present)ids[a.studentId]=1;});
+  return REC.cohortStudents(c).filter(function(s){return ids[s.id];});},
+ /* one place decides who may watch, so the count on the card and the list in
+    the panel can never disagree */
+ /* Returns each student WITH THE RULE THAT LET THEM IN. A count on its own
+    sends the manager to Business Booster asking why; the reason on the row
+    answers them on the screen. */
+ audience:function(r){
+  var why=r.release==='batch'?'whole batch':'marked absent';
+  var base=r.release==='batch'?REC.cohortStudents(r.cohort)
+          :r.release==='absent'?REC.absentOn(r.date,r.cohort):[];
+  var have={};base.forEach(function(s){have[s.id]={s:s,why:why};});
+  (r.grants||[]).forEach(function(id){
+   var s=DB.get('customers').find(function(x){return x.id===id;});
+   if(s&&s.status==='active')have[id]={s:s,why:'given by hand'};});
+  (r.revoked||[]).forEach(function(id){delete have[id];});
+  return Object.keys(have).map(function(k){var e=have[k];e.s.grantWhy=e.why;return e.s;})
+   .sort(function(a,b){return a.name.localeCompare(b.name);});},
+ RELEASE_L:{absent:'Students marked absent',batch:'The whole batch',picked:'Chosen students only'},
+ checkUrl:function(){
+  var v=(document.getElementById('recUrl').value||'').trim();
+  var el=document.getElementById('recUrlWarn');
+  if(!v){el.textContent='';return;}
+  el.textContent=/^https:\/\//.test(v)
+   ? 'A link is not a lock. Anyone who opens it can forward it. This page controls who SEES the link, not what they do with it afterwards.'
+   : 'That does not look like a link. Paste the full address, starting with https://';
+ },
+ /* Leon marks what he taught on the Classes page. Asking him to type it again
+    here is the kind of small friction that makes a team stop using a feature.
+    Read the class log and fill it in; he can still overwrite it. */
+ suggestTitle:function(){
+  var t=document.getElementById('recTitle');if(!t||t.dataset.touched==='1')return;
+  var d=document.getElementById('recDate').value,c=+document.getElementById('recCohort').value;
+  var log=(DB.get('classLog')||[]).find(function(x){return x.date===d&&x.cohort===c;});
+  if(!log||!log.topics.length){t.value=t.value||'';t.placeholder='Unit 4 · Organising and leading';return;}
+  var names={};BSWL_SYLLABUS().forEach(function(u){u.topics.forEach(function(tp){names[tp[0]]='Unit '+u.u+' · '+tp[1];});});
+  var units={};log.topics.forEach(function(k){var u=String(k).split('.')[0];units[u]=1;});
+  var uu=Object.keys(units);
+  t.value=uu.length===1
+   ? (names[log.topics[0]]||('Unit '+uu[0]))
+   : 'Units '+uu.join(' and ')+' · '+log.topics.length+' topics';
+ },
+ previewNew:function(){
+  REC.suggestTitle();
+  var d=document.getElementById('recDate').value,c=document.getElementById('recCohort').value;
+  var rel=document.getElementById('recRelease').value,w=+document.getElementById('recWindow').value;
+  var n=rel==='batch'?REC.cohortStudents(c).length:(rel==='absent'?REC.absentOn(d,c).length:0);
+  var marked=DB.get('attendance').some(function(a){return a.date===d;});
+  var el=document.getElementById('recPreview');
+  /* THE QUIET FAILURE THIS CATCHES: choose "only absent students" for a class
+     whose attendance has not been marked yet and the answer is nobody, with
+     no error anywhere. The team would think it had gone out. */
+  if(rel==='absent'&&!marked){
+   el.textContent='Nobody is marked absent for '+(d||'that date')+' yet, so nobody would get it. '
+    +'Mark attendance for this class first, or give it to the whole batch.';
+   return;}
+  el.textContent=(rel==='picked'?'Nobody can watch it until you choose students.'
+    :'Reaches '+n+' student'+(n===1?'':'s')+' the moment you add it.')
+   +(w?' Available for '+w+' days after the class.':' Available with no time limit.');
+ },
+ add:function(){
+  var d=document.getElementById('recDate').value,ttl=document.getElementById('recTitle').value.trim();
+  var url=(document.getElementById('recUrl').value||'').trim();
+  var mins=+document.getElementById('recMins').value||0;
+  if(!d){toast(I.warn+' Pick the date of the class.');return;}
+  if(!ttl){toast(I.warn+' Say what the class covered, so a student knows what they are opening.');return;}
+  if(!/^https:\/\//.test(url)){toast(I.warn+' Paste the full recording link, starting with https://');return;}
+  var dup=REC.all().find(function(r){return r.url===url;});
+  if(dup){toast(I.warn+' That exact link is already on '+dup.date+'.');return;}
+  var rel=document.getElementById('recRelease').value;
+  if(rel==='absent'&&!DB.get('attendance').some(function(a){return a.date===d;})){
+   toast(I.warn+' Mark attendance for '+d+' first, or nobody gets this recording.');return;}
+  REC.all().push({id:DB.nextId('recordings'),date:d,cohort:+document.getElementById('recCohort').value,
+   loc:document.getElementById('recLoc').value,title:ttl,url:url,mins:mins,
+   addedBy:CURRENT.name,addedOn:todayISO(),
+   release:rel,
+   windowDays:+document.getElementById('recWindow').value,
+   grants:[],revoked:[],views:0});
+  appAudit('Recording added',ttl+' · '+d+' · by '+CURRENT.name);
+  DB.commit();
+  ['recTitle','recUrl','recMins'].forEach(function(k){document.getElementById(k).value='';});
+  document.getElementById('recUrlWarn').textContent='';
+  renderRecordings();
+  var n=REC.audience(REC.byDate()[0]).length;
+  toast(I.check+' Added. '+n+' student'+(n===1?'':'s')+' can watch it. It reaches their apps when the live pipe connects.');
+ },
+ open:function(id){REC.pick=REC.pick===id?null:id;REC.q='';renderRecordings();},
+ setRelease:function(id,v){var r=REC.all().find(function(x){return x.id===id;});if(!r)return;
+  var was=r.release,before=REC.audience(r).map(function(s){return s.id;});
+  r.release=v;
+  var after=REC.audience(r).map(function(s){return s.id;});
+  var lost=before.filter(function(x){return after.indexOf(x)<0;}).length;
+  var gained=after.filter(function(x){return before.indexOf(x)<0;}).length;
+  /* TAKING ACCESS AWAY IS THE DANGEROUS DIRECTION, so it is the one that has to
+     be confirmed. Granting is additive and reversible by eye; a silent removal
+     is a student who opens the app on Sunday and finds the class gone. */
+  if(lost>0&&REC._armed!==id+':'+v){
+   r.release=was;REC._armed=id+':'+v;renderRecordings();
+   toast(I.warn+' That takes it away from '+lost+' student'+(lost===1?'':'s')+'. Choose it again to confirm.');
+   return;}
+  REC._armed=null;
+  appAudit('Recording audience changed',r.title+' · '+REC.RELEASE_L[was]+' → '+REC.RELEASE_L[v]
+   +' · +'+gained+' / -'+lost+' · by '+CURRENT.name);
+  DB.commit();renderRecordings();
+  toast(I.check+' '+REC.audience(r).length+' students can watch it now.'
+   +(lost?' '+lost+' lost access.':''));},
+ setWindow:function(id,v){var r=REC.all().find(function(x){return x.id===id;});if(!r)return;
+  r.windowDays=+v;appAudit('Recording window changed',r.title+' → '+(+v?v+' days':'no limit')+' · by '+CURRENT.name);
+  DB.commit();renderRecordings();},
+ grant:function(id,sid){var r=REC.all().find(function(x){return x.id===id;});if(!r)return;
+  r.revoked=(r.revoked||[]).filter(function(x){return x!==sid;});
+  if((r.grants||[]).indexOf(sid)<0)r.grants.push(sid);
+  var nm=(DB.get('customers').find(function(x){return x.id===sid;})||{}).name||'';
+  appAudit('Recording access granted',nm+' · '+r.title+' · by '+CURRENT.name);
+  DB.commit();REC.q='';renderRecordings();toast(I.check+' '+nm.split(' ')[0]+' can watch it.');},
+ revoke:function(id,sid){var r=REC.all().find(function(x){return x.id===id;});if(!r)return;
+  r.grants=(r.grants||[]).filter(function(x){return x!==sid;});
+  if((r.revoked||[]).indexOf(sid)<0)r.revoked.push(sid);
+  var nm=(DB.get('customers').find(function(x){return x.id===sid;})||{}).name||'';
+  appAudit('Recording access removed',nm+' · '+r.title+' · by '+CURRENT.name);
+  DB.commit();renderRecordings();toast(I.check+' Removed for '+nm.split(' ')[0]+'.');},
+ search:function(v){REC.q=(v||'').toLowerCase();renderRecordings();
+  var i=document.getElementById('recGrantQ');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},
+ copy:function(id){var r=REC.all().find(function(x){return x.id===id;});if(!r)return;
+  try{navigator.clipboard.writeText(r.url);}catch(e){}
+  toast(I.check+' Link copied.');},
+ remove:function(id){var r=REC.all().find(function(x){return x.id===id;});if(!r)return;
+  var i=REC.all().indexOf(r);REC.all().splice(i,1);
+  appAudit('Recording removed',r.title+' · by '+CURRENT.name);
+  DB.commit();REC.pick=null;renderRecordings();
+  toast(I.check+' Removed. The video itself is untouched on your drive.');}
+};
+function renderRecordings(){
+ var el=document.getElementById('recList');if(!el)return;
+ var loc=document.getElementById('recLoc');
+ if(loc&&!loc.options.length)loc.innerHTML=Object.keys(LOC_LABEL)
+  .map(function(k){return '<option value="'+k+'">'+LOC_LABEL[k]+'</option>';}).join('');
+ var dp=document.getElementById('recDate');
+ if(dp&&!dp.value){var last=(DB.get('classLog')||[]).slice().sort(function(a,b){return a.date<b.date?1:-1;})[0];
+  dp.value=last?last.date:todayISO();}
+ REC.previewNew();
+ var rs=REC.byDate();
+ var liveN=rs.filter(REC.live).length;
+ document.getElementById('recCount').textContent=rs.length+' in the library · '+liveN+' available to watch now';
+ var nb=document.getElementById('nbRec');if(nb)nb.textContent=liveN||'';
+ el.innerHTML=rs.length?rs.map(function(r){
+  var a=REC.audience(r),dl=REC.daysLeft(r),on=REC.pick===r.id;
+  return '<button class="att-row" style="width:100%;text-align:left" onclick="REC.open('+r.id+')">'
+   +'<div class="pr-main"><div class="pr-nm">'+esc2(r.title)+'</div>'
+   +'<div class="pr-mt">'+dowName2(r.date)+' '+r.date+' · '+COHORT_SHORT[r.cohort]+' Batch · '
+   +(LOC_LABEL[r.loc]||r.loc)+(r.mins?' · '+r.mins+' min':'')+'</div></div>'
+   +'<div style="text-align:right"><div style="font-weight:700;font-variant-numeric:tabular-nums">'+a.length+'</div>'
+   +'<div class="hint">'+(REC.live(r)?(dl===null?'no limit':dl+' days left'):'closed')+'</div></div>'
+   +'<span class="hint" style="margin-left:10px">'+(on?'Hide':'Manage')+'</span></button>'
+   +(on?recPanel(r):'');
+ }).join(''):'<div class="hint">No recordings yet. Add the first one above, right after a class.</div>';
+}
+function recPanel(r){
+ var a=REC.audience(r),dl=REC.daysLeft(r);
+ var pool=REC.cohortStudents(r.cohort);
+ var can={};a.forEach(function(s){can[s.id]=1;});
+ var hits=REC.q?pool.filter(function(s){return !can[s.id]&&s.name.toLowerCase().indexOf(REC.q)>-1;}).slice(0,6):[];
+ return '<div class="card-b" style="padding:12px 4px 18px;border-bottom:1px solid var(--line)">'
+  +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:12px">'
+  +'<div><label class="hint">Who can watch it</label><select class="filter" style="width:100%" onchange="REC.setRelease('+r.id+',this.value)">'
+   +Object.keys(REC.RELEASE_L).map(function(k){
+     return '<option value="'+k+'"'+(r.release===k?' selected':'')+'>'+REC.RELEASE_L[k]+'</option>';}).join('')
+  +'</select></div>'
+  +'<div><label class="hint">Available for</label><select class="filter" style="width:100%" onchange="REC.setWindow('+r.id+',this.value)">'
+   +[['14','14 days after the class'],['7','7 days'],['30','30 days'],['0','No limit']].map(function(o){
+     return '<option value="'+o[0]+'"'+(String(r.windowDays)===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')
+  +'</select></div></div>'
+  +'<div class="hint" style="margin-bottom:10px">'
+   +(REC.live(r)?(dl===null?'Open with no time limit.':'Closes in '+dl+' days.')
+     :'Closed. Students can no longer open it. Change the window above to reopen it.')
+   +' Added by '+esc2(r.addedBy)+' on '+r.addedOn+'.</div>'
+  +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'
+   +'<a class="btn-ghost" href="'+esc2(r.url)+'" target="_blank" rel="noopener">Open the recording</a>'
+   +'<button class="btn-ghost" onclick="event.stopPropagation();REC.copy('+r.id+')">Copy link</button>'
+   +'<button class="btn-ghost" onclick="event.stopPropagation();REC.remove('+r.id+')">Remove from the app</button></div>'
+  +'<div style="font-weight:700;font-size:13px;margin-bottom:6px">Can watch it · '+a.length+'</div>'
+  +(a.length?'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">'
+    +a.slice(0,24).map(function(s){
+      return '<span class="chip" style="cursor:default">'+esc2(s.name)
+       +' <span class="hint">'+esc2(s.grantWhy)+'</span>'
+       +' <button class="hint" style="text-decoration:underline;margin-left:4px" onclick="event.stopPropagation();REC.revoke('+r.id+','+s.id+')">remove</button></span>';
+     }).join('')+(a.length>24?'<span class="hint">and '+(a.length-24)+' more</span>':'')+'</div>'
+   :'<div class="hint" style="margin-bottom:12px">Nobody yet.</div>')
+  +'<div style="font-weight:700;font-size:13px;margin-bottom:6px">Give it to somebody else</div>'
+  +'<input class="filter" id="recGrantQ" style="width:100%;max-width:320px" placeholder="Search a student in this batch" value="'+esc2(REC.q)+'" oninput="event.stopPropagation();REC.search(this.value)" onclick="event.stopPropagation()">'
+  +(hits.length?'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">'
+    +hits.map(function(s){return '<button class="chip" onclick="event.stopPropagation();REC.grant('+r.id+','+s.id+')">'+esc2(s.name)+'</button>';}).join('')
+    +'</div>':(REC.q?'<div class="hint" style="margin-top:8px">Nobody by that name who cannot already watch it.</div>':''))
+  +'</div>';
+}
+function esc2(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){
+ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function dowName2(iso){return DY_FULL[new Date(iso+'T09:41:00').getDay()];}
+if(typeof RENDERERS!=='undefined')RENDERERS.recordings=renderRecordings;
 var MSG_BLOCKED=/owe|owing|outstanding|overdue|arrears|balance|pay immediately|last warning/i;
 function msgToStudent(id){
  var c=DB.get('customers').find(function(x){return x.id===id;});if(!c)return;
@@ -3501,14 +4144,40 @@ var APP={
   DB.commit();document.getElementById('accManage').style.display='none';renderApp2();
   toast(I.check+' Access removed. '+APP.nameOf(l)+' stays in Students, untouched.');
  },
+ /* Derived at read time from lastActive, never stored. A stored "days quiet"
+    is wrong the morning after it is written. */
+ quietDays:function(l){if(!l.lastActive)return null;
+  return Math.round((AS_OF-new Date(l.lastActive+'T09:41:00'))/86400000);},
+ QUIET_AT:14,
+ renderQuiet:function(){
+  var logins=DB.get('appLogins')||[];
+  var q=logins.filter(function(l){var d=APP.quietDays(l);
+    return l.status==='active'&&d!==null&&d>=APP.QUIET_AT;})
+   .sort(function(a,b){return APP.quietDays(b)-APP.quietDays(a);});
+  document.getElementById('quietHint').textContent=
+   q.length+' with a working account, nothing opened for '+APP.QUIET_AT+' days or more';
+  document.getElementById('quietBody').innerHTML=q.length
+   ?'<table class="tbl"><thead><tr><th>Student</th><th>Location</th><th>Quiet for</th><th></th></tr></thead><tbody>'
+     +q.map(function(l){
+       var c=DB.get('customers').find(function(x){return x.id===l.studentId;});
+       return '<tr><td><b>'+APP.nameOf(l)+'</b></td><td>'+((c&&c.co)||'Not set')+'</td>'
+        +'<td style="font-variant-numeric:tabular-nums">'+APP.quietDays(l)+' days</td>'
+        +'<td style="text-align:right"><button class="btn-ghost" onclick="APP.manage('+l.id+')">Open</button> '
+        +'<button class="btn-ghost" onclick="APP.wa('+l.id+')">WhatsApp</button></td></tr>';
+      }).join('')+'</tbody></table>'
+     +'<div class="hint" style="margin-top:10px">This is the list to ring. Not the locked accounts, and not the ones who never signed in.</div>'
+   :'<div class="hint">Nobody with an account has gone quiet. That is the number you want.</div>';
+ },
  renderAccess:function(){
   var q=(document.getElementById('accSearch').value||'').toLowerCase();
   var f=document.getElementById('accFilter').value;
   var logins=DB.get('appLogins')||[];
-  var stats=[['Access created',logins.length],
-   ['Active',logins.filter(function(l){return l.status==='active';}).length],
+  var roster=DB.get('customers').filter(function(c){return c.status==='active';}).length;
+  var stats=[['On the roster',roster],
+   ['Signing in',logins.filter(function(l){return l.status==='active';}).length],
    ['Never signed in',logins.filter(function(l){return l.status==='never'||l.status==='invited';}).length],
-   ['Locked',logins.filter(function(l){return l.status==='locked';}).length]];
+   ['No account yet',Math.max(0,roster-logins.length)]];
+  APP.renderQuiet();
   document.getElementById('accStats').innerHTML=stats.map(function(k){
    return '<div class="card" style="margin:0;padding:12px 14px"><div class="hint">'+k[0]+'</div><div style="font-size:20px;font-weight:700;font-variant-numeric:tabular-nums">'+k[1]+'</div></div>';}).join('');
   var list=logins.filter(function(l){
@@ -3830,7 +4499,7 @@ function onboardingDoc(id){
  w.document.close();
  toast(I.check+' Starter guide ready for '+x.name.split(' ')[0]);
 }
-renderDashboard=function(){var ym=ymNow();var st=recStats(ym);var activeStudents=DB.get('recurringPlans').filter(function(p){return p.status==='active';}).length;var openEnq=DB.get('records').filter(isOpen);var dueList=openEnq.filter(function(r){return r.followUp&&r.followUp<=todayISO();});var pctc=st.expected?Math.min(100,Math.round(st.collected/st.expected*100)):0;var toPay=st.owing.length+st.partial.length;var prevSt=recStats(ymShift(ym,-1));var prevPay=prevSt.owing.length+prevSt.partial.length;var onlineN=DB.get('customers').filter(function(c){return c.status==='active'&&c.loc==='Online';}).length;document.getElementById('greet').innerHTML='<h1 style="font-size:27px;font-weight:800;letter-spacing:-.5px">'+greetWord(AS_OF.getHours())+', '+CURRENT.name+'</h1><div style="font-size:13px;color:var(--muted);margin-top:5px">'+DY_FULL[AS_OF.getDay()]+' '+AS_OF.getDate()+' '+MN_FULL[AS_OF.getMonth()]+' · '+(dueList.length?dueList.length+' follow-up'+(dueList.length>1?'s':'')+' due today':'fees, students and enquiries at a glance')+'</div>';document.getElementById('heroMoney').innerHTML='<div class="hm-cell"><div class="hm-label">Collected · '+MN_FULL[AS_OF.getMonth()]+'</div><div class="hm-val"><span data-to="'+st.collected+'" data-fmt="lkr">'+lkr(st.collected)+'</span></div><div class="hm-track"><div class="hm-fill" style="width:'+pctc+'%"></div></div><div class="hm-sub">'+pctc+'% of '+lkr(st.expected)+' expected</div></div><div class="hm-cell"><div class="hm-label">Outstanding</div><div class="hm-val"><span data-to="'+st.outstanding+'" data-fmt="lkr">'+lkr(st.outstanding)+'</span></div><div class="hm-sub">'+toPay+' student'+(toPay===1?'':'s')+' still to pay</div></div>';document.getElementById('dashKpis').innerHTML=kpiC('Outstanding this month',lkr(st.outstanding),toPay+' still to pay',false,I.warn)+kpiC('Outstanding last month',lkr(prevSt.outstanding),prevPay?prevPay+' still owed':'all cleared',false,I.money)+kpiC('Online students',onlineN,'active online',false,I.users)+kpiC('New enquiries',openEnq.length,dueList.length?dueList.length+' due today':'potential converts',true,I.inbox);var data=[];for(var i=5;i>=0;i--){var m=ymShift(ym,-i);var v=recStats(m).collected;data.push({label:MN[+m.split('-')[1]-1],v:v,hi:m===ym,top:Math.round(v/1000)+'k'});}document.getElementById('dashChart').innerHTML=barChart(data,150);var ct=document.getElementById('chartTitle');if(ct)ct.textContent='Fees collected, last 6 months';document.getElementById('chartHint').textContent='Collected by month ('+CFG.currency+')';var owe=[].concat(st.owing,st.partial).sort(function(a,b){return (recFee(b)-recPaid(b.id,ym))-(recFee(a)-recPaid(a.id,ym));}).slice(0,5);document.getElementById('actionQueue').innerHTML=owe.length?owe.map(function(p){var got=recPaid(p.id,ym),due=recFee(p);return '<div class="aq-item" onclick="go(\'recurring\')"><span class="aq-dot" style="background:'+(got>0?'var(--amber)':'var(--danger)')+'"></span><div class="aq-main"><div class="aq-nm">'+p.name+'</div><div class="aq-why">'+cohortLabel(p.cohort)+' · owes '+lkr(due-got)+'</div></div><span class="aq-act">Collect</span></div>';}).join(''):emptyC(I.check,'All collected','Every student has paid for '+MN_FULL[AS_OF.getMonth()]+'.');document.getElementById('dashTasks').innerHTML=taskRows(scopeTasks().slice(0,4));};if(typeof RENDERERS!=='undefined')RENDERERS.dashboard=renderDashboard;
+renderDashboard=function(){var ym=ymNow();var st=recStats(ym);var activeStudents=DB.get('recurringPlans').filter(function(p){return p.status==='active';}).length;var openEnq=DB.get('records').filter(isOpen);var dueList=openEnq.filter(function(r){return r.followUp&&r.followUp<=todayISO();});var pctc=st.expected?Math.min(100,Math.round(st.collected/st.expected*100)):0;var toPay=st.owing.length+st.partial.length;var prevSt=recStats(ymShift(ym,-1));var prevPay=prevSt.owing.length+prevSt.partial.length;var onlineN=DB.get('customers').filter(function(c){return c.status==='active'&&c.loc==='Online';}).length;document.getElementById('greet').innerHTML='<h1 style="font-size:27px;font-weight:800;letter-spacing:-.5px">'+greetWord(AS_OF.getHours())+', '+CURRENT.name+'</h1><div style="font-size:13px;color:var(--muted);margin-top:5px">'+DY_FULL[AS_OF.getDay()]+' '+AS_OF.getDate()+' '+MN_FULL[AS_OF.getMonth()]+' · '+(dueList.length?dueList.length+' follow-up'+(dueList.length>1?'s':'')+' due today':'fees, students and enquiries at a glance')+'</div>';document.getElementById('heroMoney').innerHTML='<div class="hm-cell"><div class="hm-label">Collected · '+MN_FULL[AS_OF.getMonth()]+'</div><div class="hm-val"><span data-to="'+st.collected+'" data-fmt="lkr">'+lkr(st.collected)+'</span></div><div class="hm-track"><div class="hm-fill" style="width:'+pctc+'%"></div></div><div class="hm-sub">'+pctc+'% of '+lkr(st.expected)+' expected</div></div><div class="hm-cell"><div class="hm-label">Outstanding</div><div class="hm-val"><span data-to="'+st.outstanding+'" data-fmt="lkr">'+lkr(st.outstanding)+'</span></div><div class="hm-sub">'+toPay+' student'+(toPay===1?'':'s')+' still to pay</div></div>';document.getElementById('dashKpis').innerHTML=kpiC('Outstanding this month',lkr(st.outstanding),toPay+' still to pay',false,I.warn)+kpiC('Outstanding last month',lkr(prevSt.outstanding),prevPay?prevPay+' still owed':'all cleared',false,I.money)+kpiC('Online students',onlineN,'active online',false,I.users)+kpiC('New enquiries',openEnq.length,dueList.length?dueList.length+' due today':'potential converts',true,I.inbox);var data=[];for(var i=5;i>=0;i--){var m=ymShift(ym,-i);var v=recStats(m).collected;data.push({label:MN[+m.split('-')[1]-1],v:v,hi:m===ym,top:Math.round(v/1000)+'k',full:lkr(v)});}document.getElementById('dashChart').innerHTML=barChart(data,150);var ct=document.getElementById('chartTitle');if(ct)ct.textContent='Fees collected, last 6 months';document.getElementById('chartHint').textContent='Collected by month ('+CFG.currency+')';var owe=[].concat(st.owing,st.partial).sort(function(a,b){return (recFee(b)-recPaid(b.id,ym))-(recFee(a)-recPaid(a.id,ym));}).slice(0,5);document.getElementById('actionQueue').innerHTML=owe.length?owe.map(function(p){var got=recPaid(p.id,ym),due=recFee(p);return '<div class="aq-item" onclick="go(\'recurring\')"><span class="aq-dot" style="background:'+(got>0?'var(--amber)':'var(--danger)')+'"></span><div class="aq-main"><div class="aq-nm">'+p.name+'</div><div class="aq-why">'+cohortLabel(p.cohort)+' · owes '+lkr(due-got)+'</div></div><span class="aq-act">Collect</span></div>';}).join(''):emptyC(I.check,'All collected','Every student has paid for '+MN_FULL[AS_OF.getMonth()]+'.');document.getElementById('dashTasks').innerHTML=taskRows(scopeTasks().slice(0,4));};if(typeof RENDERERS!=='undefined')RENDERERS.dashboard=renderDashboard;
 
 DB.load();
 /* apply tenant customizations over the mold defaults — brand vars, vocabulary,
