@@ -848,9 +848,7 @@ body.dark .stat-kpi .val{color:#fff}
         <button class="nav-item" data-pg="customers" data-role="all" data-module="customers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>Customers<span class="badge" id="nbCustomers"></span></button>
         <button class="nav-item" data-pg="quotes" data-role="all" data-module="quotes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>Quotes</button>
         <button class="nav-item" data-pg="inventory" data-role="all" data-module="inventory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Inventory<span class="badge" id="nbInventory"></span></button>
-        <button class="nav-item" data-pg="attendance" data-role="owner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/><path d="M9 15l2 2 4-4"/></svg>Attendance</button>
-        <button class="nav-item" data-pg="classes" data-role="owner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/></svg>Classes</button>
-        <button class="nav-item" data-pg="recordings" data-role="manager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polygon points="10 9 15 12 10 15 10 9"/></svg>Recordings<span class="badge" id="nbRec"></span></button>
+        <button class="nav-item" data-pg="classes" data-role="manager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/></svg>Class<span class="badge" id="nbRec"></span></button>
         <button class="nav-item" data-pg="messages" data-role="manager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Messages</button>
         <button class="nav-item" data-pg="app" data-role="manager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>Student app</button>
         <button class="nav-item" data-pg="tasks" data-role="all" data-module="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Task Book<span class="badge" id="nbTasks"></span></button>
@@ -1020,25 +1018,34 @@ body.dark .stat-kpi .val{color:#fff}
       </div>
 
       <!-- ══ TEAM ══ -->
-      <div class="page" id="page-attendance">
+      <div class="page" id="page-classes">
+        <!-- ══ ONE CLASS, ONE SCREEN. Marking who came, marking what was taught
+             and pasting the recording were three menu items for one Saturday.
+             The date and batch are chosen ONCE at the top and drive all three,
+             and the steps are numbered because the order matters: the recording
+             releases to whoever was marked absent, so attendance has to be in
+             before the link goes out. ══ -->
         <div class="toolbar">
-          <input type="date" id="attDate" class="filter" onchange="ATT.setDate(this.value)">
-          <select class="filter" id="attBatch" onchange="ATT.set('batch',this.value)"><option value="all">All batches</option><option value="0">2027</option><option value="1">2028</option></select>
-          <select class="filter" id="attLoc" onchange="ATT.set('loc',this.value)"><option value="all">All locations</option><option value="Kings · Nugegoda">Kings Nugegoda</option><option value="JMC · Kiribathgoda">JMC Kiribathgoda</option><option value="Sasik · Gampaha">Sasik Gampaha</option><option value="Residence">Residence</option><option value="Online">Online</option></select>
+          <input type="date" id="klDate" class="filter" onchange="KLASS.setDate(this.value)">
+          <select class="filter" id="klBatch" onchange="KLASS.setBatch(this.value)"><option value="0">2027 Batch</option><option value="1">2028 Batch</option></select>
+          <span id="klLocWrap"><select class="filter" id="attLoc" onchange="ATT.set('loc',this.value)"><option value="all">All locations</option><option value="Kings · Nugegoda">Kings Nugegoda</option><option value="JMC · Kiribathgoda">JMC Kiribathgoda</option><option value="Sasik · Gampaha">Sasik Gampaha</option><option value="Residence">Residence</option><option value="Online">Online</option></select></span>
+          <div class="sp"></div>
+          <span class="hint" id="klHint"></span>
         </div>
-        <div id="attSummary"></div>
+        <div class="tabs" id="klTabs" style="margin-bottom:14px">
+          <button class="tab active" data-kt="attendance" onclick="KLASS.tab('attendance')">1 · Who came</button>
+          <button class="tab" data-kt="topics" onclick="KLASS.tab('topics')">2 · What you taught</button>
+          <button class="tab" data-kt="recording" onclick="KLASS.tab('recording')">3 · The recording</button>
+        </div>
+        <div style="display:none">
+          <input type="date" id="attDate"><select id="attBatch"><option value="0">a</option><option value="1">b</option></select>
+          <input type="date" id="clsDate"><select id="clsBatch"><option value="0">a</option><option value="1">b</option></select>
+        </div>
+        <div id="klTab-attendance">        <div id="attSummary"></div>
         <div class="att-hint">Everyone is Present by default. Tap a student to mark them Absent.</div>
         <div class="card"><div class="card-b" id="attList" style="padding:2px 18px 10px"></div></div>
       </div>
-      <!-- ══ CLASSES (owner-only): Leon's ten-second topic marker.
-           One tap per class: pick the batch, tick what was covered, Save.
-           Never per student. This feeds the student app's catch-up engine. ══ -->
-      <div class="page" id="page-classes">
-        <div class="toolbar">
-          <input type="date" id="clsDate" class="filter" onchange="CLS.set('date',this.value)">
-          <select class="filter" id="clsBatch" onchange="CLS.set('cohort',this.value)"><option value="0">2027 Batch</option><option value="1">2028 Batch</option></select>
-        </div>
-        <div class="card"><div class="card-h"><h3>What did this class cover?</h3><span class="hint">Tick the topics, then save once. It applies to the whole batch.</span></div>
+        <div id="klTab-topics" style="display:none">        <div class="card"><div class="card-h"><h3>What did this class cover?</h3><span class="hint">Tick the topics, then save once. It applies to the whole batch.</span></div>
           <div class="card-b" id="clsTopics" style="padding:6px 18px 12px"></div>
           <div class="card-b" style="padding:0 18px 16px"><button class="btn-primary" onclick="CLS.save()">Save this class</button> <span class="hint" id="clsSaved"></span></div>
         </div>
@@ -1046,16 +1053,12 @@ body.dark .stat-kpi .val{color:#fff}
         <div class="card"><div class="card-h"><h3>Batch signals</h3><span class="hint">Where this batch is struggling and what to teach next</span></div><div class="card-b" id="clsIntel" style="padding:10px 18px 16px"></div></div>
         <div class="card"><div class="card-h"><h3>Worth a look</h3><span class="hint">At most ten students, each with a reason and one action</span></div><div class="card-b" id="clsQueue" style="padding:6px 18px 14px"></div></div>
       </div>
-      <!-- ══ RECORDINGS. Leon records his online class already. This page
-           does the one thing he cannot do from Drive: decide who may open it,
-           and do it from attendance he has already marked. The link is stored,
-           never the video. Owner and manager only. ══ -->
-      <div class="page" id="page-recordings">
+        <div id="klTab-recording" style="display:none">
         <div class="card"><div class="card-h"><h3>Add a recording</h3><span class="hint">Paste the link from Drive, YouTube or Zoom. Your team does this, not Business Booster.</span></div>
           <div class="card-b" style="padding:12px 18px 16px">
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px;margin-bottom:10px">
-              <div><label class="hint" for="recDate">Class date</label><input type="date" id="recDate" class="filter" style="width:100%" onchange="REC.previewNew()"></div>
-              <div><label class="hint" for="recCohort">Batch</label><select id="recCohort" class="filter" style="width:100%" onchange="REC.previewNew()"><option value="0">2027 Batch</option><option value="1">2028 Batch</option></select></div>
+              <div style="display:none"><label class="hint" for="recDate">Class date</label><input type="date" id="recDate" class="filter" style="width:100%" onchange="REC.previewNew()"></div>
+              <div style="display:none"><label class="hint" for="recCohort">Batch</label><select id="recCohort" class="filter" style="width:100%" onchange="REC.previewNew()"><option value="0">2027 Batch</option><option value="1">2028 Batch</option></select></div>
               <div><label class="hint" for="recLoc">Class</label><select id="recLoc" class="filter" style="width:100%"></select></div>
               <div><label class="hint" for="recMins">Length in minutes <span style="opacity:.7">(optional)</span></label><input type="number" id="recMins" class="filter" style="width:100%" min="1" max="600" placeholder="leave blank if you are not sure"></div>
             </div>
@@ -1086,10 +1089,8 @@ body.dark .stat-kpi .val{color:#fff}
         </div>
         <div class="card" id="recManage" style="display:none"></div>
       </div>
-      <!-- ══ MESSAGES: the OS is the control centre, the student app is the
-           delivery surface. Demo transport: sends are recorded here and the
-           student app carries matching seeded messages on the same clock.
-           The live pipe is the backend, and nothing here pretends otherwise. ══ -->
+      </div>
+
       <div class="page" id="page-messages">
         <div class="kpi-row" id="msgStats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px"></div>
         <div class="card"><div class="card-h"><h3>Send an update</h3><span class="hint">It lands in each student’s app, on their dashboard when it matters</span></div>
@@ -1825,7 +1826,7 @@ function buildTitles(){TITLES={
  customers:[CFG.contactWord.plural,'Enrolled students, batches and referrals'],
  quotes:['Quotes','Build and send branded quotations'],
  inventory:['Inventory','Stock, low-stock and dead-stock at a glance'],
- tasks:['Task Book','Assign and track work'],attendance:['Attendance','Mark who came to class'],classes:['Classes','Mark what each class covered'],recordings:['Recordings','Class recordings and who can watch them'],messages:['Messages','Send updates to the student app'],app:['Student app','Logins and settings, run by your team'],
+ tasks:['Task Book','Assign and track work'],classes:['Class','One class: who came, what you taught, the recording'],messages:['Messages','Send updates to the student app'],app:['Student app','Logins and settings, run by your team'],
  finance:['Finance','Fee invoices, collections and aging'],
  recurring:[CFG.recurring.label+' collection','Who paid, collected vs expected, who owes'],
  forecast:['Forecast','Month-by-month revenue recognition'],
@@ -3302,6 +3303,45 @@ async function runSelfTest(opts){
     ok('Layout: nothing inside a card touches its edge',hits.length===0,hits.slice(0,4).join(', ')||'clean');
    })();
   })();
+  /* THE CLASS PAGE. Three menu items became three tabs, so two generated
+     per-page render checks left with them and only the DEFAULT tab is still
+     covered. These render all three and pin the thing the merge is for: one
+     date and one batch drive every step. */
+  (function(){
+   go('classes');
+   const back=KLASS.t;
+   const d=document.getElementById('klDate').value;
+   ok('Class: one date drives all three steps',
+      document.getElementById('attDate').value===d
+      &&document.getElementById('clsDate').value===d
+      &&document.getElementById('recDate').value===d,d);
+   ok('Class: one batch drives all three steps',(function(){
+      const b=document.getElementById('klBatch').value;
+      return document.getElementById('attBatch').value===b
+        &&document.getElementById('clsBatch').value===b
+        &&document.getElementById('recCohort').value===b;})());
+   const painted={};
+   ['attendance','topics','recording'].forEach(t=>{
+    KLASS.tab(t);
+    const el=document.getElementById('klTab-'+t);
+    painted[t]=getComputedStyle(el).display!=='none'&&el.innerHTML.length>200;
+    const pg=document.getElementById('page-classes');
+    if(pg.scrollWidth>pg.clientWidth+1)painted[t]='overflows '+pg.scrollWidth+'>'+pg.clientWidth;
+   });
+   ok('Class: all three steps render and none scrolls sideways',
+      Object.keys(painted).every(k=>painted[k]===true),JSON.stringify(painted));
+   ok('Class: only one step is on screen at a time',
+      ['attendance','topics','recording']
+        .filter(t=>getComputedStyle(document.getElementById('klTab-'+t)).display!=='none').length===1);
+   /* the recording releases to whoever was marked absent, so the page says
+      whether attendance is in before anyone reaches step 3 */
+   ok('Class: the header says where this class stands',
+      /attendance/.test(document.getElementById('klHint').textContent)
+      &&/topics/.test(document.getElementById('klHint').textContent)
+      &&/recording/.test(document.getElementById('klHint').textContent),
+      document.getElementById('klHint').textContent);
+   KLASS.tab(back);
+  })();
   /* ENQUIRIES: table and board are one page now. The per-page render check
      only ever sees the DEFAULT view, so merging a page silently took the board
      out of coverage. These put it back and pin the thing that makes the merge
@@ -3398,8 +3438,9 @@ async function runSelfTest(opts){
    const R=DB.get('recordings')||[];
    const r1=R.find(x=>x.release==='absent');
    ok('Recordings: page is owner and manager only, never sales',
-      document.querySelector('.nav-item[data-pg="recordings"]').dataset.role==='manager',
-      'a sales login has no business releasing class material');
+      document.querySelector('.nav-item[data-pg="classes"]').dataset.role==='manager'
+      &&NEED_RANK['manager']>ROLE_RANK['staff'],
+      'recordings live on the Class page now; a sales login must not reach it');
    ok('Recordings: the absent list comes from marked attendance',
       !!r1&&REC.audience(r1).length>0
         &&REC.audience(r1).every(s=>{const a=DB.get('attendance')
@@ -3657,7 +3698,7 @@ function attFor(sid,date){return DB.get('attendance').find(function(a){return a.
 function setAttendance(sid,date,present){var a=attFor(sid,date);if(a){a.present=present;}else{DB.get('attendance').push({id:DB.nextId('attendance'),studentId:sid,date:date,present:present});}DB.commit();}
 var ATT={date:null,batch:'all',loc:'all',setDate:function(v){this.date=v;renderAttendance();},set:function(k,v){this[k]=v;renderAttendance();},toggle:function(sid){var cur=attFor(sid,this.date);if(!cur)setAttendance(sid,this.date,false);else setAttendance(sid,this.date,!cur.present);renderAttendance();renderBadges();}};
 function renderAttendance(){var el=document.getElementById('attList');if(!el)return;if(!ATT.date)ATT.date=attSessions()[0]||todayISO();var dp=document.getElementById('attDate');if(dp)dp.value=ATT.date;var studs=DB.get('customers').filter(function(s){return s.status==='active'&&(s.joined||'0000')<=ATT.date&&(ATT.batch==='all'||String(s.cohort)===ATT.batch)&&(ATT.loc==='all'||s.co===ATT.loc);}).sort(function(a,b){return a.name.localeCompare(b.name);});var present=0,absent=0;el.innerHTML=studs.map(function(s){var a=attFor(s.id,ATT.date);var isAbsent=a&&!a.present;if(isAbsent)absent++;else present++;var r=attRate(s.id);var rp=r!=null?Math.round(r*100)+'% attendance':'new';return '<div class="att-row"><div class="pr-av">'+init2(s.name)+'</div><div class="pr-main"><div class="pr-nm">'+s.name+'</div><div class="pr-mt">'+cohortLabel(s.cohort).replace(' Batch','')+' · '+s.co+' · '+rp+'</div></div><button class="att-btn '+(isAbsent?'is-absent':'is-present')+'" onclick="ATT.toggle('+s.id+')">'+(isAbsent?'Absent':'Present')+'</button></div>';}).join('')||emptyC(I.users,'No students for this class','Nobody had joined by this date, or the filter is empty.');var sum=document.getElementById('attSummary');if(sum)sum.innerHTML=studs.length?'<div class="att-sum"><div class="asx as-p"><b>'+present+'</b> present</div><div class="asx as-a"><b>'+absent+'</b> absent</div><div class="asx as-r"><b>'+Math.round(present/studs.length*100)+'%</b> turnout</div></div>':'';}
-if(typeof RENDERERS!=='undefined')RENDERERS.attendance=renderAttendance;
+/* attendance is step 1 of the Class page now */
 /* ===== BSWL CLASSES: the syllabus model + Leon's ten-second topic marker =====
    PLACEHOLDER TOPIC LIST - NEEDS LEON. The unit names follow the shape of the
    A/L Business Studies syllabus but the real list must come from Leon's own
@@ -3696,6 +3737,45 @@ var CLS={date:null,cohort:'0',picked:{},
   DB.commit();CLS.picked={};renderClasses();
   toast(I.check+' Saved. The whole '+(+CLS.cohort===0?'2027':'2028')+' batch is updated.');},
 };
+/* ONE CONTEXT FOR THE WHOLE CLASS. The three step controllers keep their own
+   inputs so none of their code had to change; this writes the shared choice
+   into all of them and re-renders whichever step is on screen. */
+var KLASS={t:'attendance',
+ sync:function(){
+  var d=document.getElementById('klDate').value,b=document.getElementById('klBatch').value;
+  ['attDate','clsDate','recDate'].forEach(function(k){var e=document.getElementById(k);if(e)e.value=d;});
+  ['attBatch','clsBatch','recCohort'].forEach(function(k){var e=document.getElementById(k);if(e)e.value=b;});
+  ATT.date=d;ATT.batch=b;CLS.date=d;CLS.cohort=b;CLS.picked={};
+ },
+ setDate:function(v){KLASS.sync();KLASS.render();},
+ setBatch:function(v){KLASS.sync();KLASS.render();},
+ tab:function(t){KLASS.t=t;
+  document.querySelectorAll('#klTabs .tab').forEach(function(b){b.classList.toggle('active',b.dataset.kt===t);});
+  ['attendance','topics','recording'].forEach(function(k){
+   document.getElementById('klTab-'+k).style.display=k===t?'':'none';});
+  /* the hall filter belongs to attendance; the recording asks which hall it was */
+  document.getElementById('klLocWrap').style.display=t==='attendance'?'':'none';
+  KLASS.render();},
+ render:function(){
+  var d=document.getElementById('klDate').value,b=+document.getElementById('klBatch').value;
+  var marked=DB.get('attendance').some(function(a){return a.date===d;});
+  var log=(DB.get('classLog')||[]).find(function(x){return x.date===d&&x.cohort===b;});
+  var rec=(DB.get('recordings')||[]).find(function(x){return x.date===d&&x.cohort===b;});
+  /* say where this class stands, so nobody has to click three tabs to find out */
+  document.getElementById('klHint').textContent=
+   (marked?'attendance marked':'attendance NOT marked')
+   +' · '+(log?log.topics.length+' topics logged':'no topics yet')
+   +' · '+(rec?'recording added':'no recording');
+  if(KLASS.t==='attendance')renderAttendance();
+  else if(KLASS.t==='topics')renderClasses();
+  else renderRecordings();
+ }
+};
+function renderClassesPage(){
+ var dp=document.getElementById('klDate');
+ if(!dp.value){var last=attSessions()[0]||todayISO();dp.value=last;}
+ KLASS.sync();KLASS.tab(KLASS.t);
+}
 function renderClasses(){var el=document.getElementById('clsTopics');if(!el)return;
  if(!CLS.date)CLS.date=todayISO();var dp=document.getElementById('clsDate');if(dp)dp.value=CLS.date;
  var cov=coveredTopics(CLS.cohort);
@@ -3758,7 +3838,7 @@ function renderClassesIntel(){
    +'<button class="btn-ghost" style="flex:none" onclick="window.open(\'https://wa.me/\'+String(\''+String(x.s.phone||'').replace(/\D/g,'')+'\').replace(/^0/,\'94\'))">Message</button></div>';
  }).join(''):'<div class="hint" style="padding:8px 0">Nobody needs chasing in this batch. Rare and good.</div>';
 }
-if(typeof RENDERERS!=='undefined')RENDERERS.classes=function(){renderClasses();renderClassesIntel();};
+if(typeof RENDERERS!=='undefined')RENDERERS.classes=function(){renderClassesPage();renderClassesIntel();};
 /* ===== MESSAGES: compose, audience resolution, the privacy wall ===== */
 function msgAudienceCount(v){
  var cs=DB.get('customers').filter(function(c){return c.status==='active';});
@@ -3996,7 +4076,7 @@ function recPanel(r){
 function esc2(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){
  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function dowName2(iso){return DY_FULL[new Date(iso+'T09:41:00').getDay()];}
-if(typeof RENDERERS!=='undefined')RENDERERS.recordings=renderRecordings;
+/* recordings is step 3 of the Class page now */
 var MSG_BLOCKED=/owe|owing|outstanding|overdue|arrears|balance|pay immediately|last warning/i;
 function msgToStudent(id){
  var c=DB.get('customers').find(function(x){return x.id===id;});if(!c)return;
