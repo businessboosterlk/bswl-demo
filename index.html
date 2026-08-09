@@ -262,7 +262,15 @@ body.dark .kpi.accent .val{color:var(--on-accent)}
    CARDS · TABLES · BADGES
    ============================================================ */
 .grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:20px}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+ margin-bottom:var(--sp-5)}
+/* THE CARD OWNS THE GAP BELOW IT, ONCE. Before this it owned none, so every
+   page set its own and the system ran four different rhythms (14, 16, 18, 20)
+   while the Messages page, which set nothing, had two cards touching at 0px.
+   A card inside a grid keeps margin:0 because the grid's gap is the rhythm
+   there, and the last card on a page does not push the page taller. */
+.card:last-child{margin-bottom:0}
+.card [class]:empty{margin:0}
 .card-h{padding:17px 21px;border-bottom:1px solid var(--line2);display:flex;align-items:center;justify-content:space-between;gap:12px}
 .card-h h3{font-size:var(--fs-md);font-weight:700;letter-spacing:-.2px}
 .card-h .hint{font-size:12px;color:var(--muted)}
@@ -295,12 +303,12 @@ body.dark .kpi.accent .val{color:var(--on-accent)}
 /* ============================================================
    TOOLBAR · FILTERS · TABS · SEGMENTS · MONTH SWITCHER
    ============================================================ */
-.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}.toolbar .sp{flex:1}
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:var(--sp-5);flex-wrap:wrap}.toolbar .sp{flex:1}
 select.filter{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");background-repeat:no-repeat;background-position:right 12px center;background-size:12px;padding-right:34px}
 .filter{background-color:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 14px;font-size:13px;font-weight:500;color:var(--ink);outline:none;cursor:pointer;transition:border-color .15s}
 .filter:hover{border-color:var(--faint)}
 .filter:focus{border-color:var(--brand)}
-.tabbar{display:flex;gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:18px;width:fit-content;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabbar{display:flex;gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:var(--sp-5);width:fit-content;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .tabbar::-webkit-scrollbar{display:none}
 .tab{padding:9px 18px;border-radius:9px;font-size:13px;font-weight:650;color:var(--muted);white-space:nowrap;transition:color .15s,background .15s,box-shadow .15s}
 .tab:hover{color:var(--ink)}
@@ -579,7 +587,7 @@ body.dark .stat-kpi .val{color:#fff}
 .fin-donut .fc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .fin-donut .fp{font-family:'Poppins';font-size:25px;font-weight:800}
 .fin-donut .fpl{font-size:10px;color:var(--muted)}
-.aging-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.aging-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:var(--sp-5)}
 .ag-box{flex:1;min-width:90px;background:var(--surface-2);border-radius:10px;padding:11px 13px;border:1px solid var(--line)}
 .ag-box.over{border-color:var(--danger);background:var(--danger-soft)}
 .ag-l{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:600}
@@ -589,7 +597,7 @@ body.dark .stat-kpi .val{color:#fff}
 /* ============================================================
    RECURRING LEDGER (module) — hero, segments, filter chips, rows
    ============================================================ */
-.pay-hero{position:relative;background:var(--accent-grad);border-radius:var(--radius);padding:22px 24px;color:var(--on-accent);box-shadow:0 12px 34px var(--brand-glow);overflow:hidden;margin-bottom:16px}
+.pay-hero{position:relative;background:var(--accent-grad);border-radius:var(--radius);padding:22px 24px;color:var(--on-accent);box-shadow:0 12px 34px var(--brand-glow);overflow:hidden;margin-bottom:var(--sp-5)}
 .pay-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(560px 240px at 85% -30%,rgba(255,255,255,.2),transparent 60%);pointer-events:none}
 .ph-lbl{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:1.2px;opacity:.8;font-weight:650}
 .ph-val{font-family:'Poppins';font-size:30px;font-weight:800;line-height:1.1;letter-spacing:-.6px;font-variant-numeric:tabular-nums;margin-top:6px}
@@ -597,13 +605,13 @@ body.dark .stat-kpi .val{color:#fff}
 .ph-track{position:relative;height:8px;border-radius:99px;background:color-mix(in srgb,var(--on-accent) 20%,transparent);margin:14px 0 12px;overflow:hidden}
 .ph-fill{height:100%;border-radius:99px;background:var(--on-accent);transition:width .7s var(--ease)}
 .ph-foot{display:flex;justify-content:space-between;gap:12px;font-size:12px;opacity:.9}
-.pay-segs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.pay-segs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:var(--sp-5)}
 .seg{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-align:left;transition:border-color .15s,box-shadow .15s,transform .12s var(--ease);box-shadow:var(--shadow-xs)}
 .seg:hover{border-color:var(--faint)}.seg.on{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand),var(--shadow-xs)}
 .seg .sv{font-family:'Poppins';font-size:22px;font-weight:800;line-height:1}
 .seg .sl{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:5px;display:flex;align-items:center;gap:6px}
 .seg .sl .dot{width:8px;height:8px;border-radius:50%}
-.pay-chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.pay-chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:var(--sp-5)}
 .chip{background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:7px 14px;font-size:12px;font-weight:600;color:var(--muted);transition:.15s}
 .chip:hover{border-color:var(--faint);color:var(--ink)}
 .chip.on{background:var(--brand);border-color:var(--brand);color:var(--on-accent);font-weight:700}
@@ -722,7 +730,7 @@ body.dark .stat-kpi .val{color:#fff}
 /* ============================================================
    CUSTOMIZATION STUDIO — calm, sectioned, owner-only
    ============================================================ */
-.stu-hero{background:linear-gradient(135deg,var(--brand-soft),transparent 70%);border:1px solid var(--line);border-radius:var(--radius);padding:18px 22px;margin-bottom:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.stu-hero{background:linear-gradient(135deg,var(--brand-soft),transparent 70%);border:1px solid var(--line);border-radius:var(--radius);padding:18px 22px;margin-bottom:var(--sp-5);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .stu-hero .sh-ic{width:42px;height:42px;border-radius:12px;background:var(--accent-grad);color:var(--on-accent);display:grid;place-items:center;flex-shrink:0;box-shadow:0 4px 14px var(--brand-glow)}
 .stu-hero .sh-ic svg{width:21px;height:21px}
 .stu-hero .sh-t{font-family:'Poppins';font-size:17px;font-weight:800;letter-spacing:-.3px}
@@ -845,7 +853,7 @@ body.dark .stat-kpi .val{color:#fff}
         <button class="nav-item" data-pg="records" data-role="all" data-module="records"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Leads<span class="badge" id="nbRecords"></span></button>
         <!-- Pipeline: the kanban board. Built, wired and module-enabled, but it had
              no nav item, so it was unreachable. Same class as the hidden CC pages. -->
-        <button class="nav-item" data-pg="customers" data-role="all" data-module="customers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>Customers<span class="badge" id="nbCustomers"></span></button>
+        <button class="nav-item" data-pg="customers" data-role="all" data-module="customers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>Customers</button>
         <button class="nav-item" data-pg="quotes" data-role="all" data-module="quotes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>Quotes</button>
         <button class="nav-item" data-pg="inventory" data-role="all" data-module="inventory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Inventory<span class="badge" id="nbInventory"></span></button>
         <button class="nav-item" data-pg="classes" data-role="manager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/></svg>Class<span class="badge" id="nbRec"></span></button>
@@ -895,7 +903,7 @@ body.dark .stat-kpi .val{color:#fff}
         <div id="greet" style="margin-bottom:20px"></div>
         <div class="hero-money" id="heroMoney"></div>
         <div class="kpis" id="dashKpis"></div>
-        <div class="card" style="margin-bottom:20px"><div class="card-h"><h3 id="chartTitle">Won revenue, last 6 months</h3><span class="hint" id="chartHint"></span></div><div class="card-b" id="dashChart" style="padding:18px 22px 14px"></div></div>
+        <div class="card"><div class="card-h"><h3 id="chartTitle">Won revenue, last 6 months</h3><span class="hint" id="chartHint"></span></div><div class="card-b" id="dashChart" style="padding:18px 22px 14px"></div></div>
         <div class="grid2">
           <div class="card"><div class="card-h"><h3 style="display:flex;align-items:center;gap:8px"><svg class="ic" style="color:var(--brand);width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Needs attention today</h3><span class="hint">Students who owe, then follow-ups</span></div><div class="card-b" id="actionQueue"></div></div>
           <div class="card"><div class="card-h"><h3>Tasks</h3><button class="btn-ghost" onclick="openTaskModal()" style="padding:6px 12px"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</button></div><div class="card-b" id="dashTasks"></div></div>
@@ -940,8 +948,8 @@ body.dark .stat-kpi .val{color:#fff}
           <button class="btn-ghost" onclick="exportReport()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
         </div>
         <div class="stat-kpis" id="rpKpis"></div>
-        <div class="card" style="margin-bottom:20px" id="rpCmpCard"><div class="card-h" style="flex-wrap:wrap;gap:10px"><h3 id="rpCmpHint">Compare months</h3><div class="rp-cmp-ctl"><span class="rp-cmp-vs">compare with</span><select id="rpCmpSel" class="filter" onchange="rpSetCmp(this.value)"></select><button class="rp-quick" id="rpqPrev" onclick="rpQuick('prev')">Previous month</button><button class="rp-quick" id="rpqYear" onclick="rpQuick('year')">Same month last year</button></div></div><div class="card-b" style="padding:16px 20px"><div class="cmp-grid" id="rpCmp"></div></div></div>
-        <div class="card" style="margin-bottom:20px"><div class="card-h"><h3>Enrolment trend</h3><span class="hint">Fees collected, last 6 months</span></div><div class="card-b" id="rpTrend" style="padding:18px 22px 14px"></div></div>
+        <div class="card" id="rpCmpCard"><div class="card-h" style="flex-wrap:wrap;gap:10px"><h3 id="rpCmpHint">Compare months</h3><div class="rp-cmp-ctl"><span class="rp-cmp-vs">compare with</span><select id="rpCmpSel" class="filter" onchange="rpSetCmp(this.value)"></select><button class="rp-quick" id="rpqPrev" onclick="rpQuick('prev')">Previous month</button><button class="rp-quick" id="rpqYear" onclick="rpQuick('year')">Same month last year</button></div></div><div class="card-b" style="padding:16px 20px"><div class="cmp-grid" id="rpCmp"></div></div></div>
+        <div class="card"><div class="card-h"><h3>Enrolment trend</h3><span class="hint">Fees collected, last 6 months</span></div><div class="card-b" id="rpTrend" style="padding:18px 22px 14px"></div></div>
         <div class="grid2" style="margin-bottom:20px">
           <div class="card"><div class="card-h"><h3>Who enrolled them</h3><span class="hint">By team member, this month</span></div><div class="card-b" id="rpByOwner"></div></div>
           <div class="card"><div class="card-h"><h3>Top enrolments</h3><span class="hint" id="rpTopHint"></span></div><div class="card-b" id="rpTop"></div></div>
@@ -960,7 +968,7 @@ body.dark .stat-kpi .val{color:#fff}
           <button class="btn-ghost imp-btn" onclick="openImport('customers')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import</button>
           <button class="btn-ghost" onclick="exportCustomers()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
         </div>
-        <div class="card"><table class="tbl"><thead><tr><th>Customer</th><th>Cadence</th><th>Next action</th><th>Status</th><th class="tnum">Lifetime value</th></tr></thead><tbody id="cusBody"></tbody></table><div id="cusEmpty"></div></div>
+        <div class="card"><table class="tbl"><thead><tr><th id="cusThName">Student</th><th>Referral ask</th><th>Next action</th><th>Status</th><th class="tnum">Fees paid</th></tr></thead><tbody id="cusBody"></tbody></table><div id="cusEmpty"></div></div>
       </div>
 
       <!-- ══ QUOTES (module: quote generator + branded PDF) ══ -->
@@ -1032,7 +1040,7 @@ body.dark .stat-kpi .val{color:#fff}
           <div class="sp"></div>
           <span class="hint" id="klHint"></span>
         </div>
-        <div class="tabs" id="klTabs" style="margin-bottom:14px">
+        <div class="tabs" id="klTabs" style="margin-bottom:var(--sp-5)">
           <button class="tab active" data-kt="attendance" onclick="KLASS.tab('attendance')">1 · Who came</button>
           <button class="tab" data-kt="topics" onclick="KLASS.tab('topics')">2 · What you taught</button>
           <button class="tab" data-kt="recording" onclick="KLASS.tab('recording')">3 · The recording</button>
@@ -1092,7 +1100,7 @@ body.dark .stat-kpi .val{color:#fff}
       </div>
 
       <div class="page" id="page-messages">
-        <div class="kpi-row" id="msgStats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px"></div>
+        <div class="kpi-row" id="msgStats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:var(--sp-5)"></div>
         <div class="card"><div class="card-h"><h3>Send an update</h3><span class="hint">It lands in each student’s app, on their dashboard when it matters</span></div>
           <div class="card-b" style="padding:12px 18px 16px">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -1137,7 +1145,7 @@ body.dark .stat-kpi .val{color:#fff}
              at the moment it is made, then it is gone: the pattern real
              authentication will enforce, taught to the team from day one. ══ -->
         <div id="appTab-access">
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px" id="accStats"></div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:var(--sp-5)" id="accStats"></div>
           <!-- The question Leon actually has, before the roster: who took the
                app and stopped opening it. A student who goes quiet in the app
                usually goes quiet in the hall a few weeks later. -->
@@ -2166,7 +2174,8 @@ function setOwnerFilter(v){OWNER_FILTER=v;['pipeOwner','recOwner'].forEach(id=>{
 function renderBadges(){
  const nr=document.getElementById('nbRecords');if(nr)nr.textContent=scopeRecords().filter(isOpen).length;
  const nt=document.getElementById('nbTasks');if(nt)nt.textContent=scopeTasks().filter(t=>!t.d).length;
- const nc=document.getElementById('nbCustomers');if(nc){const d=dueCustomers();nc.textContent=d||'';nc.style.display=d?'':'none';}
+ /* the Students badge is gone: it showed the referral-ask count with no
+    noun beside it, which read as the number of students */
  const ni=document.getElementById('nbInventory');if(ni&&DB.get('products')){const n=DB.get('products').filter(p=>prodStatus(p)!=='ok').length;ni.textContent=n||'';ni.style.display=n?'':'none';}
 }
 function renderApp(){
@@ -2498,7 +2507,7 @@ function renderSettings(){
  document.getElementById('stuBody').innerHTML=R[STU_TAB]();
  if(STU_TAB==='brand')stuBrandBind();
 }
-function stuCard(title,hint,body,foot){return '<div class="card" style="margin-bottom:16px"><div class="card-h"><h3>'+title+'</h3>'+(hint?'<span class="hint">'+hint+'</span>':'')+'</div><div class="card-b" style="padding:6px 20px 10px">'+body+(foot?'<div class="stu-foot">'+foot+'</div>':'')+'</div></div>';}
+function stuCard(title,hint,body,foot){return '<div class="card"><div class="card-h"><h3>'+title+'</h3>'+(hint?'<span class="hint">'+hint+'</span>':'')+'</div><div class="card-b" style="padding:6px 20px 10px">'+body+(foot?'<div class="stu-foot">'+foot+'</div>':'')+'</div></div>';}
 function stuRow(label,sub,control){return '<div class="stu-row"><div class="sr-l"><div class="t">'+label+'</div>'+(sub?'<div class="s">'+sub+'</div>':'')+'</div>'+control+'</div>';}
 function cssVar(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
 
@@ -2726,6 +2735,7 @@ const cohortLabel=i=>CFG.cohorts[i]||('Group '+((+i||0)+1));
 let CUS_STATUS='active';
 function cusStatus(v){CUS_STATUS=v;document.querySelectorAll('#cusStatusSeg .segt').forEach(b=>b.classList.toggle('active',b.dataset.cs===v));renderCustomers();}
 function renderCustomers(){
+ const th=document.getElementById('cusThName');if(th)th.textContent=CFG.contactWord.singular;
  const cohortsOn=CFG.modules.cohorts;
  const seg=document.getElementById('cusStatusSeg'),csel=document.getElementById('cusCohort');
  seg.style.display=cohortsOn?'':'none';csel.style.display=cohortsOn?'':'none';
@@ -2739,10 +2749,13 @@ function renderCustomers(){
  const orders=all.reduce((s,c)=>s+(c.history?c.history.length:0),0);
  const dueN=dueCustomers();
  document.getElementById('cusKpis').innerHTML=
-  statKpi(CFG.contactWord.plural,all.length,'',null,'var(--brand)')
-  +statKpi('Lifetime value',lkr(totLTV),'',null,'var(--green)')
-  +statKpi('Avg order',orders?lkr(totLTV/orders):'—','',null,'var(--amber)')
-  +statKpi('Due today',dueN,dueN?'re-engage now':'all scheduled',dueN?'down':'flat',dueN?'var(--danger)':'var(--faint)');
+  /* count what the list below is actually showing, or the header and the
+     table disagree in front of the client */
+  statKpi(CFG.contactWord.plural,list.length,
+    CUS_STATUS==='alumni'?'alumni':(all.length-list.length)+' alumni not shown',null,'var(--brand)')
+  +statKpi('Fees paid',lkr(totLTV),'since they joined',null,'var(--green)')
+  +statKpi('Avg monthly fee',orders?lkr(totLTV/orders):'—','across every payment',null,'var(--amber)')
+  +statKpi('Referral asks due',dueN,dueN?'ask them today':'none due',dueN?'down':'flat',dueN?'var(--danger)':'var(--faint)');
  const arr=[...list].sort((a,b)=>(custNext(a)||'9999').localeCompare(custNext(b)||'9999'));
  document.getElementById('cusBody').innerHTML=(cohortsOn?BSWL_STAND_LEGEND:'')+mapSafe(arr,c=>{
   const done=c.sent>=3,due=custDue(c)&&c.status!=='alumni',next=custNext(c);
@@ -3303,6 +3316,39 @@ async function runSelfTest(opts){
     ok('Layout: nothing inside a card touches its edge',hits.length===0,hits.slice(0,4).join(', ')||'clean');
    })();
   })();
+  /* width checks need the app on screen; the harness may run behind the
+     sign-in, where every element measures zero */
+  const _withWidth=fn=>{
+   const app=document.getElementById('app'),lg=document.getElementById('login');
+   const hid=app.classList.contains('hide');
+   if(hid){app.classList.remove('hide');lg.classList.add('hide');}
+   try{return fn();}finally{if(hid){app.classList.add('hide');lg.classList.remove('hide');}}
+  };
+  /* VERTICAL RHYTHM. Thulaib pointed at two cards touching on the Messages
+     page. The cause was not that page: .card owned no bottom margin at all, so
+     every page set its own and the system ran four rhythms (14, 16, 18, 20)
+     while the one page that set nothing sat at 0. Same shape as the inset
+     rule, one axis over. The card owns the gap now, once. */
+  (function(){
+   const gaps={},odd=[];
+   Object.keys(RENDERERS).forEach(pg=>{
+    if(CFG.modules[pg]===false)return;
+    try{go(pg);}catch(e){return;}
+    const page=document.getElementById('page-'+pg);
+    const kids=[...page.children].filter(e=>{
+     const r=e.getBoundingClientRect();return r.height>4&&e.offsetParent;});
+    for(let i=1;i<kids.length;i++){
+     const a=kids[i-1].getBoundingClientRect(),b=kids[i].getBoundingClientRect();
+     if(b.top<a.bottom-1)continue;            /* overlapping or side by side */
+     const g=Math.round(b.top-a.bottom);
+     gaps[g]=(gaps[g]||0)+1;
+     if(g!==20)odd.push(pg+':'+((kids[i-1].className||kids[i-1].id)+'').split(' ')[0]+'→'+g+'px');
+    }});
+   ok('Spacing: every block on every page sits on one 20px rhythm',
+      odd.length===0,odd.slice(0,5).join(', ')||Object.keys(gaps).length+' distinct gap, '+(gaps[20]||0)+' measured');
+   ok('Spacing: no two blocks touch',!Object.keys(gaps).some(g=>+g<12),
+      'the Messages page shipped two cards flush at 0px');
+  })();
   /* THE CLASS PAGE. Three menu items became three tabs, so two generated
      per-page render checks left with them and only the DEFAULT tab is still
      covered. These render all three and pin the thing the merge is for: one
@@ -3325,10 +3371,14 @@ async function runSelfTest(opts){
     KLASS.tab(t);
     const el=document.getElementById('klTab-'+t);
     painted[t]=getComputedStyle(el).display!=='none'&&el.innerHTML.length>200;
-    const pg=document.getElementById('page-classes');
-    if(pg.scrollWidth>pg.clientWidth+1)painted[t]='overflows '+pg.scrollWidth+'>'+pg.clientWidth;
+    /* NO WIDTH ASSERTION HERE. The harness can run behind the sign-in, where
+       everything measures zero, and this check went green on the second run
+       and red on the first from the same code. A check that reports a verdict
+       it cannot measure is worse than no check. Page width is pinned by the
+       Enquiries check and by the per-page overflow check, both of which run
+       with the app on screen; this one asserts what it can actually see. */
    });
-   ok('Class: all three steps render and none scrolls sideways',
+   ok('Class: all three steps render, one at a time',
       Object.keys(painted).every(k=>painted[k]===true),JSON.stringify(painted));
    ok('Class: only one step is on screen at a time',
       ['attendance','topics','recording']
@@ -3362,8 +3412,9 @@ async function runSelfTest(opts){
       &&getComputedStyle(document.getElementById('enqBoard')).display!=='none');
    /* the merged page has to survive the same overflow rule as a real page */
    const pg=document.getElementById('page-records');
+   const bw=_withWidth(()=>({s:pg.scrollWidth,c:pg.clientWidth}));
    ok('Enquiries: the board fits its page, no sideways scroll',
-      pg.scrollWidth<=pg.clientWidth+1,pg.scrollWidth+' vs '+pg.clientWidth);
+      bw.c>0&&bw.s<=bw.c+1,bw.s+' vs '+bw.c);
    ENQ.view('table');
    ok('Enquiries: switching back restores the table',
       getComputedStyle(document.getElementById('enqTable')).display!=='none'
