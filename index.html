@@ -845,7 +845,6 @@ body.dark .stat-kpi .val{color:#fff}
         <button class="nav-item" data-pg="records" data-role="all" data-module="records"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Leads<span class="badge" id="nbRecords"></span></button>
         <!-- Pipeline: the kanban board. Built, wired and module-enabled, but it had
              no nav item, so it was unreachable. Same class as the hidden CC pages. -->
-        <button class="nav-item" data-pg="pipeline" data-role="all" data-module="pipeline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="11" rx="1"/><rect x="17" y="4" width="4" height="7" rx="1"/></svg>Pipeline</button>
         <button class="nav-item" data-pg="customers" data-role="all" data-module="customers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>Customers<span class="badge" id="nbCustomers"></span></button>
         <button class="nav-item" data-pg="quotes" data-role="all" data-module="quotes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>Quotes</button>
         <button class="nav-item" data-pg="inventory" data-role="all" data-module="inventory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Inventory<span class="badge" id="nbInventory"></span></button>
@@ -906,26 +905,26 @@ body.dark .stat-kpi .val{color:#fff}
       </div>
 
       <!-- ══ PIPELINE (kanban board module) ══ -->
-      <div class="page" id="page-pipeline">
-        <div class="toolbar">
-          <select class="filter" id="pipeOwner" onchange="setOwnerFilter(this.value)"><option value="all">Whole team</option></select>
-          <span class="hint" style="font-size:12px;color:var(--muted)">Drag a card to move a deal</span>
-          <div class="sp"></div>
-          <button class="btn-ghost" onclick="exportRecords()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export Excel</button>
-        </div>
-        <div class="board" id="board"></div>
-      </div>
-
       <!-- ══ RECORDS (table + filters + search + detail panel) ══ -->
       <div class="page" id="page-records">
         <div class="toolbar">
+          <!-- Table and board are the SAME 47 records read two ways, so they are
+               one page with a switch, not two menu items. -->
+          <div class="seg-toggle" id="enqViewSeg">
+            <button class="segt active" data-ev="table" onclick="ENQ.view('table')">Table</button>
+            <button class="segt" data-ev="board" onclick="ENQ.view('board')">Board</button>
+          </div>
           <select class="filter" id="recStage" onchange="renderRecords()"><option value="all">All stages</option></select>
           <select class="filter" id="recOwner" onchange="setOwnerFilter(this.value)"><option value="all">Whole team</option></select>
           <div class="sp"></div>
           <button class="btn-ghost imp-btn" onclick="openImport('records')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import</button>
           <button class="btn-ghost" onclick="exportRecords()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export Excel</button>
         </div>
-        <div class="card"><table class="tbl"><thead><tr><th data-fl="name">Name</th><th data-fl="stage">Stage</th><th data-fl="owner">Owner</th><th data-fl="followUp">Follow-up</th><th class="tnum" data-fl="value">Value</th></tr></thead><tbody id="recBody"></tbody></table><div id="recEmpty"></div></div>
+        <div id="enqTable"><div class="card"><table class="tbl"><thead><tr><th data-fl="name">Name</th><th data-fl="stage">Stage</th><th data-fl="owner">Owner</th><th data-fl="followUp">Follow-up</th><th class="tnum" data-fl="value">Value</th></tr></thead><tbody id="recBody"></tbody></table><div id="recEmpty"></div></div></div>
+        <div id="enqBoard" style="display:none">
+          <div class="hint" style="margin-bottom:10px">Drag a card to move a student through the stages.</div>
+          <div class="board" id="board"></div>
+        </div>
       </div>
 
       <!-- ══ TASKS ══ -->
@@ -1822,7 +1821,6 @@ let TITLES={};
 function buildTitles(){TITLES={
  dashboard:['Dashboard','Today at a glance'],
  reports:['Reports','Month-over-month performance'],
- pipeline:['Pipeline','Every enquiry from first message to enrolled'],
  records:[CFG.entity.plural,'Every '+CFG.entity.singular.toLowerCase()+' from first message to enrolled'],
  customers:[CFG.contactWord.plural,'Enrolled students, batches and referrals'],
  quotes:['Quotes','Build and send branded quotations'],
@@ -2277,7 +2275,24 @@ function drop(e,stage){e.preventDefault();
 }
 
 /* ── Records table ── */
+/* ENQUIRIES: one page, two readings of the same records. The board was its own
+   menu item for no reason other than that it draws differently. */
+var ENQ={v:'table',
+ view:function(v){ENQ.v=v;
+  document.querySelectorAll('#enqViewSeg .segt').forEach(function(b){
+   b.classList.toggle('active',b.dataset.ev===v);});
+  renderRecords();},
+};
 function renderRecords(){
+ /* both views read scopeRecords(); the switch only decides which one paints */
+ var tbl=document.getElementById('enqTable'),brd=document.getElementById('enqBoard');
+ if(tbl&&brd){tbl.style.display=ENQ.v==='table'?'':'none';
+  brd.style.display=ENQ.v==='board'?'':'none';
+  document.getElementById('recStage').style.display=ENQ.v==='table'?'':'none';}
+ if(ENQ.v==='board'){renderBoard();return;}
+ renderRecordsTable();
+}
+function renderRecordsTable(){
  const sSel=document.getElementById('recStage');
  if(sSel.options.length<=1)sSel.innerHTML='<option value="all">All stages</option>'+CFG.stages.map(s=>'<option value="'+s.k+'">'+s.label+'</option>').join('');
  const stf=sSel.value||'all';
@@ -2413,7 +2428,7 @@ function sanitizeStages(merged){
  defs.forEach(d=>{if(!out.some(x=>x.k===d.k))out.push(JSON.parse(JSON.stringify(d)));});
  merged.stages=out;
 }
-const FLOOR_MODULES=['pipeline','records','customers','tasks','finance','reports','team','activity'];
+const FLOOR_MODULES=['records','customers','tasks','finance','reports','team','activity'];
 function applyConfig(){
  const merged=deepMerge(JSON.parse(JSON.stringify(CFG_DEFAULTS)),cfgOverrides());
  /* ── LOCKED: enforced on every apply, whatever the overrides claim ── */
@@ -2609,7 +2624,7 @@ function stuSaveMessages(){
 
 /* ── MODULES: the floor is locked visible; extras toggle instantly ── */
 const MODULE_INFO={
- pipeline:['Pipeline','the deal board'],records:['Records','your core list'],customers:['Contacts','repeat business + follow-ups'],tasks:['Tasks','team to-dos'],
+ pipeline:['Board view','the drag-and-drop board inside Enquiries'],records:['Records','your core list'],customers:['Contacts','repeat business + follow-ups'],tasks:['Tasks','team to-dos'],
  finance:['Finance','invoices and collections'],reports:['Reports','month-over-month numbers'],team:['Team','performance per person'],activity:['Activity','the audit trail'],
  import:['Bulk import','bring in spreadsheets'],quotes:['Quotes','line-item quotes + PDF'],recurring:['Recurring fees','monthly collection ledger'],
  cohorts:['Groups','batches / cohorts on contacts'],forecast:['Forecast','month-by-month revenue grid'],inventory:['Inventory','stock, alerts and photos'],
@@ -3211,7 +3226,7 @@ function downloadImportTemplate(){
  exportCSV(sc.label.toLowerCase().replace(/\s+/g,'-')+'-import-template.csv',sc.fields.map(f=>f.l),[example]);
 }
 
-const RENDERERS={dashboard:renderDashboard,reports:renderReports,pipeline:renderBoard,records:renderRecords,customers:renderCustomers,quotes:renderQuotes,inventory:renderInventory,tasks:renderTasks,finance:renderFinance,recurring:renderRecurring,forecast:renderMMGrid,team:renderTeam,activity:renderActivity,settings:renderSettings};
+const RENDERERS={dashboard:renderDashboard,reports:renderReports,records:renderRecords,customers:renderCustomers,quotes:renderQuotes,inventory:renderInventory,tasks:renderTasks,finance:renderFinance,recurring:renderRecurring,forecast:renderMMGrid,team:renderTeam,activity:renderActivity,settings:renderSettings};
 
 /* ════════════════════════════════════════════════════════════════════
    SECTION 12 — SELF-TEST HARNESS (dev-only; the pre-deploy gate)
@@ -3286,6 +3301,34 @@ async function runSelfTest(opts){
       });});});
     ok('Layout: nothing inside a card touches its edge',hits.length===0,hits.slice(0,4).join(', ')||'clean');
    })();
+  })();
+  /* ENQUIRIES: table and board are one page now. The per-page render check
+     only ever sees the DEFAULT view, so merging a page silently took the board
+     out of coverage. These put it back and pin the thing that makes the merge
+     legitimate: both views read the same records. */
+  (function(){
+   const was=ENQ.v;
+   go('records');ENQ.view('table');
+   const rows=document.querySelectorAll('#recBody tr').length;
+   ENQ.view('board');
+   const cards=document.querySelectorAll('#board .kcard,#board [draggable]').length;
+   const boardStages=CFG.stages.filter(x=>x.board).map(x=>x.k);
+   const inBoard=scopeRecords().filter(x=>boardStages.indexOf(x.stage)>-1).length;
+   ok('Enquiries: the board and the table read the same records',
+      rows===scopeRecords().length&&cards===inBoard,
+      rows+' rows, '+cards+' cards, '+inBoard+' expected on the board');
+   ok('Enquiries: only one view is on screen at a time',
+      getComputedStyle(document.getElementById('enqTable')).display==='none'
+      &&getComputedStyle(document.getElementById('enqBoard')).display!=='none');
+   /* the merged page has to survive the same overflow rule as a real page */
+   const pg=document.getElementById('page-records');
+   ok('Enquiries: the board fits its page, no sideways scroll',
+      pg.scrollWidth<=pg.clientWidth+1,pg.scrollWidth+' vs '+pg.clientWidth);
+   ENQ.view('table');
+   ok('Enquiries: switching back restores the table',
+      getComputedStyle(document.getElementById('enqTable')).display!=='none'
+      &&document.querySelectorAll('#recBody tr').length===rows);
+   ENQ.view(was);
   })();
   /* ENROLMENT. 39 enquiries said Enrolled and produced zero students. The
      checks below pin the whole path, because every one of these silently
