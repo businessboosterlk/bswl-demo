@@ -3438,6 +3438,31 @@ async function runSelfTest(opts){
    ok('Layout: a card interior uses at most two vertical gaps',rough.length===0,
       rough.slice(0,3).join(' | ')||'level');
   })();
+  /* THE APP CONTROL CENTRE is run by Bihandu, not by Business Booster. The
+     thing that sends a manager to the phone is not a missing setting, it is a
+     control that will not say what it is about to do. Every feature row now
+     states the reach BEFORE the press. */
+  (function(){
+   const prev=CURRENT.role;CURRENT.role='manager';
+   go('app');APP.tab('experience');
+   const rows=document.getElementById('expFeatures').innerText;
+   ok('App control: a manager can reach it at all',pageAllowed('app'),
+      'recordings, logins and app copy are the manager’s job, not BB’s');
+   ok('App control: every feature says how many students it reaches',
+      Object.keys(APP.FEAT_META).length>0
+      &&(rows.match(/can see this/g)||[]).length===Object.keys(APP.FEAT_META).length,
+      (rows.match(/can see this/g)||[]).length+' of '+Object.keys(APP.FEAT_META).length);
+   ok('App control: the number is there before the press, not only in the toast',
+      /can see this/.test(rows)&&/last changed by/.test(rows),
+      'a manager deciding to switch something off needs the count while deciding');
+   ok('App control: an off feature says nobody, never a stale count',(function(){
+      const k=Object.keys(APP.FEAT_META)[0],f=DB.get('appConfig').features[k];
+      const was=f.on;f.on=false;renderApp2();
+      const txt=document.getElementById('expFeatures').innerText;
+      f.on=was;renderApp2();
+      return /Nobody can see this/.test(txt);})());
+   CURRENT.role=prev;
+  })();
   /* ICON SIZE. I shipped an Enrol button whose icon filled the whole button
      and pushed the label out of view, because I.users was the one icon in the
      set without class="ic" and nothing sized a bare svg. I had tested that
@@ -4581,15 +4606,24 @@ function renderApp2(){
   var cfg=DB.get('appConfig');
   document.getElementById('expFeatures').innerHTML=Object.keys(APP.FEAT_META).map(function(k){
    var f=cfg.features[k],m=APP.FEAT_META[k];
+   var n=msgAudienceCount(f.aud==='all'?'all':f.aud);
    var audSel='<select class="filter" style="font-size:12px;padding:4px 8px" onchange="APP.setAud(\''+k+'\',this.value)">'
     +[['all','Everyone'],['c0','2027 Batch'],['c1','2028 Batch']].map(function(o){
       return '<option value="'+o[0]+'"'+(f.aud===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>';
    return '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair)">'
     +'<div style="flex:1;min-width:0"><b style="font-size:13.5px">'+m[0]+'</b><div class="hint">'+m[1]+'</div>'
-    +'<div class="hint" style="margin-top:3px">Visible to '+(f.aud==='all'?'everyone':(f.aud==='c0'?'the 2027 batch':'the 2028 batch'))
+    /* SAY THE NUMBER BEFORE THE PRESS, not in the toast afterwards. A manager
+       deciding whether to switch something off needs to know how many students
+       lose it while they are still deciding. */
+    +'<div class="hint" style="margin-top:3px">'
+    +(f.on?'<b style="color:var(--ink)">'+n+' student'+(n===1?'':'s')+' can see this</b>'
+          :'<b style="color:var(--ink)">Nobody can see this</b>')
+    +' · '+(f.aud==='all'?'everyone':(f.aud==='c0'?'the 2027 batch':'the 2028 batch'))
     +' · last changed by '+f.by+' on '+f.when+'</div></div>'
     +'<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">'
-    +'<button class="'+(f.on?'btn-primary':'btn-ghost')+'" style="min-width:56px" onclick="APP.toggle(\''+k+'\')">'+(f.on?'On':'Off')+'</button>'
+    +'<button class="'+(f.on?'btn-primary':'btn-ghost')+'" style="min-width:56px" title="'
+      +(f.on?'Switching this off takes it from '+n+' students':'Switching this on gives it to '+n+' students')
+      +'" onclick="APP.toggle(\''+k+'\')">'+(f.on?'On':'Off')+'</button>'
     +audSel+'</div></div>';
   }).join('');
   var PH=['','Build the foundation','Turn knowledge into marks','Enter exam mode'];
