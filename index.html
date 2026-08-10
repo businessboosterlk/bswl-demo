@@ -3455,6 +3455,11 @@ async function runSelfTest(opts){
    ok('App control: the number is there before the press, not only in the toast',
       /can see this/.test(rows)&&/last changed by/.test(rows),
       'a manager deciding to switch something off needs the count while deciding');
+   /* the number offered at the last step is the SAME one the row prints */
+   ok('App control: switching a feature off asks first, using the row\'s own count',
+      /if\(f\.on\)\{[\s\S]{0,220}confirm\(/.test(APP.toggle.toString())
+      &&APP.toggle.toString().indexOf('msgAudienceCount')>-1,
+      'granting stays one tap, removing does not');
    ok('App control: an off feature says nobody, never a stale count',(function(){
       const k=Object.keys(APP.FEAT_META)[0],f=DB.get('appConfig').features[k];
       const was=f.on;f.on=false;renderApp2();
@@ -4546,6 +4551,15 @@ var APP={
   appAudit('App feature scoped',k+' → '+v+' · by '+CURRENT.name);DB.commit();renderApp2();},
  toggle:function(k){
   var f=DB.get('appConfig').features[k];var meta=APP.FEAT_META[k];
+  /* REMOVAL IS THE SIDE THAT NEEDS THE STRONGER STEP. The count and the
+     consequence are already in the row, which is where a manager reads them
+     while deciding. This is the last stop before it actually happens, and it
+     uses the SAME count the row prints so the two can never disagree. */
+  if(f.on){
+   var n=msgAudienceCount(f.aud==='all'?'all':f.aud);
+   if(n&&!confirm(n+' student'+(n===1?'':'s')+' will lose '+meta[0]+'.\n\n'
+     +meta[2]+'\n\nContinue?'))return;
+  }
   f.on=!f.on;f.by=CURRENT.name;f.when=todayISO();
   appAudit('App feature '+(f.on?'enabled':'disabled'),meta[0]+' · by '+CURRENT.name);
   DB.commit();renderApp2();
