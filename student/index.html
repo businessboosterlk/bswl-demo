@@ -1717,10 +1717,36 @@ function checkinDone(blocker){
  renderNext();say('Check-in recorded');
 }
 
+/* ══ THE OS BRIDGE. Messages sent from the staff OS land in a key on this
+   origin; the app folds them into the inbox ahead of its own seed. The two
+   surfaces already agreed on the shape, so nothing here translates: it filters
+   to THIS student and stamps them unread.
+
+   HONEST LIMIT, and it is the whole limit: localStorage is one browser on one
+   device. Leon's laptop and a student's phone share nothing. This proves the
+   contract and the screens; the backend is what makes it travel. ══ */
+function osMessages(){
+ var out=[];
+ try{
+  var raw=JSON.parse(localStorage.getItem('bswl_msgs_v1')||'[]');
+  raw.forEach(function(m){
+   /* audience: a named student, a batch, or everyone */
+   if(m.studentId!=null){ if(String(m.studentId)!==String(ME.id||'')) return; }
+   else if(m.aud==='c0'&&ME.batch!=='2027')return;
+   else if(m.aud==='c1'&&ME.batch!=='2028')return;
+   out.push({id:9000+out.length,type:m.type||'class',prio:2,read:false,
+    date:m.date,title:m.title,body:m.body,fromOS:true});
+  });
+ }catch(e){}
+ return out;
+}
+
 /* ══ UPDATES (inbox) ══ */
 var IB_FILTER='all';
 var IB_TYPES={all:'All',class:'Classes',learning:'Learning',seminar:'Seminars',delivery:'Deliveries',payment:'Payments'};
-function unreadCount(){return DB.inbox.filter(function(m){return !m.read;}).length;}
+function unreadCount(){
+ /* OS sends are merged once, on first read, so a reload does not duplicate */
+ if(!DB._osMerged){DB._osMerged=1;var o=osMessages();if(o.length)DB.inbox=o.concat(DB.inbox);}return DB.inbox.filter(function(m){return !m.read;}).length;}
 function renderBell(){var b=document.getElementById('bellBadge');var n=unreadCount();
  b.hidden=n===0;b.textContent=n>9?'9+':n;}
 function openInbox(){document.getElementById('inboxw').classList.add('on');
@@ -2262,6 +2288,25 @@ function BSWL_TEST(){
    show(back);
    ok('Layout: a card interior uses at most two vertical gaps',rough.length===0,
       rough.slice(0,3).join(' | ')||'level');
+  })();
+  /* THE OS BRIDGE. The one link that was missing: the OS recorded a send and
+     the app carried a seeded inbox, and nothing travelled between them. */
+  (function(){
+   const K='bswl_msgs_v1',keep=localStorage.getItem(K);
+   try{
+    localStorage.setItem(K,JSON.stringify([
+     {ref:'T1',type:'class',title:'Harness message',body:'x',aud:'all',studentId:null,date:todayISO()},
+     {ref:'T2',type:'class',title:'Other batch only',body:'x',aud:ME.batch==='2027'?'c1':'c0',studentId:null,date:todayISO()}]));
+    const got=osMessages();
+    ok('Bridge: a message sent in the OS reaches this student',
+       got.some(m=>m.title==='Harness message'),got.length+' delivered');
+    ok('Bridge: a message for the other batch does not',
+       !got.some(m=>m.title==='Other batch only'),
+       'audience is honoured on the way in, not just on the way out');
+    ok('Bridge: what arrives is unread',got.every(m=>m.read===false));
+    ok('Bridge: merged once, so a reload cannot duplicate it',
+       typeof DB._osMerged!=='undefined');
+   }finally{ if(keep===null)localStorage.removeItem(K); else localStorage.setItem(K,keep); }
   })();
   /* RECORDINGS. The same three statements the OS pins, asserted here against
      this student's own attendance. Two surfaces, one rule: if either side

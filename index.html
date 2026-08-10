@@ -4411,6 +4411,17 @@ var MSG={armed:false,toStudent:null,
    studentId:MSG.toStudent?MSG.toStudent.id:null,
    sentAt:todayISO()+' '+'09:41',by:CURRENT.id,
    sent:n,opened:0,status:'sent'});
+  /* THE APP LEG. Same trick as the website enquiry bridge, opposite direction:
+     the send also lands in a key the student app reads on open. Same origin
+     only, and same DEVICE only, so this is the demo of the pipe and not the
+     pipe. The toast keeps saying so. Replaced wholesale by the backend. */
+  try{
+   var out=JSON.parse(localStorage.getItem('bswl_msgs_v1')||'[]');
+   var m=DB.get('messages')[0];
+   out.push({ref:'M'+m.id+'-'+m.sentAt,type:m.type,title:m.title,body:m.body,
+    aud:v,studentId:m.studentId,date:todayISO()});
+   localStorage.setItem('bswl_msgs_v1',JSON.stringify(out.slice(-50)));
+  }catch(e){}
   DB.commit();MSG.armed=false;MSG.toStudent=null;
   document.getElementById('msgTitle').value='';document.getElementById('msgBody').value='';
   renderMessages();
