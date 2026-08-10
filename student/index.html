@@ -71,6 +71,42 @@
 }
 
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
+/* ══ BB APP FOUNDATIONS ══════════════════════════════════════════════════
+   Portable. No app specific selectors. Lift this block whole into any BB app.
+   Every rule here exists because a phone does something a desktop does not. */
+
+/* 1. DOUBLE TAP NO LONGER ZOOMS, and the 300ms tap delay goes with it.
+      `manipulation` keeps panning and keeps PINCH zoom, which is an
+      accessibility tool a real person uses. It only removes the double tap
+      gesture, which in an app is never what the person meant. */
+html{touch-action:manipulation}
+
+/* 2. NO BLUE FLASH on tap, and no long press menu offering to copy a button. */
+*{-webkit-tap-highlight-color:transparent}
+button,label,.tabs,.seg,.hdr,[role="button"]{
+ -webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+/* values and notes stay selectable: a member copying their own numbers is fine */
+input,textarea,p,.lede,.tw,.why{-webkit-user-select:auto;user-select:auto}
+
+/* 3. THE FIELD ZOOM. iOS zooms the entire viewport when a focused input has
+      text under 16px, and it does not zoom back out. That is the "it zooms in
+      and looks weird" Thulaib described. 16px is the threshold, not a
+      preference. Coarse pointers only, so desktop keeps its own scale. */
+@media (pointer:coarse){
+ input,select,textarea{font-size:16px!important}
+}
+
+/* 4. SCROLL STAYS WHERE IT WAS PUT. `contain` stops a scroll that reaches the
+      end of a sheet from continuing into the page behind it. On the page
+      itself `none` also removes pull to refresh, which in an installed app
+      reloads the whole thing for no reason a member would expect. */
+html,body{overscroll-behavior-y:none}
+.scrim,.sheet,.inboxw,.flow,[data-scroll]{overscroll-behavior:contain}
+
+/* 5. THE PAGE BEHIND A SHEET IS FROZEN, not merely covered. */
+body.sheet-open{position:fixed;left:0;right:0;width:100%;overflow:hidden}
+[inert]{pointer-events:none}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{
  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Segoe UI',Roboto,Inter,system-ui,sans-serif;
@@ -1285,8 +1321,11 @@ function renderProgress(){
   +'<div class="sect-h"><h2>Next reward</h2></div>'
   +'<div class="card"><div style="display:flex;align-items:baseline;gap:var(--s2)"><h3 style="flex:1">'+esc(nextR.t)+'</h3>'
    +(nextR.pending?'<span class="pill">Pending confirmation</span>':'')+'</div>'
-   +'<p class="lede">'+esc(nextR.sub)+'</p>'
+   +'<p class="lede" style="margin-top:var(--s2)">'+esc(nextR.sub)+'</p>'
    +'<div class="track" style="margin-top:var(--s4)"><i style="width:'+Math.min(100,Math.round(nextR.have/nextR.need*100))+'%"></i></div>'
+   /* was --s2 while its neighbours used --s4, giving this one card four
+      different vertical gaps. The caption belongs to the bar above it, so it
+      keeps the tight gap and the bar takes the loose one: two, not four. */
    +'<p class="meta" style="margin-top:var(--s2)">'+(nextR.pct?nextR.have+'% of '+nextR.need+'%':nextR.have+' of '+nextR.need+' '+nextR.unit)+'</p>'
    +'<button class="btn btn-secondary btn-sm" style="margin-top:var(--s4);width:100%" onclick="openRewards()">All rewards</button></div>'
 
@@ -1386,6 +1425,176 @@ function recOpened(id){var r=DB.recordings.find(function(x){return x.id===id;});
 function recCopy(id){var r=DB.recordings.find(function(x){return x.id===id;});if(!r)return;
  try{navigator.clipboard.writeText(r.url);}catch(e){}
  toast('Link copied. Save it while you are on wifi.');}
+
+/* ══ BB APP FOUNDATIONS, the behaviour half ══════════════════════════════
+   Identical in every BB app. The only line that differs is the overlay
+   selector on the first line of the module. */
+var BBF=(function(){
+ var OVS='.scrim, .inboxw, .flow';
+ var lockedY=0, locked=false, lastFocus=null, histDepth=0, closing=false;
+ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(e){}
+
+ /* AN OVERLAY IS OPEN WHEN IT IS VISIBLE, not when it carries a particular
+    class. Sheets use `on`, modals use `open`, panels flip visibility, and the
+    next app will invent a fourth. Visibility is true of all of them. */
+ function isOpen(el){
+  var cs=getComputedStyle(el);
+  if(cs.display==='none'||cs.visibility==='hidden')return false;
+  var r=el.getBoundingClientRect();
+  if(!(r.width>0&&r.height>0))return false;
+  /* AN OVERLAY THAT FADES IN IS OPEN THE MOMENT IT STARTS. Reading opacity
+     one frame after the class lands gives 0, and the observer fires on the
+     microtask BEFORE the first frame, so a fading overlay was judged closed
+     and the body was never pinned. Found on BSWL's .scrim, which fades; the
+     gym's overlays do not, which is why the mold never showed it. A running
+     transition means it is on its way in, so treat it as open. */
+  if(parseFloat(cs.opacity||'1')<0.05){
+   var moving=false;
+   try{moving=el.getAnimations().some(function(a){
+    return a.playState==='running'||a.playState==='pending';});}catch(e){}
+   if(!moving)return false;
+  }
+  return true;
+ }
+ function anyOpen(){
+  var n=document.querySelectorAll(OVS), i;
+  for(i=0;i<n.length;i++)if(isOpen(n[i]))return n[i];
+  return null;
+ }
+
+ /* THE FREEZE. `overflow:hidden` alone does not hold on iOS: the page keeps
+    its rubber band and silently forgets where it was. Pinning the body at a
+    negative top holds the position exactly, and putting it back is the only
+    reason the scroll survives the sheet at all. */
+ function lock(){
+  if(locked)return;
+  lockedY=window.scrollY||window.pageYOffset||0;
+  document.body.style.top=(-lockedY)+'px';
+  document.body.classList.add('sheet-open');
+  locked=true;
+ }
+ function unlock(){
+  if(!locked)return;
+  document.body.classList.remove('sheet-open');
+  document.body.style.top='';
+  window.scrollTo(0,lockedY);
+  locked=false;
+ }
+
+ /* THE PAGE BEHIND IS OUT OF REACH, not merely covered. Without this a thumb
+    still hits a button through the gap beside a sheet, and a keyboard or a
+    screen reader walks into content the person cannot see. Generic on
+    purpose: no app specific selector, so this holds in any cast. */
+ var shielded=[];
+ function shield(ov){
+  release();
+  if(!ov)return;
+  [].slice.call(document.body.children).forEach(function(el){
+   if(el===ov||el.contains(ov))return;
+   if(/^(SCRIPT|STYLE|TEMPLATE|LINK)$/.test(el.tagName))return;
+   if(el.hasAttribute('inert'))return;
+   el.setAttribute('inert','');el.setAttribute('aria-hidden','true');
+   shielded.push(el);
+  });
+ }
+ function release(){
+  shielded.forEach(function(el){el.removeAttribute('inert');el.removeAttribute('aria-hidden');});
+  shielded=[];
+ }
+
+ function takeFocus(ov){
+  lastFocus=document.activeElement;
+  var f=ov.querySelector('button,[href],[tabindex]:not([tabindex="-1"])');
+  if(f){try{f.focus({preventScroll:true});}catch(e){}}
+ }
+ function giveBackFocus(){
+  if(lastFocus&&lastFocus.focus){try{lastFocus.focus({preventScroll:true});}catch(e){}}
+  lastFocus=null;
+ }
+
+ /* THE BACK BUTTON CLOSES THE SHEET, it does not leave the app. On Android
+    this is the loudest tell that something is a web page: Back on an open
+    sheet throws the person out of the product entirely. */
+ function closeTop(){
+  var ov=anyOpen();
+  if(!ov)return false;
+  var btn=ov.querySelector('[onclick*="close"],[onclick*="Close"],[data-close]');
+  if(btn){btn.click();return true;}
+  ov.classList.remove('on');ov.classList.remove('open');
+  return true;
+ }
+ window.addEventListener('popstate',function(){
+  if(closing)return;              /* this pop is the one our own close asked for */
+  if(histDepth>0){histDepth--;closeTop();}
+ });
+ window.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&anyOpen()){e.preventDefault();history.back();}
+ });
+
+ function sync(){
+  var ov=anyOpen();
+  if(ov&&!locked){
+   lock();shield(ov);takeFocus(ov);
+   histDepth++;try{history.pushState({bbSheet:1},'');}catch(e){}
+  }else if(!ov&&locked){
+   release();giveBackFocus();
+   /* UNLOCK SYNCHRONOUSLY, ALWAYS. Deferring it behind a timer left the body
+      pinned for whatever ran next, and what ran next could not scroll. With
+      scrollRestoration on manual the browser no longer moves the scroll on a
+      pop, so there is nothing to wait for. */
+   unlock();
+   if(histDepth>0){
+    histDepth--;closing=true;
+    try{history.back();}catch(e){}
+    setTimeout(function(){closing=false;},0);
+   }
+  }
+ }
+
+ /* ONE OBSERVER, NOT N EDITED FUNCTIONS. Overlays are opened by different
+    functions in different parts of the file. Editing them fixes the ones that
+    exist and ships the next one broken. Watching the attribute fixes every
+    overlay that exists and every one anyone adds after today, including in a
+    cast of this mold into another client's app. */
+ function start(){
+  var mo=new MutationObserver(sync);
+  var watch=function(el){mo.observe(el,{attributes:true,attributeFilter:['class','style','hidden']});};
+  document.querySelectorAll(OVS).forEach(watch);
+  new MutationObserver(function(muts){
+   muts.forEach(function(m){
+    [].slice.call(m.addedNodes).forEach(function(n){
+     if(n.nodeType===1&&n.matches&&n.matches(OVS))watch(n);
+    });
+   });
+   sync();
+  }).observe(document.body,{childList:true,subtree:true});
+  sync();
+ }
+
+ /* THE KEYBOARD SAYS WHAT THE BUTTON SAYS. A form whose last field offers
+    "return" instead of "Go" makes a person hunt for the button they are
+    already standing on. Applied at focus, which is the only moment the hint
+    is read, because most fields do not exist until their page renders. */
+ function hint(el){
+  if(!el||!/^(INPUT|TEXTAREA)$/.test(el.tagName))return;
+  if(el.getAttribute('enterkeyhint'))return;
+  var form=el.closest('.sheet,.modal,.panel,.login-in,form');
+  var peers=form?form.querySelectorAll('input,textarea'):[el];
+  el.setAttribute('enterkeyhint',peers[peers.length-1]===el?'go':'next');
+  if(el.type==='email'||el.inputMode==='email'||el.inputMode==='numeric'||el.inputMode==='decimal'){
+   el.setAttribute('autocapitalize','off');
+   el.setAttribute('autocorrect','off');
+   el.setAttribute('spellcheck','false');
+  }
+ }
+ function hintKeyboards(){
+  document.addEventListener('focusin',function(e){hint(e.target);});
+  document.querySelectorAll('input,textarea').forEach(hint);
+ }
+
+ return {start:start,hintKeyboards:hintKeyboards,anyOpen:anyOpen,sync:sync,
+         isLocked:function(){return locked;}};
+})();
 
 /* ══ NAV ══ */
 function show(sc){
@@ -1976,6 +2185,84 @@ function BSWL_TEST(){
       Math.abs((lr.left+lr.width/2)-(sr.left+sr.width/2))<1.5&&Math.abs((lr.top+lr.height/2)-(sr.top+sr.height/2))<1.5);
    if(wasGone)document.getElementById('login').classList.add('gone');
   }
+  /* ── BB APP FOUNDATIONS: the things that make it a product, not a page ── */
+  (function(){
+   const cs=getComputedStyle;
+   ok('App: double tap does not zoom',
+      cs(document.documentElement).touchAction==='manipulation',
+      cs(document.documentElement).touchAction);
+   ok('App: the page does not pull to refresh',
+      cs(document.body).overscrollBehaviorY==='none',
+      cs(document.body).overscrollBehaviorY);
+   const b=document.querySelector('.nav-item');
+   ok('App: no blue flash on tap',
+      !b||/rgba\(0, 0, 0, 0\)|transparent/.test(cs(b).webkitTapHighlightColor),'');
+   ok('App: chrome does not select on drag',!b||cs(b).userSelect==='none',
+      b?cs(b).userSelect:'');
+   /* THE FIELD ZOOM. iOS zooms the whole viewport when a focused input has
+      text under 16px and never zooms back. The threshold is the spec, not a
+      taste. Only enforced where a touch keyboard actually exists. */
+   if(matchMedia('(pointer:coarse)').matches){
+    const small=[];
+    document.querySelectorAll('input,select,textarea').forEach(el=>{
+     if(parseFloat(cs(el).fontSize)<16)small.push((el.id||el.type||el.tagName)+' '+cs(el).fontSize);});
+    ok('App: no field under 16px, so focusing one cannot zoom the screen',
+       small.length===0,small.slice(0,3).join(', ')||'all 16px+');
+   }else ok('App: no field under 16px, so focusing one cannot zoom the screen',
+            true,'fine pointer, rule is coarse only');
+   const sh=document.querySelector('.modal');
+   ok('App: a sheet does not chain its scroll to the page',
+      !sh||cs(sh).overscrollBehaviorY==='contain',sh?cs(sh).overscrollBehaviorY:'');
+   ok('App: the foundation layer is present',typeof BBF==='object'&&!!BBF.start,'');
+  })();
+  /* THE FREEZE, proven by doing it rather than by reading a class name. */
+  (function(){
+   /* THIS APP HAS NO .modal-ov. Lifting the gym's check verbatim made it look
+      for one, find nothing, and pass on 'no modals' while the ninth check
+      never ran at all. A check that passes because it could not find the thing
+      it tests is worse than no check. Point it at THIS app's overlays. */
+   const ov=document.querySelector('.scrim, .inboxw, .flow');
+   if(!ov){ok('App: the page behind an open sheet is frozen',false,
+     'NO OVERLAY FOUND to test with, this check is asserting nothing');
+    ok('App: the page behind an open sheet is out of reach',false,'same');return;}
+   /* the class that opens an overlay is the app's own word: sheets say `on`,
+      modals say `open`. Add both, restore exactly what was there. */
+   const had={on:ov.classList.contains('on'),open:ov.classList.contains('open')};
+   ov.classList.add('on');ov.classList.add('open');
+   BBF.sync();                 /* the observer runs a tick later; drive it now */
+   const frozen=cs2(document.body).position==='fixed';
+   const shielded=!!document.querySelector('[inert]');
+   if(!had.on)ov.classList.remove('on');
+   if(!had.open)ov.classList.remove('open');
+   BBF.sync();
+   ok('App: the page behind an open sheet is frozen',frozen,frozen?'pinned':'STILL SCROLLS');
+   ok('App: the page behind an open sheet is out of reach',shielded,
+      shielded?'inert':'still tappable and tabbable');
+   function cs2(e){return getComputedStyle(e);}
+  })();
+  /* THE VERTICAL HALF. The check above only ever measured left and right, so
+     every vertical defect was invisible to it and had to be caught by eye. */
+  (function(){
+   const back='next';const rough=[];
+   ['next','learn','progress'].forEach(pg=>{
+    try{show(pg);}catch(e){return;}
+    document.querySelectorAll('.card').forEach(card=>{
+     const kids=[].slice.call(card.children).filter(k=>{
+      const r=k.getBoundingClientRect(); return r.width>0&&r.height>0;});
+     if(kids.length<3)return;
+     const gaps=[];
+     for(let i=1;i<kids.length;i++){
+      const a=kids[i-1].getBoundingClientRect(),c=kids[i].getBoundingClientRect();
+      if(Math.abs(c.top-a.top)<4)continue;      /* side by side is not a stack */
+      gaps.push(Math.round(c.top-a.bottom));}
+     const distinct=[];
+     gaps.forEach(g=>{if(distinct.indexOf(g)<0)distinct.push(g);});
+     if(distinct.length>2)rough.push(pg+':'+(String(card.className).split(' ')[0]||'card')+' ['+gaps.join(',')+']');
+    });});
+   show(back);
+   ok('Layout: a card interior uses at most two vertical gaps',rough.length===0,
+      rough.slice(0,3).join(' | ')||'level');
+  })();
   /* RECORDINGS. The same three statements the OS pins, asserted here against
      this student's own attendance. Two surfaces, one rule: if either side
      changes its mind about who may watch, one of these two suites goes red. */
