@@ -2224,6 +2224,48 @@ function renderBadges(){
     noun beside it, which read as the number of students */
  const ni=document.getElementById('nbInventory');if(ni&&DB.get('products')){const n=DB.get('products').filter(p=>prodStatus(p)!=='ok').length;ni.textContent=n||'';ni.style.display=n?'':'none';}
 }
+/* THE WEBSITE PIPE. The enquiry form on the site writes here, so the desk sees
+   it in the pipeline without anyone retyping it off a WhatsApp. Same origin
+   today, which is why this crossing is real; on the client's own domain it is
+   two origins and the backend takes over. */
+var WEB_ENQ_KEY='bswl_enquiries_v1', WEB_TAKEN_KEY='bswl_enquiries_taken_v1';
+function webEnquiries(){
+ try{return JSON.parse(localStorage.getItem(WEB_ENQ_KEY)||'[]');}catch(e){return [];}
+}
+function webTaken(){
+ try{return JSON.parse(localStorage.getItem(WEB_TAKEN_KEY)||'[]');}catch(e){return [];}
+}
+/* ONCE AND ONLY ONCE. Every enquiry carries a ref from the website and the
+   system remembers the refs it has taken, so a refresh, a second tab or a
+   reopened system cannot turn one enquiry into two records. */
+function webPull(){
+ var q=webEnquiries(), taken=webTaken(), added=0;
+ if(!q.length)return 0;
+ var recs=DB.get('records')||[];
+ var nextId=recs.reduce(function(a,r){return Math.max(a,r.id||0);},0)+1;
+ q.forEach(function(e){
+  if(!e||!e.ref||taken.indexOf(e.ref)>-1)return;
+  recs.push({id:nextId++,name:e.name,co:e.batch+' \u00b7 '+e.loc,phone:e.phone,
+   stage:'new',owner:1,value:0,followUp:todayISO(),created:todayISO().slice(0,7),
+   rev:null,src:e.src||'Website',
+   acts:[{t:'Enquiry received',m:'From the website form. '+e.batch+', '+e.loc+'.',tm:'just now'}]});
+  taken.push(e.ref);added++;
+ });
+ if(added){
+  /* the website's store is the client's. Read it, mark it, leave it. */
+  try{localStorage.setItem(WEB_TAKEN_KEY,JSON.stringify(taken.slice(-200)));}catch(e){}
+  DB.commit();
+ }
+ return added;
+}
+/* an enquiry landing while the desk is looking at the screen should appear on
+   the screen, not on the next reload */
+window.addEventListener('storage',function(e){
+ if(e&&e.key&&e.key!==WEB_ENQ_KEY)return;
+ var n=webPull();
+ if(n){renderApp();toast(n+' new '+(n===1?'enquiry':'enquiries')+' from the website');}
+});
+
 function renderApp(){
  renderBadges();
  const act=document.querySelector('.page.active');
@@ -3451,6 +3493,38 @@ async function runSelfTest(opts){
    const prev=CURRENT.role;CURRENT.role='manager';
    go('app');APP.tab('experience');
    const rows=document.getElementById('expFeatures').innerText;
+   /* ── THE WEBSITE PIPE: the desk stops retyping enquiries off a phone ── */
+   (function(){
+    const q=webEnquiries().slice(), taken=webTaken().slice();
+    const before=(DB.get('records')||[]).length;
+    const ref='TEST'+before;
+    try{localStorage.setItem(WEB_ENQ_KEY,JSON.stringify(q.concat([{
+      ref:ref,name:'Harness Student',phone:'0771234567',
+      batch:'2027 batch',loc:'Nugegoda',at:todayISO(),src:'Website'}])));}catch(e){}
+    const added=webPull();
+    const recs=DB.get('records')||[];
+    const made=recs.filter(r=>r.name==='Harness Student');
+    ok('Website pipe: an enquiry from the site lands in the pipeline',
+       added===1&&made.length===1,added+' added, '+made.length+' in the pipeline');
+    ok('Website pipe: it arrives as a new enquiry the desk has to work',
+       made.length===1&&made[0].stage==='new'&&!!made[0].followUp,
+       made.length?made[0].stage+', follow up '+made[0].followUp:'none');
+    ok('Website pipe: it carries the facts the form collected, not a summary',
+       made.length===1&&made[0].phone==='0771234567'
+       &&made[0].co.indexOf('Nugegoda')>-1&&made[0].co.indexOf('2027')>-1,
+       made.length?made[0].co+' · '+made[0].phone:'none');
+    /* PULLING TWICE MUST NOT MAKE TWO. A refresh, a second tab or a reopened
+       system all call this again, and each would otherwise duplicate the lot. */
+    const again=webPull();
+    ok('Website pipe: pulling twice cannot make the same enquiry twice',
+       again===0&&(DB.get('records')||[]).filter(r=>r.name==='Harness Student').length===1,
+       again+' on the second pull');
+    /* put the world back exactly as it was found */
+    DB._d.records=recs.filter(r=>r.name!=='Harness Student');
+    try{localStorage.setItem(WEB_ENQ_KEY,JSON.stringify(q));
+        localStorage.setItem(WEB_TAKEN_KEY,JSON.stringify(taken));}catch(e){}
+    DB.commit();
+   })();
    ok('App control: a manager can reach it at all',pageAllowed('app'),
       'recordings, logins and app copy are the manager’s job, not BB’s');
    ok('App control: every feature says how many students it reaches',
@@ -4870,6 +4944,8 @@ DB.load();
 /* apply tenant customizations over the mold defaults — brand vars, vocabulary,
    titles, nav texts, module visibility. The Studio re-runs this on every save. */
 applyConfig();
+/* an enquiry that arrived while the system was closed is still an enquiry */
+try{webPull();}catch(e){}
 snapshotPages();   /* pristine page markup — lets errored views self-heal (see pageErrorBoundary) */
 document.querySelectorAll('.nav-item[data-pg]').forEach(n=>n.onclick=()=>go(n.dataset.pg));
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
