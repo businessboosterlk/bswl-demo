@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta name="bb-build" content="stafffz180454">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="manifest" href="manifest.json">
@@ -5322,7 +5323,20 @@ var BBF=(function(){
   if(e.key==='Escape'&&anyOpen()){e.preventDefault();history.back();}
  });
 
+ /* COALESCE. Observers may ask for a sync hundreds of times in one render;
+    the work runs once. Direct calls (the harness) still run synchronously. */
+ var syncQueued=false, inSync=false, syncRuns=0;
+ function scheduleSync(){
+  if(syncQueued)return;
+  syncQueued=true;
+  setTimeout(function(){syncQueued=false;sync();},0);
+ }
  function sync(){
+  if(inSync)return;           /* sync mutates the DOM; it must never re-enter */
+  inSync=true;syncRuns++;
+  try{ syncBody(); }finally{ inSync=false; }
+ }
+ function syncBody(){
   var ov=anyOpen();
   if(ov&&!locked){
    lock();shield(ov);takeFocus(ov);
@@ -5348,16 +5362,20 @@ var BBF=(function(){
     overlay that exists and every one anyone adds after today, including in a
     cast of this mold into another client's app. */
  function start(){
-  var mo=new MutationObserver(sync);
+  var mo=new MutationObserver(scheduleSync);
   var watch=function(el){mo.observe(el,{attributes:true,attributeFilter:['class','style','hidden']});};
   document.querySelectorAll(OVS).forEach(watch);
+  /* THE STORM WAS HERE. This used to call sync() on EVERY mutation batch in
+     the document, and a render floods hundreds while animations add sixty a
+     second. Its only real job is spotting a NEW overlay. */
   new MutationObserver(function(muts){
+   var sawOverlay=false;
    muts.forEach(function(m){
     [].slice.call(m.addedNodes).forEach(function(n){
-     if(n.nodeType===1&&n.matches&&n.matches(OVS))watch(n);
+     if(n.nodeType===1&&n.matches&&n.matches(OVS)){watch(n);sawOverlay=true;}
     });
    });
-   sync();
+   if(sawOverlay)scheduleSync();
   }).observe(document.body,{childList:true,subtree:true});
   sync();
  }
@@ -5384,6 +5402,7 @@ var BBF=(function(){
  }
 
  return {start:start,hintKeyboards:hintKeyboards,anyOpen:anyOpen,sync:sync,
+         runs:function(){return syncRuns;},
          isLocked:function(){return locked;}};
 })();
 
