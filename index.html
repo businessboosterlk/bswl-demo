@@ -969,12 +969,14 @@ body.dark .stat-kpi .val{color:#fff}
             <button class="segt active" data-ev="table" onclick="ENQ.view('table')">Table</button>
             <button class="segt" data-ev="board" onclick="ENQ.view('board')">Board</button>
           </div>
+          <input class="filter" id="enqSearch" style="min-width:150px" placeholder="Search a name or number" oninput="ENQ.search(this.value)">
           <select class="filter" id="recStage" onchange="renderRecords()"><option value="all">All stages</option></select>
           <select class="filter" id="recOwner" onchange="setOwnerFilter(this.value)"><option value="all">Whole team</option></select>
           <div class="sp"></div>
           <button class="btn-ghost imp-btn" onclick="openImport('records')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import</button>
           <button class="btn-ghost" onclick="exportRecords()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export Excel</button>
         </div>
+        <div class="hint" id="enqCount" style="margin-bottom:8px"></div>
         <div id="enqTable"><div class="card"><table class="tbl"><thead><tr><th data-fl="name">Name</th><th data-fl="stage">Stage</th><th data-fl="owner">Owner</th><th data-fl="followUp">Follow-up</th><th class="tnum" data-fl="value">Value</th></tr></thead><tbody id="recBody"></tbody></table><div id="recEmpty"></div></div></div>
         <div id="enqBoard" style="display:none">
           <div class="hint" style="margin-bottom:10px">Drag a card to move a student through the stages.</div>
@@ -2009,8 +2011,11 @@ function exportXLS(name,headers,rows){
 }
 function exportRecords(){exportXLS((CFG.app.client||'export').toLowerCase().replace(/\s+/g,'-')+'-'+CFG.entity.plural.toLowerCase()+'.xls',
  ['Name','Company','Phone','Stage','Owner','Follow-up','Value ('+CFG.currency+')'],
- scopeRecords().map(r=>[r.name,r.co,r.phone,stageLabel(r.stage),staffById(r.owner).name,r.followUp||'',r.value]));
- toast(I.check+' Excel exported');}
+ /* THE EXPORT CARRIES THE ROWS ON SCREEN. Filtering to seven and exporting
+    forty-seven is the same lie as the fee headline, in a file Leon opens later
+    and cannot see the filter that produced it. */
+ enqRows().map(r=>[r.name,r.co,r.phone,stageLabel(r.stage),staffById(r.owner).name,r.followUp||'',r.value]));
+ toast(I.check+' Excel exported: '+enqRows().length+' row'+(enqRows().length===1?'':'s')+' as shown.');}
 function waRecord(id){const r=DB.get('records').find(x=>x.id===id);if(!r)return;
  const ph=(r.phone||'').replace(/\D/g,'').replace(/^0/,'94');
  if(!ph){toast('No phone number on this '+CFG.entity.singular.toLowerCase());return;}
@@ -2368,7 +2373,8 @@ function taskRows(list){
 let DRAG=null;
 function renderBoard(){
  const cols=CFG.stages.filter(s=>s.board);
- const recs=scopeRecords();
+ /* the board reads the SAME narrowing function as the table */
+ const recs=enqRows();
  document.getElementById('board').innerHTML=cols.map(st=>{
   const cards=recs.filter(r=>r.stage===st.k);
   return '<div class="col" ondragover="dragOver(event,this)" ondragleave="dragLeave(this)" ondrop="drop(event,\''+st.k+'\')">'
@@ -2398,7 +2404,9 @@ function drop(e,stage){e.preventDefault();
 /* ── Records table ── */
 /* ENQUIRIES: one page, two readings of the same records. The board was its own
    menu item for no reason other than that it draws differently. */
-var ENQ={v:'table',
+var ENQ={v:'table',q:'',
+ search:function(v){ENQ.q=v;renderRecords();
+  var i=document.getElementById('enqSearch');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},
  view:function(v){ENQ.v=v;
   document.querySelectorAll('#enqViewSeg .segt').forEach(function(b){
    b.classList.toggle('active',b.dataset.ev===v);});
@@ -2413,11 +2421,25 @@ function renderRecords(){
  if(ENQ.v==='board'){renderBoard();return;}
  renderRecordsTable();
 }
+/* THE ONE NARROWING FUNCTION. Everything that shows enquiries reads this, so
+   the table, the board and any count can never disagree about what is shown. */
+function enqRows(){
+ const sSel=document.getElementById('recStage');
+ const stf=(sSel&&sSel.value)||'all';
+ const q=(ENQ.q||'').trim().toLowerCase();
+ return scopeRecords()
+  .filter(r=>stf==='all'||r.stage===stf)
+  .filter(r=>!q||(r.name+' '+(r.co||'')+' '+(r.phone||'')).toLowerCase().indexOf(q)>-1)
+  .sort((a,b)=>b.value-a.value);
+}
 function renderRecordsTable(){
  const sSel=document.getElementById('recStage');
  if(sSel.options.length<=1)sSel.innerHTML='<option value="all">All stages</option>'+CFG.stages.map(s=>'<option value="'+s.k+'">'+s.label+'</option>').join('');
- const stf=sSel.value||'all';
- const rows=scopeRecords().filter(r=>stf==='all'||r.stage===stf).sort((a,b)=>b.value-a.value);
+ const rows=enqRows();
+ const hint=document.getElementById('enqCount');
+ if(hint)hint.textContent=rows.length===scopeRecords().length
+   ?rows.length+' enquiries'
+   :rows.length+' of '+scopeRecords().length+' shown';
  document.getElementById('recBody').innerHTML=mapSafe(rows,r=>{
   const due=r.followUp&&r.followUp<=todayISO()&&isOpen(r);
   return '<tr onclick="openRecord('+r.id+')"><td><div class="tn">'+r.name.toString()+'</div><div class="tm">'+(r.co||'')+'</div></td>'
@@ -3592,6 +3614,31 @@ async function runSelfTest(opts){
       f.on=was;renderApp2();
       return /Nobody can see this/.test(txt);})());
    CURRENT.role=prev;
+  })();
+  /* ENQUIRIES. One narrowing function, and everything reads its result. The
+     failure this prevents is a second code path: a table and a board that each
+     filter for themselves and quietly disagree about what is shown. */
+  (function(){
+   go('records');ENQ.view('table');
+   const q0=ENQ.q;ENQ.search('');
+   const all=document.querySelectorAll('#recBody tr').length;
+   ENQ.search('per');
+   const few=document.querySelectorAll('#recBody tr').length;
+   ok('Enquiries: search narrows the table',few<all,all+' rows down to '+few);
+   ok('Enquiries: the count says what is shown',
+      /of \d+ shown/.test(document.getElementById('enqCount').textContent),
+      document.getElementById('enqCount').textContent);
+   ok('Enquiries: the board reads the same narrowing function',(function(){
+      ENQ.view('board');
+      const boardStages=CFG.stages.filter(x=>x.board).map(x=>x.k);
+      const cards=document.querySelectorAll('#board .kcard,#board [draggable]').length;
+      const expect=enqRows().filter(r=>boardStages.indexOf(r.stage)>-1).length;
+      ENQ.view('table');
+      return cards===expect;})(),'a second filter path is how two views disagree');
+   ok('Enquiries: the export carries the rows on screen',
+      enqRows().length===few&&enqRows().length<all,
+      'exporting the whole book from a filtered screen is the same lie in a file');
+   ENQ.search(q0||'');
   })();
   /* FILTERED TOTALS. Search narrowed the fee list from 165 rows to 7 and the
      figures above it did not move, so Leon read a whole-book number sitting
