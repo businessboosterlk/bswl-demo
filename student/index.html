@@ -195,8 +195,21 @@ h3{font-size:var(--t-md);font-weight:600;letter-spacing:-.01em;line-height:var(-
    Nothing else in this app is ever coloured. Progress, rewards, honours and
    the syllabus stay monochrome on purpose: a student's own standing is not a
    scoreboard, and nobody is ever ranked bottom here. */
+/* ── THEMES. A student picks their own; nobody is sorted into one. Only the
+   ACCENT moves, which is the inverted card, the active tab and the ring.
+   --urgent is deliberately absent from every theme below: if the signal
+   colour changes with the decoration, it stops being a signal. ── */
+html[data-theme="sunset"]  {--accent:#ff8a3d;--on-accent:#241000;--theme2:#ffd166}
+html[data-theme="neon"]    {--accent:#ff5fa2;--on-accent:#2b0016;--theme2:#f3ff5c}
+html[data-theme="electric"]{--accent:#4da3ff;--on-accent:#00182e;--theme2:#ff9f45}
+html[data-theme="mono"]    {--accent:#f7f7f7;--on-accent:#0d0d0d;--theme2:#f7f7f7}
+.sw{width:100%;aspect-ratio:1;border-radius:var(--r-md);border:2px solid transparent;
+ display:block;position:relative}
+.sw[aria-pressed="true"]{border-color:var(--text)}
+.sw i{position:absolute;inset:22% 22% auto auto;width:34%;height:34%;border-radius:99px;display:block}
 .urgent{color:var(--urgent);font-weight:700}
-.primary .urgent{color:var(--urgent-on-light)}
+.primary .urgent{color:var(--on-accent);background:rgba(0,0,0,.16);
+ padding:1px 7px;border-radius:var(--r-sm);font-weight:750}
 .card.closing{border-left:3px solid var(--urgent)}
 .meta{font-size:var(--t-xs);color:var(--text-3)}
 .sect-h{display:flex;align-items:baseline;gap:var(--s3);margin:var(--s6) 0 var(--s3)}
@@ -1367,6 +1380,14 @@ function renderProgress(){
   +DB.honours.map(function(h){
     return '<span class="pill" style="margin:0 6px 6px 0">'+esc(h.name)+' · '+h.att+'%</span>';}).join('')
   +'</div></div>'
+  +'<div class="sect-h"><h2>Make it yours</h2></div>'
+  +'<article class="card"><p class="lede" style="margin-bottom:var(--s3)">Pick a colour. It is yours, on this phone, and you can change it any time.</p>'
+  +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s3)">'
+  +THEMES.map(function(t){
+    return '<button class="sw" aria-pressed="'+(THEME_NOW()===t.k?'true':'false')+'" '
+     +'aria-label="'+t.n+'" title="'+t.n+'" onclick="setTheme(\''+t.k+'\')" '
+     +'style="background:'+t.a+'"><i style="background:'+t.b+'"></i></button>';
+   }).join('')+'</div></article>'
   +'<div class="sect-h"><h2>You</h2></div>'
   +'<div class="list">'
    +'<div class="rowbtn" style="cursor:default"><span class="grow"><span class="tt" style="font-weight:550">'+esc(ME.name)+'</span>'
@@ -1616,6 +1637,25 @@ var BBF=(function(){
  return {start:start,hintKeyboards:hintKeyboards,anyOpen:anyOpen,sync:sync,
          isLocked:function(){return locked;}};
 })();
+
+/* ══ THEME. A student chooses; nobody is assigned one. Stored on their own
+   phone, so it is genuinely theirs and no gender is asked for or stored. ══ */
+var THEMES=[
+ {k:'mono',    n:'Black and white', a:'#f7f7f7', b:'#8a8a8a'},
+ {k:'sunset',  n:'Sunset',          a:'#ff8a3d', b:'#ffd166'},
+ {k:'neon',    n:'Neon',            a:'#ff5fa2', b:'#f3ff5c'},
+ {k:'electric',n:'Electric',        a:'#4da3ff', b:'#ff9f45'}
+];
+function THEME_NOW(){return document.documentElement.getAttribute('data-theme')||'mono';}
+function setTheme(k){
+ document.documentElement.setAttribute('data-theme',k);
+ try{localStorage.setItem('bswl_theme',k);}catch(e){}
+ var n=(THEMES.find(function(t){return t.k===k;})||{}).n||k;
+ if(typeof renderProgress==='function')renderProgress();
+ toast(n+' it is.');
+}
+(function(){var k='mono';try{k=localStorage.getItem('bswl_theme')||'mono';}catch(e){}
+ document.documentElement.setAttribute('data-theme',k);})();
 
 /* ══ NAV ══ */
 function show(sc){
@@ -2167,11 +2207,21 @@ function BSWL_TEST(){
   document.querySelectorAll('.tabs button,.btn,.conf').forEach(function(e){
    var r=e.getBoundingClientRect();if(r.height&&r.height<44)small++;});
   ok('Primary touch targets are at least 44px',small===0,small+' under');
-  /* monochrome */
-  var chroma=0;
-  document.querySelectorAll('.card,.btn,.primary,.list,.chip').forEach(function(e){
-   var c=getComputedStyle(e).color.match(/\d+/g);if(c&&(+c[0]!==+c[1]||+c[1]!==+c[2]))chroma++;});
-  ok('Monochrome holds',chroma===0);
+  /* MONOCHROME IS NOW THE DEFAULT, not the only state. This used to assert the
+     app had no colour at all; themes make that false by design. The rule that
+     survived is the one worth keeping: a student who chooses nothing gets the
+     black and white app, and colour is opt in. */
+  (function(){
+   var w=THEME_NOW();setTheme('mono');
+   var chroma=0;
+   document.querySelectorAll('.card,.btn,.list,.chip').forEach(function(e){
+    if(e.closest('.urgent')||e.classList.contains('urgent'))return;
+    var c=getComputedStyle(e).color.match(/\d+/g);
+    if(c&&(+c[0]!==+c[1]||+c[1]!==+c[2]))chroma++;});
+   setTheme(w);
+   ok('Monochrome holds when nothing is chosen',chroma===0,
+      chroma?chroma+' coloured in the default theme':'the default app is still black and white');
+  })();
   /* safe area */
   var root=document.documentElement;
   root.style.setProperty('--sat','59px');
@@ -2350,6 +2400,56 @@ function BSWL_TEST(){
     ok('Bridge: merged once, so a reload cannot duplicate it',
        typeof DB._osMerged!=='undefined');
    }finally{ if(keep===null)localStorage.removeItem(K); else localStorage.setItem(K,keep); }
+  })();
+  /* THEMES. A student picks their own. The risk is that a theme quietly eats
+     the urgency signal, so these check the thing that must survive all four. */
+  (function(){
+   const was=THEME_NOW();
+   function rgb(x){x=(x||'').trim();
+    if(x[0]==='#'){var h=x.slice(1);
+     if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+     return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+    return (x.match(/[\d.]+/g)||[]).map(Number);}
+   function lum(c){const f=c.slice(0,3).map(v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);});
+    return 0.2126*f[0]+0.7152*f[1]+0.0722*f[2];}
+   function ratio(a,b){return (Math.max(lum(a),lum(b))+0.05)/(Math.min(lum(a),lum(b))+0.05);}
+   const bad=[],urg=[];
+   THEMES.forEach(t=>{
+    setTheme(t.k);
+    const cs=getComputedStyle(document.documentElement);
+    const acc=rgb(cs.getPropertyValue('--accent')||'#fff');
+    const on =rgb(cs.getPropertyValue('--on-accent')||'#000');
+    const u  =(cs.getPropertyValue('--urgent')||'').trim();
+    urg.push(u);
+    /* the inverted card is the loudest thing on the screen; its text has to read */
+    if(acc.length&&on.length&&ratio(acc,on)<4.5)bad.push(t.k+' '+ratio(acc,on).toFixed(2));
+   });
+   setTheme(was);
+   ok('Themes: text on the accent card is legible in every theme',bad.length===0,
+      bad.join(', ')||THEMES.length+' themes checked');
+   /* the accent card is a different background in every theme, so the urgency
+      mark has to be measured against each one, not assumed */
+   (function(){
+    const bad=[];const w=THEME_NOW();
+    THEMES.forEach(t=>{setTheme(t.k);
+     const el=document.querySelector('.primary .urgent');if(!el)return;
+     const cs=getComputedStyle(el);
+     const fg=rgb(cs.color),bg=rgb(getComputedStyle(el.closest('.primary')).backgroundColor);
+     if(fg.length&&bg.length&&ratio(fg,bg)<4.5)bad.push(t.k+' '+ratio(fg,bg).toFixed(2));});
+    setTheme(w);
+    ok('Themes: the urgency mark is legible on every accent card',bad.length===0,
+       bad.join(', ')||'all four measured');
+   })();
+   ok('Themes: the urgency colour never changes with the theme',
+      new Set(urg).size===1,urg.join(' / ')+' · a signal that moves with the decoration is not a signal');
+   /* read what a STUDENT can see, not the source: innerHTML contains this
+      check, so it was matching its own words and failing itself. */
+   ok('Themes: a student chooses, nobody is assigned one',
+      !/\b(gender|boys|girls)\b/i.test(document.body.innerText||''),
+      'nothing on screen asks for it, and nothing stores it');
+   ok('Themes: the choice survives a reload',(function(){
+      setTheme('neon');const kept=localStorage.getItem('bswl_theme')==='neon';
+      setTheme(was);return kept;})());
   })();
   /* THE ONE COLOUR. Feedback said everything looked the same. The fix is not
      paint, it is hierarchy, so this is ONE hue meaning ONE thing: it expires.
