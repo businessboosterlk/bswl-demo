@@ -208,8 +208,15 @@ html[data-theme="mono"]    {--accent:#f7f7f7;--on-accent:#0d0d0d;--theme2:#f7f7f
 .sw[aria-pressed="true"]{border-color:var(--text)}
 .sw i{position:absolute;inset:22% 22% auto auto;width:34%;height:34%;border-radius:99px;display:block}
 .urgent{color:var(--urgent);font-weight:700}
+/* On a COLOURED accent card, amber measured 2.09 to 2.53 against a floor of
+   4.5, so urgency becomes a mark instead of a hue. On the BLACK AND WHITE card
+   amber reads at 5.53 and is the whole point, so mono keeps it. Applying the
+   chip to all four took the colour out of the default app, which is the one
+   Thulaib saw on his phone. */
 .primary .urgent{color:var(--on-accent);background:rgba(0,0,0,.16);
  padding:1px 7px;border-radius:var(--r-sm);font-weight:750}
+html[data-theme="mono"] .primary .urgent{color:var(--urgent-on-light);
+ background:none;padding:0;font-weight:700}
 .card.closing{border-left:3px solid var(--urgent)}
 .meta{font-size:var(--t-xs);color:var(--text-3)}
 .sect-h{display:flex;align-items:baseline;gap:var(--s3);margin:var(--s6) 0 var(--s3)}
