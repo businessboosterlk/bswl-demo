@@ -51,6 +51,12 @@
  --line:#2a2a2a; --line-2:#3a3a3a;
  --accent:#f7f7f7; --on-accent:#0d0d0d;
  --focus:#8ab4ff;
+ /* THE ONLY COLOUR IN A MONOCHROME APP. It means ONE thing: this expires.
+    Not "new", not "important". The moment it also means important, everything
+    becomes important and the screen is flat again with paint on it. Four uses,
+    listed at .urgent below. Set this to var(--text) to remove it entirely. */
+ --urgent:#f0a92b;
+ --urgent-on-light:#8a5a00;   /* the same idea on the inverted primary card */
  --scrim:rgba(0,0,0,.62);
 }
 @media(prefers-color-scheme:light){
@@ -183,6 +189,15 @@ svg{display:block;flex:none}
 h2{font-size:var(--t-lg);font-weight:650;letter-spacing:-.015em;line-height:var(--lh-tight)}
 h3{font-size:var(--t-md);font-weight:600;letter-spacing:-.01em;line-height:var(--lh-snug)}
 .lede{font-size:var(--t-sm);color:var(--text-2);line-height:var(--lh-snug)}
+/* URGENCY, all four uses in one place.
+   1. the deadline inside a sentence   2. the same on the inverted card
+   3. a closing card's left edge       4. the seminar deadline row
+   Nothing else in this app is ever coloured. Progress, rewards, honours and
+   the syllabus stay monochrome on purpose: a student's own standing is not a
+   scoreboard, and nobody is ever ranked bottom here. */
+.urgent{color:var(--urgent);font-weight:700}
+.primary .urgent{color:var(--urgent-on-light)}
+.card.closing{border-left:3px solid var(--urgent)}
 .meta{font-size:var(--t-xs);color:var(--text-3)}
 .sect-h{display:flex;align-items:baseline;gap:var(--s3);margin:var(--s6) 0 var(--s3)}
 .sect-h h2{flex:1;min-width:0;font-size:var(--t-md)}
@@ -742,7 +757,8 @@ function recommend(){
  myRecordings().filter(function(r){return r.release==='absent';}).forEach(function(r){
   var dl=recDaysLeft(r);
   out.push({p:0,kind:'recording',rec:r.id,mins:r.mins,title:'Watch: '+r.title,
-   why:'You missed this class'+(dl===null?'':', '+dl+' day'+(dl===1?'':'s')+' left to watch it')});
+   why:'You missed this class'+(dl===null?'':', '+dl+' day'+(dl===1?'':'s')+' left to watch it'),
+   days:dl});
  });
  Object.keys(DB.tutes).forEach(function(u){
   var s=DB.tutes[u];
@@ -1016,7 +1032,10 @@ function renderNext(){
  }else if(top){
   primary='<div class="primary"><div class="kind">'+KIND[top.kind][1].replace('<svg','<svg width="14" height="14"')+esc(KIND[top.kind][0])
    +'<span class="dot"></span>'+top.mins+' min</div>'
-   +'<h2>'+esc(top.title.replace(/^Catch up: /,'').replace(/^Watch: /,''))+'</h2><p class="why">'+esc(top.why)+'</p>'
+   +'<h2>'+esc(top.title.replace(/^Catch up: /,'').replace(/^Watch: /,''))+'</h2>'
+   +'<p class="why">'+(top.days!=null&&top.days!==undefined
+     ?esc('You missed this class')+', <span class="urgent">'+top.days+' day'+(top.days===1?'':'s')+' left</span> to watch it'
+     :esc(top.why))+'</p>'
    +'<button class="btn" onclick="startTask('+recJSON(top)+')">'+(top.kind==='recording'?'Watch the class':top.kind==='tute'?'Open tute':top.kind==='papers'?'Open papers':'Start')+'</button></div>';
  }else{
   primary='<div class="card"><h2>Nothing urgent</h2><p class="lede" style="margin-top:var(--s2)">'
@@ -1403,13 +1422,15 @@ function renderRecordings(){
  var closed=DB.recordings.filter(function(r){return recMine(r)&&!recLive(r);}).length;
  el.innerHTML=(mine.length?mine.map(function(r){
   var dl=recDaysLeft(r);
-  return '<article class="card">'
+  var closing=dl!==null&&dl<=3;
+  return '<article class="card'+(closing?' closing':'')+'">'
    +'<div class="tt" style="font-weight:600">'+esc(r.title)+'</div>'
    +'<div class="tw">'+dowName(r.date)+' '+fmtD(r.date)+' · '+r.mins+' min'
      +(r.release==='absent'?' · you missed this class':'')+'</div>'
    +'<p class="lede" style="margin-top:var(--s2)">'
      +(dl===null?'No time limit on this one.'
-       :(dl===1?'Last day to watch it.':dl+' days left to watch it.'))+'</p>'
+       :(dl===1?'<span class="urgent">Last day</span> to watch it.'
+               :'<span class="urgent">'+dl+' days left</span> to watch it.'))+'</p>'
    +'<a class="btn btn-primary" style="margin-top:var(--s3)" href="'+esc(r.url)+'" '
      +'target="_blank" rel="noopener" onclick="recOpened('+r.id+')">Watch the class</a>'
    +'<button class="btn btn-secondary" style="margin-top:var(--s2)" onclick="recCopy('+r.id+')">Copy the link to save it</button>'
@@ -1786,7 +1807,9 @@ function openMsg(id){
    +'<a class="btn btn-primary" style="margin-top:var(--s4)" href="'+c.url+'" target="_blank" rel="noopener">Track package</a>';}
  else if(m.seminar){var sm=m.seminar;
   extra='<div class="list" style="margin-top:var(--s4)">'
-   +row('When',sm.when)+row('Where',sm.where)+row('Deadline',sm.deadline)
+   +row('When',sm.when)+row('Where',sm.where)
+   +'<div class="rowbtn" style="cursor:default;min-height:48px"><span class="grow meta">Deadline</span>'
+     +'<span class="urgent" style="font-size:var(--t-base)">'+esc(sm.deadline)+'</span></div>'
    +row('Your place',sm.registered?'Registered':'Not registered yet')+'</div>'
    +(sm.registered
      ?'<div class="banner" style="margin-top:var(--s4)">You are registered. It goes on Leon\u2019s list.</div>'
@@ -2327,6 +2350,36 @@ function BSWL_TEST(){
     ok('Bridge: merged once, so a reload cannot duplicate it',
        typeof DB._osMerged!=='undefined');
    }finally{ if(keep===null)localStorage.removeItem(K); else localStorage.setItem(K,keep); }
+  })();
+  /* THE ONE COLOUR. Feedback said everything looked the same. The fix is not
+     paint, it is hierarchy, so this is ONE hue meaning ONE thing: it expires.
+     These checks exist because the failure mode is spread: the moment colour
+     also means "new" or "important", every screen has it and the app is flat
+     again with paint on it. */
+  (function(){
+   const cs=getComputedStyle(document.documentElement);
+   ok('Colour: there is exactly one urgency token',
+      !!cs.getPropertyValue('--urgent').trim(),cs.getPropertyValue('--urgent').trim());
+   /* count where it can land, across every screen, not where we think it does */
+   const back=(['next','learn','progress'].find(k=>
+     document.getElementById('sc-'+k).classList.contains('on')))||'next';
+   const seen=new Set();
+   ['next','learn','progress'].forEach(sc=>{
+    try{show(sc);}catch(e){return;}
+    document.querySelectorAll('#sc-'+sc+' .urgent, #sc-'+sc+' .closing').forEach(el=>{
+     seen.add(sc+':'+(el.className+'').split(' ').filter(c=>c==='urgent'||c==='closing')[0]);});
+   });
+   try{show(back);}catch(e){}
+   ok('Colour: it never reaches Progress',![...seen].some(k=>k.indexOf('progress:')===0),
+      'rewards, honours and attendance are a student’s standing, not a scoreboard');
+   ok('Colour: it means a deadline, never a status',(function(){
+      const src=document.documentElement.innerHTML;
+      /* it must never sit on the words that describe standing */
+      return !/class="[^"]*urgent[^"]*"[^>]*>\s*(Lost|Shaky|Behind|Weak|Bad)/i.test(src);})(),
+      'a student who is behind is not an emergency');
+   ok('Colour: one variable turns it all off',
+      document.querySelectorAll('[style*="#f0a92b"],[style*="f0a92b"]').length===0,
+      'no hardcoded copy of the hue anywhere, so --urgent is the only switch');
   })();
   /* RECORDINGS. The same three statements the OS pins, asserted here against
      this student's own attendance. Two surfaces, one rule: if either side
