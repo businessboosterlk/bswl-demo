@@ -1735,7 +1735,10 @@ function osMessages(){
    else if(m.aud==='c0'&&ME.batch!=='2027')return;
    else if(m.aud==='c1'&&ME.batch!=='2028')return;
    out.push({id:9000+out.length,type:m.type||'class',prio:2,read:false,
-    date:m.date,title:m.title,body:m.body,fromOS:true});
+    date:m.date,title:m.title,body:m.body,
+    /* a tracking number arrives as a FIELD, so the app can offer to copy it
+       rather than asking a student to retype it out of a sentence */
+    courier:m.courier||null,fromOS:true});
   });
  }catch(e){}
  return out;
@@ -1801,10 +1804,27 @@ function msgGo(where){closeSheet();closeInbox();
  if(where==='papers'){show('learn');seg('papers');}
  else if(where==='learn'){show('learn');seg('syllabus');}
  else show('next');}
+/* one row per student per seminar, last write wins, so an undo removes it */
+function seminarRSVP(m,going){
+ try{
+  var K='bswl_rsvp_v1';
+  var all=JSON.parse(localStorage.getItem(K)||'[]');
+  var key=(m.seminar&&m.seminar.title)||m.title;
+  all=all.filter(function(r){return !(r.seminar===key&&r.student===ME.name);});
+  if(going)all.push({seminar:key,student:ME.name,batch:ME.batch,loc:ME.loc,at:todayISO()});
+  localStorage.setItem(K,JSON.stringify(all.slice(-200)));
+ }catch(e){}
+}
 function registerSeminar(id){
  var m=msgById(id);if(!m||!m.seminar)return;
- m.seminar.registered=true;closeSheet();renderInbox();renderNext();
- toast('Registered. Leon\u2019s list has your name.',function(){m.seminar.registered=false;renderInbox();renderNext();});
+ m.seminar.registered=true;
+ /* THE RETURN LEG. Until now the app said "Leon's list has your name" and no
+    list existed anywhere. The registration goes back up the same bridge the
+    message came down, so the OS can show who is coming. */
+ seminarRSVP(m,true);
+ closeSheet();renderInbox();renderNext();
+ toast('Registered. Leon\u2019s list has your name.',function(){
+  m.seminar.registered=false;seminarRSVP(m,false);renderInbox();renderNext();});
 }
 /* the highest-priority unread message earns one slim card on Today */
 function todayMsg(){var u=DB.inbox.filter(function(m){return !m.read;});

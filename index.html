@@ -1103,6 +1103,12 @@ body.dark .stat-kpi .val{color:#fff}
           <div class="card-b" id="clsTopics" style="padding:6px 18px 12px"></div>
           <div class="card-b" style="padding:0 18px 16px"><button class="btn-primary" onclick="CLS.save()">Save this class</button> <span class="hint" id="clsSaved"></span></div>
         </div>
+        <!-- TUTES. Leon assigns these in real life and the system had no way for
+             him to say so, so the app showed "assigned" for units nobody set.
+             It sits on step 2 because he is already here marking what he taught. -->
+        <div class="card"><div class="card-h"><h3>Set the tute for this class</h3><span class="hint">The batch sees it in Learn, under Tutes</span></div>
+          <div class="card-b" style="padding:10px 18px 16px" id="clsTutes"></div>
+        </div>
         <div class="card"><div class="card-h"><h3>Coverage so far</h3><span class="hint">How much of the syllabus each batch has seen</span></div><div class="card-b" id="clsProgress" style="padding:10px 18px 16px"></div></div>
         <div class="card"><div class="card-h"><h3>Batch signals</h3><span class="hint">Where this batch is struggling and what to teach next</span></div><div class="card-b" id="clsIntel" style="padding:10px 18px 16px"></div></div>
         <div class="card"><div class="card-h"><h3>Worth a look</h3><span class="hint">At most ten students, each with a reason and one action</span></div><div class="card-b" id="clsQueue" style="padding:6px 18px 14px"></div></div>
@@ -1163,6 +1169,14 @@ body.dark .stat-kpi .val{color:#fff}
                   <option value="Sasik · Gampaha">Sasik, Gampaha</option><option value="Residence">Residence</option><option value="Online">Online students</option>
                 </select></div>
             </div>
+            <!-- A tracking number typed into a sentence cannot be copied, linked
+                 or checked. These appear only for a courier dispatch. -->
+            <div id="msgCourier" style="display:none;margin-top:10px;grid-template-columns:1fr 1fr;gap:10px">
+              <div><label class="hint" for="msgCourierCo">Courier</label>
+                <input class="filter" id="msgCourierCo" style="width:100%" maxlength="40" placeholder="Fardar Express" oninput="MSG.preview()"></div>
+              <div><label class="hint" for="msgCourierNo">Tracking number</label>
+                <input class="filter" id="msgCourierNo" style="width:100%" maxlength="30" placeholder="FD1284563" oninput="MSG.preview()"></div>
+            </div>
             <div style="margin-top:10px"><label class="hint" for="msgTitle">Title</label>
               <input class="filter" id="msgTitle" style="width:100%" maxlength="80" placeholder="Saturday class starts at 9.00" oninput="MSG.preview()"></div>
             <div style="margin-top:10px"><label class="hint" for="msgBody">Message</label>
@@ -1171,6 +1185,11 @@ body.dark .stat-kpi .val{color:#fff}
             <div class="hint" id="msgWarn" style="margin-top:6px;font-weight:700"></div>
             <button class="btn-primary" id="msgSendBtn" style="margin-top:12px" onclick="MSG.send()">Review and send</button>
           </div>
+        </div>
+        <!-- THE RETURN LEG. The app told a student "Leon's list has your name"
+             and no list existed. This is that list. -->
+        <div class="card"><div class="card-h"><h3>Who is coming</h3><span class="hint" id="rsvpHint"></span></div>
+          <div class="card-b" style="padding:10px 18px 16px" id="rsvpBody"></div>
         </div>
         <div class="card"><div class="card-h"><h3>Sent and scheduled</h3><span class="hint">Delivery and read figures are demo values until the live pipe connects</span></div>
           <table class="tbl"><thead><tr><th>Message</th><th>Audience</th><th class="tnum">Sent to</th><th class="tnum">Opened</th><th>Status</th></tr></thead><tbody id="msgBody2"></tbody></table>
@@ -1733,6 +1752,7 @@ function seedData(){
      `release` decides who gets it. 'absent' is the default and reads the
      attendance Leon has already marked, so the usual case costs nobody a
      single click. */
+  tuteAssign:[{unit:'3',cohort:0,date:ym+'-04',by:'Leon'},{unit:'4',cohort:0,date:ym+'-11',by:'Leon'}],
   recordings:[
    {id:1,date:ym+'-11',cohort:0,loc:'Kings',title:'Unit 4 · Organising and leading',
     url:'https://drive.google.com/file/d/1kM4nQ7pXbVw2LrT9dAeZ/view',
@@ -3547,6 +3567,51 @@ async function runSelfTest(opts){
       return /Nobody can see this/.test(txt);})());
    CURRENT.role=prev;
   })();
+  /* THREE GAPS CLOSED. Each was a thing the app showed that the OS could not
+     set, so the screen implied a control that did not exist. */
+  (function(){
+   go('messages');
+   document.getElementById('msgType').value='delivery';MSG.preview();
+   ok('Courier: the tracking number has its own field',
+      getComputedStyle(document.getElementById('msgCourier')).display!=='none'
+      &&!!document.getElementById('msgCourierNo'),
+      'typed into a sentence it cannot be copied, linked or checked');
+   document.getElementById('msgType').value='class';MSG.preview();
+   ok('Courier: the fields hide for every other type',
+      getComputedStyle(document.getElementById('msgCourier')).display==='none');
+   ok('Courier: a dispatch without a number is refused',(function(){
+      const n=DB.get('messages').length;
+      document.getElementById('msgType').value='delivery';
+      document.getElementById('msgTitle').value='Pack sent';
+      document.getElementById('msgBody').value='On its way.';
+      document.getElementById('msgCourierNo').value='';
+      MSG.armed=true;MSG.send();
+      const blocked=DB.get('messages').length===n;
+      document.getElementById('msgType').value='class';MSG.armed=false;MSG.preview();
+      return blocked;})(),'a number in the body is not a tracked number');
+
+   go('classes');renderClassesPage();KLASS.tab('topics');
+   ok('Tutes: the OS can assign one',
+      !!document.getElementById('clsTutes')
+      &&document.getElementById('clsTutes').innerText.indexOf('Unit')>-1,
+      'the app showed "assigned" for units nobody had ever set');
+   ok('Tutes: an assignment is a record, not a label',
+      Array.isArray(DB.get('tuteAssign'))&&DB.get('tuteAssign').length>0,
+      (DB.get('tuteAssign')||[]).length+' set');
+
+   go('messages');
+   ok('Seminars: the OS has somewhere for registrations to land',
+      !!document.getElementById('rsvpBody'),
+      'the app said "Leon’s list has your name" and no list existed');
+   ok('Seminars: it reads the app’s own key',(function(){
+      const K='bswl_rsvp_v1',keep=localStorage.getItem(K);
+      localStorage.setItem(K,JSON.stringify([{seminar:'Paper technique',student:'Test Student',batch:'2027',at:todayISO()}]));
+      renderRSVPs();
+      const shown=document.getElementById('rsvpBody').innerText.indexOf('Test Student')>-1;
+      if(keep===null)localStorage.removeItem(K); else localStorage.setItem(K,keep);
+      renderRSVPs();
+      return shown;})());
+  })();
   /* ICON SIZE. I shipped an Enrol button whose icon filled the whole button
      and pushed the label out of view, because I.users was the one icon in the
      set without class="ic" and nothing sized a bare svg. I had tested that
@@ -4028,6 +4093,21 @@ function coveredTopics(cohort){var set={};(DB.get('classLog')||[]).forEach(funct
 var CLS={date:null,cohort:'0',picked:{},
  set:function(k,v){this[k==='date'?'date':'cohort']=v;this.picked={};renderClasses();},
  tog:function(id){if(this.picked[id])delete this.picked[id];else this.picked[id]=1;renderClasses();},
+
+ tute:function(u){
+  var d=document.getElementById('klDate').value,c=+document.getElementById('klBatch').value;
+  var set=DB.get('tuteAssign');
+  var i=set.findIndex(function(x){return x.unit===u&&x.cohort===c;});
+  if(i>=0){var was=set[i];set.splice(i,1);
+   logFeed(CURRENT.id,'Tute unassigned','Unit '+u+' · '+COHORT_SHORT[c]+' Batch');
+   DB.commit();renderTuteSetter();
+   toastUndo('Unit '+u+' tute removed',function(){set.push(was);DB.commit();renderTuteSetter();});
+   return;}
+  set.push({unit:u,cohort:c,date:d,by:CURRENT.name});
+  logFeed(CURRENT.id,'Tute assigned','Unit '+u+' · '+COHORT_SHORT[c]+' Batch');
+  DB.commit();renderTuteSetter();
+  toast(I.check+' Unit '+u+' tute assigned to the '+COHORT_SHORT[c]+' batch.');
+ },
  save:function(){var ids=Object.keys(this.picked);if(!ids.length){toast(I.warn+' Tick at least one topic first');return;}
   var log=DB.get('classLog');var ex=log.find(function(r){return r.date===CLS.date&&r.cohort===+CLS.cohort;});
   if(ex){ids.forEach(function(t){if(ex.topics.indexOf(t)<0)ex.topics.push(t);});}
@@ -4065,7 +4145,7 @@ var KLASS={t:'attendance',
    +' · '+(log?log.topics.length+' topics logged':'no topics yet')
    +' · '+(rec?'recording added':'no recording');
   if(KLASS.t==='attendance')renderAttendance();
-  else if(KLASS.t==='topics')renderClasses();
+  else if(KLASS.t==='topics'){renderClasses();renderTuteSetter();}
   else renderRecordings();
  }
 };
@@ -4098,6 +4178,19 @@ function BSWL_batchIntel(cohort){
  /* deterministic seeded aggregates per cohort, labelled demo in the UI */
  var demPc=cohort===0?46:28, tutePc=cohort===0?71:58, median=cohort===0?14:11, mismatch=cohort===0?9:6, sample=cohort===0?43:31;
  return {covPc:Math.round(covN/total*100),demPc:demPc,tutePc:tutePc,median:median,mismatch:mismatch,sample:sample};
+}
+function renderTuteSetter(){
+ var el=document.getElementById('clsTutes');if(!el)return;
+ var d=document.getElementById('klDate').value,c=+document.getElementById('klBatch').value;
+ var set=DB.get('tuteAssign')||[];
+ el.innerHTML=BSWL_SYLLABUS().map(function(u){
+  var cur=set.find(function(x){return x.unit===u.u&&x.cohort===c;});
+  return '<div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line2)">'
+   +'<div style="flex:1"><b style="font-size:13.5px">Unit '+u.u+'</b><div class="hint">'+esc2(u.name)+'</div></div>'
+   +(cur?'<span class="hint">set '+cur.date+'</span>':'')
+   +'<button class="'+(cur?'btn-ghost':'btn-primary')+'" onclick="CLS.tute(\''+u.u+'\')">'
+   +(cur?'Remove':'Assign')+'</button></div>';
+ }).join('');
 }
 function renderClassesIntel(){
  var el=document.getElementById('clsIntel');if(!el)return;
@@ -4387,6 +4480,8 @@ function msgToStudent(id){
 var MSG={armed:false,toStudent:null,
  clearStudent:function(){MSG.toStudent=null;MSG.preview();},
  preview:function(){MSG.armed=false;var btn=document.getElementById('msgSendBtn');btn.textContent='Review and send';
+  var isCourier=document.getElementById('msgType').value==='delivery';
+  document.getElementById('msgCourier').style.display=isCourier?'grid':'none';
   var v=document.getElementById('msgAud').value;
   var n=MSG.toStudent?1:msgAudienceCount(v);
   var lbl=MSG.toStudent?MSG.toStudent.name+' only · <button class="hint" style="text-decoration:underline" onclick="MSG.clearStudent()">clear</button>':msgAudienceLabel(v);
@@ -4406,7 +4501,12 @@ var MSG={armed:false,toStudent:null,
   if(n===0){toast(I.warn+' That audience has no active students.');return;}
   var btn=document.getElementById('msgSendBtn');
   if(!MSG.armed){MSG.armed=true;btn.textContent='Send to '+n+' student'+(n===1?'':'s')+'?';return;}
+  var cCo=(document.getElementById('msgCourierCo').value||'').trim();
+  var cNo=(document.getElementById('msgCourierNo').value||'').trim();
+  if(document.getElementById('msgType').value==='delivery'&&!cNo){
+   toast(I.warn+' A courier dispatch needs the tracking number in its own field, not in the message.');return;}
   DB.get('messages').unshift({id:DB.nextId('messages'),type:document.getElementById('msgType').value,
+   courier:cNo?{co:cCo||'Courier',no:cNo}:null,
    title:t,body:bdy,aud:MSG.toStudent?MSG.toStudent.name:msgAudienceLabel(v),
    studentId:MSG.toStudent?MSG.toStudent.id:null,
    sentAt:todayISO()+' '+'09:41',by:CURRENT.id,
@@ -4419,11 +4519,12 @@ var MSG={armed:false,toStudent:null,
    var out=JSON.parse(localStorage.getItem('bswl_msgs_v1')||'[]');
    var m=DB.get('messages')[0];
    out.push({ref:'M'+m.id+'-'+m.sentAt,type:m.type,title:m.title,body:m.body,
-    aud:v,studentId:m.studentId,date:todayISO()});
+    courier:m.courier||null,aud:v,studentId:m.studentId,date:todayISO()});
    localStorage.setItem('bswl_msgs_v1',JSON.stringify(out.slice(-50)));
   }catch(e){}
   DB.commit();MSG.armed=false;MSG.toStudent=null;
   document.getElementById('msgTitle').value='';document.getElementById('msgBody').value='';
+  document.getElementById('msgCourierCo').value='';document.getElementById('msgCourierNo').value='';
   renderMessages();
   toast(I.check+' Sent to '+n+' students. It reaches their apps when the live pipe connects.');
  }
@@ -4449,6 +4550,24 @@ function renderMessages(){
    +'<td>'+(m.status==='scheduled'?'<span class="hint">Scheduled · '+(m.schedFor||'')+'</span>':'Sent')+'</td></tr>';
  }).join('');
  MSG.preview();
+ renderRSVPs();
+}
+function renderRSVPs(){
+ var el=document.getElementById('rsvpBody');if(!el)return;
+ var all=[];
+ try{all=JSON.parse(localStorage.getItem('bswl_rsvp_v1')||'[]');}catch(e){}
+ var by={};all.forEach(function(r){(by[r.seminar]=by[r.seminar]||[]).push(r);});
+ var names=Object.keys(by);
+ document.getElementById('rsvpHint').textContent=
+  names.length?all.length+' registered across '+names.length+' seminar'+(names.length===1?'':'s')
+   :'nobody yet';
+ el.innerHTML=names.length?names.map(function(k){
+  return '<div style="padding:8px 0"><b style="font-size:13.5px">'+esc2(k)+'</b>'
+   +'<span class="hint"> · '+by[k].length+' registered</span>'
+   +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">'
+   +by[k].map(function(r){return '<span class="chip" style="cursor:default">'+esc2(r.student)
+     +'<span class="hint"> '+esc2(r.batch||'')+'</span></span>';}).join('')+'</div></div>';
+ }).join(''):'<div class="hint">Nobody has registered yet. Registrations appear here as students tap Register in the app.</div>';
 }
 if(typeof RENDERERS!=='undefined')RENDERERS.messages=renderMessages;
 /* ===== STUDENT APP CONTROL v2: access, experience, content, health =====
