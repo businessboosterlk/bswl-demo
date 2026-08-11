@@ -3100,9 +3100,32 @@ function renderRecurring(keepFocus){
  document.getElementById('rcLbl').textContent=monthLbl(ym);
  document.getElementById('rcNext').disabled=ymShift(ym,1)>ymNow();
  document.getElementById('rcPrev').disabled=ymShift(ym,-1)<RECUR.first();
- const pct=st.expected?Math.min(100,Math.round(st.collected/st.expected*100)):0;
- document.getElementById('payHero').innerHTML='<div class="ph-lbl">Collected · '+monthShort(ym)+'</div><div class="ph-val"><span data-to="'+st.collected+'" data-from="'+RECUR._last+'" data-fmt="lkr">'+lkr(st.collected)+'</span></div><div class="ph-sub">of '+lkr(st.expected)+' expected · '+pct+'%</div><div class="ph-track"><div class="ph-fill" style="width:'+pct+'%"></div></div><div class="ph-foot"><span><b>'+lkr(st.outstanding)+'</b> outstanding</span><span>'+(st.owing.length+st.partial.length)+' to collect</span></div>';
- animateCounts(document.getElementById('payHero'));RECUR._last=st.collected;
+ /* THE HEADLINE MUST DESCRIBE WHAT IS ON SCREEN. Search narrowed 165 rows to
+    7 while these totals stayed at the whole book, so the number above the
+    table was answering a different question from the one just asked. When a
+    filter is active the figures come from the filtered set and the label says
+    so; with nothing filtered it is the whole book, as before. */
+ const _filtered=RECUR.filt(st.plans);
+ const _narrowed=_filtered.length!==st.plans.length||RECUR.status!=='all';
+ const _view=(function(){
+  if(!_narrowed)return {collected:st.collected,expected:st.expected,
+    outstanding:st.outstanding,toPay:st.owing.length+st.partial.length};
+  let e=0,c=0,o=0,n=0;
+  const set=RECUR.status==='paid'?RECUR.filt(st.paid)
+          :RECUR.status==='partial'?RECUR.filt(st.partial)
+          :RECUR.status==='owing'?RECUR.filt(st.owing):_filtered;
+  set.forEach(function(pl){const due=recFee(pl),got=recPaid(pl.id,ym);
+   e+=due;c+=got;if(got<due){o+=due-got;n++;}});
+  return {collected:c,expected:e,outstanding:o,toPay:n};
+ })();
+ const pct=_view.expected?Math.min(100,Math.round(_view.collected/_view.expected*100)):0;
+ document.getElementById('payHero').innerHTML='<div class="ph-lbl">Collected · '+monthShort(ym)
+  +(_narrowed?' · <b>these '+_filtered.length+' only</b>':'')+'</div>'
+  +'<div class="ph-val"><span data-to="'+_view.collected+'" data-from="'+RECUR._last+'" data-fmt="lkr">'+lkr(_view.collected)+'</span></div>'
+  +'<div class="ph-sub">of '+lkr(_view.expected)+' expected · '+pct+'%</div>'
+  +'<div class="ph-track"><div class="ph-fill" style="width:'+pct+'%"></div></div>'
+  +'<div class="ph-foot"><span><b>'+lkr(_view.outstanding)+'</b> outstanding</span><span>'+_view.toPay+' to collect</span></div>';
+ animateCounts(document.getElementById('payHero'));RECUR._last=_view.collected;
  const fp=RECUR.filt(st.paid),fpar=RECUR.filt(st.partial),fo=RECUR.filt(st.owing);
  const segs=[['paid','Paid',fp.length,'var(--green)'],['partial','Partial',fpar.length,'var(--amber)'],['owing','Owing',fo.length,'var(--danger)']];
  document.getElementById('paySegs').innerHTML=segs.map(g=>'<button class="seg seg-'+g[0]+(RECUR.status===g[0]?' on':'')+'" onclick="RECUR.setStatus(\''+g[0]+'\')"><div class="sv">'+g[2]+'</div><div class="sl"><span class="dot" style="background:'+g[3]+'"></span>'+g[1]+'</div></button>').join('');
@@ -3569,6 +3592,33 @@ async function runSelfTest(opts){
       f.on=was;renderApp2();
       return /Nobody can see this/.test(txt);})());
    CURRENT.role=prev;
+  })();
+  /* FILTERED TOTALS. Search narrowed the fee list from 165 rows to 7 and the
+     figures above it did not move, so Leon read a whole-book number sitting
+     directly over seven rows. A screen showing one total above a different set
+     of rows is lying with real numbers, which is worse than showing none. */
+  (function(){
+   go('recurring');
+   const rows=()=>document.querySelectorAll('#payList .pay-row').length;
+   const money=()=>{const t=document.getElementById('payHero').innerText;
+    const m=t.match(/([\d,]+)/g)||[];return m.join('|');};
+   const q0=RECUR.q,s0=RECUR.status;
+   RECUR.setQ('');const allRows=rows(),allMoney=money();
+   RECUR.setQ('per');const narrowRows=rows(),narrowMoney=money();
+   ok('Fees: search actually narrows the list',narrowRows<allRows,
+      allRows+' rows down to '+narrowRows);
+   ok('Fees: the totals follow the filter',narrowMoney!==allMoney,
+      narrowMoney===allMoney?'STILL SHOWING THE WHOLE BOOK over a filtered table':'they move together');
+   ok('Fees: the header says the view is narrowed',
+      /these \d+ only/.test(document.getElementById('payHero').innerText),
+      'a smaller number with no explanation reads as money going missing');
+   /* and the arithmetic has to be real, not merely different */
+   const st=recStats(RECUR.ym||ymNow());
+   let e=0,c=0;RECUR.filt(st.plans).forEach(function(p){e+=recFee(p);c+=recPaid(p.id,RECUR.ym||ymNow());});
+   ok('Fees: the filtered total is the sum of the filtered rows',
+      document.getElementById('payHero').innerText.indexOf(lkr(c).replace(/^[^\d]*/,''))>-1,
+      'expected '+lkr(c));
+   RECUR.setQ(q0);RECUR.status=s0;renderRecurring();
   })();
   /* THREE GAPS CLOSED. Each was a thing the app showed that the OS could not
      set, so the screen implied a control that did not exist. */
