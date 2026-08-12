@@ -270,7 +270,13 @@ label{display:block;font-size:var(--t-sm);font-weight:600;margin-bottom:var(--s2
  letter-spacing:.02em;opacity:.62;margin-bottom:var(--s2)}
 .primary h2{font-size:var(--t-2xl);letter-spacing:-.02em;margin-bottom:var(--s2)}
 .primary .why{font-size:var(--t-sm);opacity:.66;line-height:var(--lh-snug)}
-.primary .btn{margin-top:var(--s5);background:var(--on-accent);color:var(--accent)}
+.primary .btn{margin-top:var(--s5);background:var(--btn-ink);color:var(--btn-on)}
+/* THE ACTION BUTTON IS NEVER THE THEME. It was background:var(--on-accent)
+   with color:var(--accent), so in Electric it came out navy-on-blue and in
+   Neon dark-plum-on-pink. The one control a student must be able to hit is
+   not the place to express a colour choice. Black on a light card, white on a
+   dark one, in every theme, forever. */
+:root{--btn-ink:#0d0d0d;--btn-on:#f7f7f7}
 .primary .dot{width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.5;flex:none}
 
 /* block, not inline: these are stacked lines inside a button, and inline
@@ -2476,6 +2482,31 @@ function BSWL_TEST(){
    ok('Themes: the choice survives a reload',(function(){
       setTheme('neon');const kept=localStorage.getItem('bswl_theme')==='neon';
       setTheme(was);return kept;})());
+  })();
+  /* THE ACTION BUTTON. It read background:var(--on-accent) on color:var(--accent),
+     so it wore the theme: navy on blue in Electric, plum on pink in Neon. The
+     one control a student has to hit is not where a colour choice belongs. */
+  (function(){
+   const was=THEME_NOW(),bad=[];
+   function rgb(x){x=(x||'').trim();
+    if(x[0]==='#'){var h=x.slice(1);if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+     return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+    return (x.match(/[\d.]+/g)||[]).map(Number);}
+   function lum(c){const f=c.slice(0,3).map(v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);});
+    return 0.2126*f[0]+0.7152*f[1]+0.0722*f[2];}
+   const seen=new Set();
+   THEMES.forEach(t=>{setTheme(t.k);show('next');
+    const b=document.querySelector('.primary .btn');if(!b)return;
+    const cs=getComputedStyle(b);
+    seen.add(cs.backgroundColor+'|'+cs.color);
+    const r=(Math.max(lum(rgb(cs.color)),lum(rgb(cs.backgroundColor)))+0.05)
+           /(Math.min(lum(rgb(cs.color)),lum(rgb(cs.backgroundColor)))+0.05);
+    if(r<7)bad.push(t.k+' '+r.toFixed(2));});
+   setTheme(was);
+   ok('Colour: the action button is the same in every theme',seen.size===1,
+      [...seen].join(' / ')+' · a student must never have to hunt for the button');
+   ok('Colour: the action button is high contrast in every theme',bad.length===0,
+      bad.join(', ')||'all four above 7:1');
   })();
   /* THE ONE COLOUR. Feedback said everything looked the same. The fix is not
      paint, it is hierarchy, so this is ONE hue meaning ONE thing: it expires.
