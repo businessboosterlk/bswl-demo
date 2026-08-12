@@ -3166,8 +3166,12 @@ function renderRecurring(keepFocus){
  animateCounts(document.getElementById('payHero'));RECUR._last=_view.collected;
  const fp=RECUR.filt(st.paid),fpar=RECUR.filt(st.partial),fo=RECUR.filt(st.owing);
  const segs=[['paid','Paid',fp.length,'var(--green)'],['partial','Partial',fpar.length,'var(--amber)'],['owing','Owing',fo.length,'var(--danger)']];
- document.getElementById('paySegs').innerHTML=segs.map(g=>'<button class="seg seg-'+g[0]+(RECUR.status===g[0]?' on':'')+'" onclick="RECUR.setStatus(\''+g[0]+'\')"><div class="sv">'+g[2]+'</div><div class="sl"><span class="dot" style="background:'+g[3]+'"></span>'+g[1]+'</div></button>').join('');
- const chips=[];const chip=(on,label,fn)=>'<button class="chip'+(on?' on':'')+'" onclick="'+fn+'">'+label+'</button>';
+ document.getElementById('paySegs').innerHTML=segs.map(g=>'<button class="seg seg-'+g[0]+(RECUR.status===g[0]?' on':'')+'" aria-pressed="'+(RECUR.status===g[0]?'true':'false')+'" onclick="RECUR.setStatus(\''+g[0]+'\')"><div class="sv">'+g[2]+'</div><div class="sl"><span class="dot" style="background:'+g[3]+'"></span>'+g[1]+'</div></button>').join('');
+ const chips=[];/* THE STATE WAS ONLY A COLOUR. A filter chip carried "on" in a CSS class and
+   nowhere else, so a screen reader read three identical buttons and never said
+   which group the fees were being filtered to. Same for the paid/partial/owing
+   segments. aria-pressed is the state; the class is only how it looks. */
+ const chip=(on,label,fn)=>'<button class="chip'+(on?' on':'')+'" aria-pressed="'+(on?'true':'false')+'" onclick="'+fn+'">'+label+'</button>';
  if(CFG.modules.cohorts){chips.push(chip(RECUR.cohort==='all','All groups',"RECUR.setCohort('all')"));CFG.cohorts.forEach((c,i)=>chips.push(chip(RECUR.cohort===String(i),c,"RECUR.setCohort('"+i+"')")));}
  const pc=document.getElementById('payChips');pc.innerHTML=chips.join('');pc.style.display=chips.length?'':'none';
  let show=RECUR.status==='paid'?fp:RECUR.status==='partial'?fpar:RECUR.status==='owing'?fo:RECUR.filt(st.plans);
@@ -4048,6 +4052,22 @@ async function runSelfTest(opts){
        beforeAudience+' students and '+beforeViews+' views survived the edit');
     /* put the seed back so nothing downstream measures my test data */
     after.title=okTitle;delete after.editedBy;delete after.editedOn;REC.edit=null;
+   })();
+   /* A TOGGLE WHOSE STATE IS ONLY A COLOUR. The fees filter chips carried "on"
+      in a CSS class and nowhere else, so a screen reader read three identical
+      buttons and never said which group the money was filtered to. This is the
+      general form: any button the code marks as on must SAY so. */
+   (function(){
+    const mute=[];
+    ['recurring','records','customers','classes','tasks','finance'].forEach(function(pg){
+     go(pg);
+     document.querySelectorAll('#page-'+pg+' button.on').forEach(function(b){
+      const st=b.getAttribute('aria-pressed')||b.getAttribute('aria-selected')
+             ||b.getAttribute('aria-checked')||b.getAttribute('aria-current');
+      if(st!=='true')mute.push(pg+':'+(b.className||'').split(' ')[0]);
+     });});
+    ok('Every toggle that looks selected also says it is',mute.length===0,
+       mute.slice(0,4).join(', ')||'chips, segments and switches all expose state');
    })();
    ok('Recordings: page is owner and manager only, never sales',
       document.querySelector('.nav-item[data-pg="classes"]').dataset.role==='manager'
