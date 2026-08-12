@@ -257,7 +257,7 @@ html[data-theme="mono"] .primary .urgent{color:var(--urgent-on-light);
 .seg button{flex:1;text-align:center;font-size:var(--t-sm);font-weight:600;min-height:38px;
  border-radius:calc(var(--r-md) - 3px);color:var(--text-2);
  transition:background var(--m-fast) var(--ease),color var(--m-fast) var(--ease)}
-.seg button[aria-selected="true"]{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg button[aria-selected="true"]{background:var(--accent);color:var(--on-accent);box-shadow:0 1px 2px rgba(0,0,0,.12)}
 
 input,select,textarea{font:inherit;color:var(--text);background:var(--surface-2);
  border:1px solid var(--line-2);border-radius:var(--r-md);padding:var(--s3);width:100%;min-height:48px}
@@ -393,7 +393,7 @@ label{display:block;font-size:var(--t-sm);font-weight:600;margin-bottom:var(--s2
  color:var(--text-3);font-size:11px;font-weight:600;text-align:center;
  transition:color var(--m-fast) var(--ease)}
 .tabs button svg{width:22px;height:22px}
-.tabs button[aria-selected="true"]{color:var(--text)}
+.tabs button[aria-selected="true"]{color:var(--accent)}
 /* ── SPLASH. It replaces a blank launch, it must never become one. Cold start
    only, time-boxed, tap anywhere to skip. ── */
 .splash{position:fixed;inset:0;z-index:200;background:var(--bg);color:var(--text);
