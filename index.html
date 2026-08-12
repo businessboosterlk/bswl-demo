@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="bb-build" content="stafffz180454">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="manifest" href="manifest.json">
@@ -334,6 +333,12 @@ details.card>summary:hover{background:var(--surface-2)}
 .tbl tbody tr:last-child td{border-bottom:none}
 .tbl .tn{font-weight:700}.tbl .tm{font-size:11px;color:var(--muted)}
 .tnum{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+/* .hint LOOKED LIKE A UTILITY AND WAS NOT. It existed only as `.card-h .hint`
+   and `.st-head .hint`, so writing class="hint" anywhere else gave 16px of
+   full-brightness ink with no error anywhere. Thulaib spotted "47 enquiries"
+   sitting on the Enquiries page looking like body copy. A class that works in
+   one container and silently does nothing in another is worse than no class. */
+.hint{font-size:12.5px;color:var(--muted)}
 /* chart hover: the value appears for the column you are pointing at. The
    highlighted month keeps its number permanently, so the chart is never blank. */
 .bcol .bval{opacity:0;transition:opacity .14s var(--ease)}
@@ -1092,7 +1097,7 @@ body.dark .stat-kpi .val{color:#fff}
           <div class="sp"></div>
           <span class="hint" id="klHint"></span>
         </div>
-        <div class="tabs" id="klTabs" style="margin-bottom:var(--sp-5)">
+        <div class="tabbar" id="klTabs" style="margin-bottom:var(--sp-5)">
           <button class="tab active" data-kt="attendance" onclick="KLASS.tab('attendance')">1 · Who came</button>
           <button class="tab" data-kt="topics" onclick="KLASS.tab('topics')">2 · What you taught</button>
           <button class="tab" data-kt="recording" onclick="KLASS.tab('recording')">3 · The recording</button>
@@ -3615,6 +3620,47 @@ async function runSelfTest(opts){
       f.on=was;renderApp2();
       return /Nobody can see this/.test(txt);})());
    CURRENT.role=prev;
+  })();
+  /* A CLASS THAT RESOLVES TO NOTHING. Thulaib pointed at "47 enquiries" sitting
+     on the Enquiries page looking like body copy. The cause was not that line:
+     .hint existed only as `.card-h .hint` and `.st-head .hint`, so writing
+     class="hint" anywhere else got 16px of full-brightness ink and no error
+     anywhere. The same scan found class="tabs", which this system does not
+     have at all; its tab bar is .tabbar. Both are the same fault: markup
+     asking for styling that was never written, failing silently.
+     This reads the real stylesheets, so it catches the NEXT one. */
+  (function(){
+   const declared=new Set();
+   [...document.styleSheets].forEach(ss=>{try{[...ss.cssRules].forEach(r=>{
+    if(!r.selectorText)return;
+    (r.selectorText.match(/\.[a-zA-Z][\w-]*/g)||[]).forEach(c=>declared.add(c.slice(1)));
+   });}catch(e){}});
+   /* names the JS uses as hooks rather than styling, and which carry their
+      look from a sibling class or an inline style */
+   const HOOKS={'imp-btn':1,'kpi-row':1,'seg-paid':1,'seg-partial':1,'seg-owing':1,'as-r':1};
+   const orphan={};
+   Object.keys(RENDERERS).forEach(k=>{
+    if(CFG.modules[k]===false)return;
+    try{go(k);}catch(e){return;}
+    document.querySelectorAll('#page-'+k+' *').forEach(e=>{
+     if(!e.offsetParent)return;
+     const cls=(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className)||'';
+     String(cls).split(/\s+/).filter(Boolean).forEach(c=>{
+      if(!declared.has(c)&&!HOOKS[c])orphan[c]=(orphan[c]||0)+1;});
+    });});
+   go('dashboard');
+   ok('Styling: every class in the markup exists in the stylesheet',
+      Object.keys(orphan).length===0,
+      Object.keys(orphan).join(', ')||'no class asks for styling that was never written');
+  })();
+  /* and the utility that started it must work OUTSIDE a card header */
+  (function(){
+   const probe=document.createElement('div');probe.className='hint';probe.textContent='x';
+   document.querySelector('.page.active').appendChild(probe);
+   const fs=parseFloat(getComputedStyle(probe).fontSize);
+   probe.remove();
+   ok('Styling: .hint works anywhere, not only inside a card header',fs<=13.5,
+      fs+'px · it was scoped, so it silently did nothing on a page');
   })();
   /* ENQUIRIES. One narrowing function, and everything reads its result. The
      failure this prevents is a second code path: a table and a board that each
