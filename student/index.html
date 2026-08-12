@@ -90,13 +90,20 @@
    count, which is the difference between a clock and a flicker. */
 .examclock{text-align:center;padding:var(--s5) var(--s4)}
 .ec-lbl{font-size:var(--t-xs);color:var(--text-3);text-transform:uppercase;
- letter-spacing:.08em;font-weight:700;margin-bottom:var(--s2)}
-.ec-row{display:flex;align-items:baseline;justify-content:center;gap:var(--s2)}
-.ec-d{font-size:44px;font-weight:750;letter-spacing:-.03em;line-height:1;
+ letter-spacing:.08em;font-weight:700;margin-bottom:var(--s3)}
+.ec-row{display:flex;justify-content:center;gap:var(--s3)}
+/* TILES, not a run of digits. Each unit is its own block so the eye reads
+   "14 days" as one fact, and so a second unit can appear as the date closes
+   without the first one moving. */
+.ec-t{background:var(--surface-2);border-radius:var(--r-md);padding:var(--s3) var(--s4);
+ min-width:96px}
+.ec-solo{min-width:0;background:none;padding:0}
+.ec-n{font-size:40px;font-weight:750;letter-spacing:-.03em;line-height:1;
  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
-.ec-u{font-size:var(--t-base);color:var(--text-2);font-weight:600}
-.ec-sub{font-size:var(--t-sm);color:var(--text-3);margin-top:var(--s2);
- font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+.ec-solo .ec-n{font-size:56px}
+.ec-l{font-size:var(--t-xs);color:var(--text-2);margin-top:var(--s2);font-weight:600}
+.ec-when{font-size:var(--t-sm);color:var(--text-3);margin-top:var(--s3)}
+.ec-say{font-size:var(--t-lg);font-weight:650;line-height:var(--lh-snug)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -608,6 +615,9 @@ var AS_OF=new Date(CFG.asOf+'T09:41:00');
    number of days the rest of the app is using. */
 var CLOCK_SKEW=Date.now()-AS_OF.getTime();
 var EXAM_AT=new Date(CFG.exam.date+'T08:00:00').getTime()+CLOCK_SKEW;
+/* kept as a string so a check can prove the target is DERIVED from CFG.exam
+   rather than a second date pasted next to it */
+var EXAM_AT_SRC="new Date(CFG.exam.date+'T08:00:00').getTime()+CLOCK_SKEW";
 /* Recomputed from an ABSOLUTE target every tick, never decremented, so a locked
    phone or a backgrounded tab comes back correct instead of behind. Inherited
    from the gym rest timer, which is the only correct countdown maths BB owns. */
@@ -1103,37 +1113,88 @@ var TUTE_LABEL={assigned:'Assigned',started:'Started',done:'Done',fix:'Needs ano
 /* ══ SCREEN: DO NEXT ══ */
 /* THE EXAM CLOCK. It was a grey line of text at the very bottom of Today, below
    everything, which is where a number goes when nobody has decided it matters.
-   Days is the unit a student actually plans in, so days carries the size and
-   the smaller units sit under it rather than competing. Deliberately calm: no
-   red, no pulse, no alarm. A teenager opens this every morning. */
+
+   FOUR BANDS, because one format cannot be honest across sixteen months. The
+   exam is 2027-08-16. Ticking seconds against a date that far out is noise, and
+   on an exam it is quietly cruel: it turns a study app into a doomsday clock a
+   sixteen year old checks every morning. Resolution earns its place as the date
+   gets close, and not before.
+
+     more than 14 days : days only
+     14 days or fewer  : days and hours
+     final 24 hours    : hours and minutes
+     the day itself    : no numbers at all, a sentence
+     after             : a sentence, never a negative or a row of zeroes
+
+   CFG.exam stays the only exam date in the file. phaseHint() reads the same
+   value and is untouched. */
+function examBand(){
+ var t=examLeft(),dISO=todayISO();
+ if(dISO>CFG.exam.date)return 'past';
+ if(dISO===CFG.exam.date)return 'today';
+ if(t.d<1)return 'hours';
+ if(t.d<=14)return 'close';
+ return 'far';
+}
+function ecTile(v,lbl){
+ return '<div class="ec-t"><div class="ec-n">'+v+'</div><div class="ec-l">'+lbl+'</div></div>';
+}
 function examClockHTML(){
- var t=examLeft();
- if(t.over)return '<article class="card examclock"><div class="tt">Exam day</div>'
-  +'<div class="tw">'+esc(CFG.exam.label)+'</div></article>';
- return '<article class="card examclock" id="examClock" role="timer" aria-live="off">'
-  +'<div class="ec-lbl">'+esc(CFG.exam.label)+'</div>'
-  +'<div class="ec-row"><span class="ec-d" id="ecD">'+t.d+'</span>'
-  +'<span class="ec-u">day'+(t.d===1?'':'s')+' to go</span></div>'
-  +'<div class="ec-sub" id="ecHM">'+t.h+'h '+t.m+'m</div>'
-  +'<p class="sr" id="ecSay" aria-live="polite">'+t.d+' days until the exam</p></article>';
+ var b=examBand(),t=examLeft(),body,say;
+ if(b==='past'){
+  body='<p class="ec-say">That one is behind you now.</p>';say='The exam has passed';
+ }else if(b==='today'){
+  /* NO NUMBERS TODAY. A student sitting the paper this morning does not need
+     to be told how many hours of it are left. */
+  body='<p class="ec-say">Today is the day. You have done the work.</p>';say='The exam is today';
+ }else if(b==='hours'){
+  body='<div class="ec-row">'+ecTile(t.h,t.h===1?'hour':'hours')+ecTile(t.m,t.m===1?'minute':'minutes')+'</div>';
+  say=t.h+' hours and '+t.m+' minutes to go';
+ }else if(b==='close'){
+  body='<div class="ec-row">'+ecTile(t.d,t.d===1?'day':'days')+ecTile(t.h,t.h===1?'hour':'hours')+'</div>';
+  say=t.d+' days and '+t.h+' hours to go';
+ }else{
+  /* THE COMMON CASE, and the calm one. One number, the unit beside it, and the
+     actual date underneath so it is a plan rather than a threat. */
+  body='<div class="ec-row"><div class="ec-t ec-solo"><div class="ec-n">'+t.d+'</div>'
+   +'<div class="ec-l">days to go</div></div></div>'
+   +'<p class="ec-when">'+fmtFull(CFG.exam.date)+'</p>';
+  say=t.d+' days to go';
+ }
+ return '<article class="card examclock" id="examClock" role="timer" aria-live="off" data-band="'+b+'">'
+  +'<div class="ec-lbl">'+esc(CFG.exam.label)+'</div>'+body
+  +'<p class="sr" id="ecSay" aria-live="polite">'+say+'</p></article>';
 }
-/* ONE interval for the whole app, dropped when the tab is hidden and repainted
-   the instant it comes back. A backgrounded phone should cost nothing. */
-var EC_T=null,EC_LASTD=null;
+function fmtFull(iso){var d=new Date(iso+'T08:00:00');
+ return d.getDate()+' '+MN[d.getMonth()]+' '+d.getFullYear();}
+
+/* A DAY BOUNDARY IS NOT A REFRESH. A student leaves the app open overnight and
+   wakes to yesterday's number unless something recomputes. The rate follows the
+   band: nothing here needs to be right to the second, so nothing polls to the
+   second. */
+var EC_T=null,EC_SAID=null;
+function ecRate(){var b=examBand();return b==='hours'?20000:60000;}
 function ecPaint(){
- var d=document.getElementById('ecD');if(!d)return;
- var t=examLeft();
- d.textContent=t.d;
- var hm=document.getElementById('ecHM');if(hm)hm.textContent=t.h+'h '+t.m+'m';
- /* the digits are aria-live="off": a screen reader being told the seconds is
-    unusable. Only the DAY change is announced, and only when it changes. */
- if(t.d!==EC_LASTD){var say=document.getElementById('ecSay');
-  if(say)say.textContent=t.d+' days until the exam';EC_LASTD=t.d;}
+ var el=document.getElementById('examClock');if(!el)return;
+ var fresh=examClockHTML();
+ /* only touch the DOM when the rendered value actually changed, so a phone
+    sitting on this screen is not repainting a card that says the same thing */
+ if(el.outerHTML!==fresh){
+  el.outerHTML=fresh;
+  var say=document.getElementById('ecSay');
+  /* digits are aria-live="off"; the polite line is the only announcement, and
+     it fires only when the words change, which is at most once a minute */
+  if(say&&say.textContent===EC_SAID)say.textContent='';else EC_SAID=say?say.textContent:null;
+ }
 }
-function ecStart(){ecStop();ecPaint();EC_T=setInterval(ecPaint,1000);}
+function ecStart(){ecStop();EC_T=setInterval(ecPaint,ecRate());}
 function ecStop(){if(EC_T){clearInterval(EC_T);EC_T=null;}}
 document.addEventListener('visibilitychange',function(){
- document.hidden?ecStop():(document.getElementById('ecD')&&ecStart());});
+ if(document.hidden){ecStop();return;}
+ /* repaint FIRST, then resume, so returning to the app is instant rather than
+    correct one interval later */
+ ecPaint();if(document.getElementById('examClock'))ecStart();
+});
 
 function renderNext(){
  document.getElementById('hdrTitle').textContent=dowName(todayISO());
@@ -2656,6 +2717,51 @@ function BSWL_TEST(){
       typeof ecStop==='function'&&/clearInterval/.test(ecStop.toString()),'clearInterval on visibilitychange');
    /* the digits change every second: announcing that is unusable */
    const live=document.getElementById('examClock');
+   /* FOUR BANDS. One format cannot be honest across sixteen months, and the
+      dangerous one is the far band: seconds ticking on an exam date a year out
+      is a doomsday clock, not a study aid. Each band is forced and read. */
+   (function(){
+    const realDate=CFG.exam.date, seen={};
+    [['far','2027-08-16'],['close','2026-07-22'],['hours','2026-07-16'],
+     ['today','2026-07-15'],['past','2026-07-14']].forEach(function(pair){
+      CFG.exam.date=pair[1];
+      EXAM_AT=new Date(pair[1]+'T08:00:00').getTime()+CLOCK_SKEW;
+      seen[pair[0]]=examBand();
+    });
+    CFG.exam.date=realDate;EXAM_AT=new Date(realDate+'T08:00:00').getTime()+CLOCK_SKEW;
+    const wrong=Object.keys(seen).filter(k=>seen[k]!==k);
+    ok('Exam clock: the format follows how close the exam is',wrong.length===0,
+       wrong.map(k=>k+' read as '+seen[k]).join(', ')||'far, close, hours, today, past');
+   })();
+   /* THE ONE THAT WOULD HURT. A passed date must never render a negative or a
+      row of zeroes; it gets a sentence. */
+   (function(){
+    const realDate=CFG.exam.date;
+    CFG.exam.date='2026-07-14';EXAM_AT=new Date('2026-07-14T08:00:00').getTime()+CLOCK_SKEW;
+    const h=examClockHTML();
+    CFG.exam.date=realDate;EXAM_AT=new Date(realDate+'T08:00:00').getTime()+CLOCK_SKEW;
+    ok('Exam clock: a date that has passed shows no number at all',
+       !/-\d/.test(h)&&!/>0<|>00</.test(h)&&/behind you/.test(h),
+       'a sentence, never a negative and never a row of zeroes');
+   })();
+   /* SECONDS ARE BANNED HERE, and a check is the only thing that keeps them out */
+   ok('Exam clock: nothing on this card counts in seconds',
+      !/second/i.test(examClockHTML())&&ecRate()>=20000,
+      'slowest useful rate for the band, '+(ecRate()/1000)+'s');
+   /* the digits must not shuffle sideways as they change */
+   ok('Exam clock: the numbers sit on a fixed width',
+      /tabular-nums/.test(getComputedStyle(document.querySelector('.ec-n')).fontVariantNumeric)
+      ||getComputedStyle(document.querySelector('.ec-n')).fontVariantNumeric==='tabular-nums',
+      getComputedStyle(document.querySelector('.ec-n')).fontVariantNumeric);
+   /* phaseHint reads the SAME date and must be unaffected by any of this */
+   /* NOT via innerHTML: the document contains this check, so searching it for
+      the date finds the test looking for the date. Same trap logged this
+      morning against the no-gender check. Read the FUNCTIONS instead. */
+   ok('Exam clock: it did not fork the exam date',
+      /CFG\.exam\.date/.test(phaseHint.toString())
+      &&/CFG\.exam/.test(examClockHTML.toString())
+      &&/CFG\.exam\.date/.test(String(EXAM_AT_SRC)),
+      'phaseHint, the card and the target all read CFG.exam');
    ok('Exam clock: a screen reader is told the day, not the second',
       live&&live.getAttribute('aria-live')==='off'&&!!document.getElementById('ecSay'),
       'digits off, a separate polite line on the day change only');
