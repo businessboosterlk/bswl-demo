@@ -3448,6 +3448,33 @@ async function runSelfTest(opts){
     A layout check that runs before the font lands is not measuring the page. */
  try{ if(document.fonts&&document.fonts.ready)await document.fonts.ready; }catch(e){}
  const R=[];const ok=(name,pass,detail)=>{R.push({name:name,pass:!!pass,detail:String(detail==null?'':detail).slice(0,200)});};
+
+ /* ══ THE HARNESS CHECKS ITSELF FIRST ══
+    Three false greens in one day, all from the harness rather than the code:
+    measuring before the webfont landed, measuring a page that had collapsed to
+    zero width, and a regex that could not read its own uppercased text. Each
+    one produced a confident number that was worth nothing, and one of them had
+    two separate readers agreeing on a money bug that did not exist.
+    A number is not evidence unless the conditions it was taken under are. */
+ const VW=window.innerWidth,VH=window.innerHeight;
+ if(VW<320||VH<400){
+  /* A ZERO WIDTH PAGE IS NOT A PASSING PAGE. Every card is skipped for being
+     under 40px and every layout assertion trivially passes. Refuse to score. */
+  return {pass:false,failed:1,viewport:VW+'x'+VH,
+   results:[{name:'The harness refuses to measure a collapsed page',pass:false,
+    detail:'viewport '+VW+'x'+VH+', nothing below 320x400 can be measured. This is'
+     +' not a failing build, it is a failing measurement. Size the window and rerun.'}]};
+ }
+ /* THE CONDITIONS ARE PART OF THE RESULT, so a score can never be quoted
+    without the width it was taken at. */
+ ok('Harness: measured at a real phone width',VW>=320&&VW<=430,VW+'x'+VH);
+ ok('Harness: the webfont had landed before anything was measured',
+    !document.fonts||document.fonts.status==='loaded',
+    (document.fonts?document.fonts.status:'no font api')
+    +' · a layout check that runs mid font-swap measures a page no user sees');
+ /* RUNS MUST AGREE. A score that moves between consecutive runs on unchanged
+    bytes is not a result, and today it hid a real grid overflow for hours. */
+ window.__ST_PREV=window.__ST_PREV||null;
  /* full snapshot — the harness must leave zero footprint */
  const snapData=JSON.stringify(DB._d);
  const snapCur=JSON.parse(JSON.stringify(CURRENT));
@@ -4328,9 +4355,24 @@ async function runSelfTest(opts){
      genuine pre-run errors persist (they were captured in bootLog). */
   window.__ST_LOG.length=bootLog.length;
  }
- const failed=R.filter(r=>!r.pass);
+ let failed=R.filter(r=>!r.pass);
  try{console.table(R.map(r=>({check:r.name,result:r.pass?'PASS':'FAIL',detail:r.detail})));}catch(e){}
  stReport(R,failed);
+ /* RUNS MUST AGREE. Consecutive runs on unchanged bytes that score differently
+    are not a result. Today that pattern hid a real grid overflow for hours
+    because the odd run out was quietly treated as the true one. The harness
+    now says so itself rather than leaving a human to notice. */
+ const sig=R.map(function(x){return (x.pass?'1':'0');}).join('');
+ const prev=window.__ST_PREV;
+ window.__ST_PREV={sig:sig,vw:VW};
+ if(prev&&prev.vw===VW&&prev.sig!==sig){
+  const moved=R.filter(function(x,i){return prev.sig[i]!==sig[i];})
+               .map(function(x){return x.name;}).slice(0,3);
+  R.push({name:'Harness: this run disagrees with the last one',pass:false,
+   detail:'same bytes, same '+VW+'px, different verdict on: '+moved.join(', ')
+    +'. Neither number is evidence until they agree.'});
+  failed=R.filter(function(x){return !x.pass;});
+ }
  return {pass:failed.length===0,failed:failed,results:R,viewport:window.innerWidth+'px'};
 }
 function stReport(R,failed){
