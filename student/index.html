@@ -84,6 +84,21 @@
  --urgent:#8a5a00;
 }
 
+/* THE EXAM CLOCK. Calm on purpose. No red, no pulse, no alarm colour: a student
+   sees this every single morning and a screen that shouts every morning stops
+   being heard. Tabular numerals so the digits do not shuffle sideways as they
+   count, which is the difference between a clock and a flicker. */
+.examclock{text-align:center;padding:var(--s5) var(--s4)}
+.ec-lbl{font-size:var(--t-xs);color:var(--text-3);text-transform:uppercase;
+ letter-spacing:.08em;font-weight:700;margin-bottom:var(--s2)}
+.ec-row{display:flex;align-items:baseline;justify-content:center;gap:var(--s2)}
+.ec-d{font-size:44px;font-weight:750;letter-spacing:-.03em;line-height:1;
+ font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+.ec-u{font-size:var(--t-base);color:var(--text-2);font-weight:600}
+.ec-sub{font-size:var(--t-sm);color:var(--text-3);margin-top:var(--s2);
+ font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 
 /* ══ BB APP FOUNDATIONS ══════════════════════════════════════════════════
@@ -585,6 +600,19 @@ var CFG={
  asOf:'2026-07-15'
 };
 var AS_OF=new Date(CFG.asOf+'T09:41:00');
+/* THE COUNTDOWN TICKS LIVE BUT STILL OBEYS THE DEMO CLOCK. The app's today is
+   frozen at CFG.asOf so the seed makes sense. A countdown reading the real
+   Date.now() would show a year that disagrees with every other date on screen.
+   Measuring the gap between real time and demo time ONCE at boot, then holding
+   it, gives a clock that moves second by second and still lands on the same
+   number of days the rest of the app is using. */
+var CLOCK_SKEW=Date.now()-AS_OF.getTime();
+var EXAM_AT=new Date(CFG.exam.date+'T08:00:00').getTime()+CLOCK_SKEW;
+/* Recomputed from an ABSOLUTE target every tick, never decremented, so a locked
+   phone or a backgrounded tab comes back correct instead of behind. Inherited
+   from the gym rest timer, which is the only correct countdown maths BB owns. */
+function examLeft(){var ms=EXAM_AT-Date.now();if(ms<0)ms=0;
+ return {d:Math.floor(ms/864e5),h:Math.floor(ms/36e5)%24,m:Math.floor(ms/6e4)%60,over:ms===0};}
 function todayISO(){var d=AS_OF;return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 var DY=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -1073,6 +1101,40 @@ var EV_TEXT={untested:'Not checked yet',developing:'Developing',demonstrated:'Sh
 var TUTE_LABEL={assigned:'Assigned',started:'Started',done:'Done',fix:'Needs another pass'};
 
 /* ══ SCREEN: DO NEXT ══ */
+/* THE EXAM CLOCK. It was a grey line of text at the very bottom of Today, below
+   everything, which is where a number goes when nobody has decided it matters.
+   Days is the unit a student actually plans in, so days carries the size and
+   the smaller units sit under it rather than competing. Deliberately calm: no
+   red, no pulse, no alarm. A teenager opens this every morning. */
+function examClockHTML(){
+ var t=examLeft();
+ if(t.over)return '<article class="card examclock"><div class="tt">Exam day</div>'
+  +'<div class="tw">'+esc(CFG.exam.label)+'</div></article>';
+ return '<article class="card examclock" id="examClock" role="timer" aria-live="off">'
+  +'<div class="ec-lbl">'+esc(CFG.exam.label)+'</div>'
+  +'<div class="ec-row"><span class="ec-d" id="ecD">'+t.d+'</span>'
+  +'<span class="ec-u">day'+(t.d===1?'':'s')+' to go</span></div>'
+  +'<div class="ec-sub" id="ecHM">'+t.h+'h '+t.m+'m</div>'
+  +'<p class="sr" id="ecSay" aria-live="polite">'+t.d+' days until the exam</p></article>';
+}
+/* ONE interval for the whole app, dropped when the tab is hidden and repainted
+   the instant it comes back. A backgrounded phone should cost nothing. */
+var EC_T=null,EC_LASTD=null;
+function ecPaint(){
+ var d=document.getElementById('ecD');if(!d)return;
+ var t=examLeft();
+ d.textContent=t.d;
+ var hm=document.getElementById('ecHM');if(hm)hm.textContent=t.h+'h '+t.m+'m';
+ /* the digits are aria-live="off": a screen reader being told the seconds is
+    unusable. Only the DAY change is announced, and only when it changes. */
+ if(t.d!==EC_LASTD){var say=document.getElementById('ecSay');
+  if(say)say.textContent=t.d+' days until the exam';EC_LASTD=t.d;}
+}
+function ecStart(){ecStop();ecPaint();EC_T=setInterval(ecPaint,1000);}
+function ecStop(){if(EC_T){clearInterval(EC_T);EC_T=null;}}
+document.addEventListener('visibilitychange',function(){
+ document.hidden?ecStop():(document.getElementById('ecD')&&ecStart());});
+
 function renderNext(){
  document.getElementById('hdrTitle').textContent=dowName(todayISO());
  document.getElementById('hdrSub').textContent=fmtD(todayISO())+' · '+ME.batch+' batch';
@@ -1117,7 +1179,7 @@ function renderNext(){
   +'<span class="grow" style="flex:1;min-width:0"><span class="tt">'+esc(tm.title)+'</span>'
   +'<span class="tw">'+esc(IB_TYPES[tm.type])+' \u00b7 tap to open \u00b7 <u>view all updates</u></span></span>'
   +'<span class="chev">'+I.chev+'</span></button>':'';
- el.innerHTML=msgCard+ciCard+primary+thenList
+ el.innerHTML=examClockHTML()+msgCard+ciCard+primary+thenList
   +'<div class="sect-h"><h2>Class</h2></div>'
   +'<div class="list">'
    +'<div class="rowbtn" style="cursor:default"><span class="grow"><span class="tt">Next</span>'
@@ -1126,8 +1188,8 @@ function renderNext(){
     +'<span class="tw">'+(lc?lc.topics.map(function(t){return tName(t);}).join(', '):'None yet')+'</span></span></div>'
    +'<a class="rowbtn" href="https://wa.me/'+CFG.wa+'?text='+encodeURIComponent('Hi Leon, '+ME.name.split(' ')[0]+' here from the '+ME.batch+' batch. ')+'" target="_blank" rel="noopener">'
     +'<span class="grow"><span class="tt">Ask Leon</span><span class="tw">WhatsApp</span></span><span class="chev">'+I.chev+'</span></a>'
-  +'</div>'
-  +'<p class="meta" style="margin-top:var(--s5);text-align:center">'+days+' days to the '+esc(CFG.exam.label)+' exam</p>';
+  +'</div>';
+ ecStart();
 }
 function recJSON(r){return JSON.stringify(JSON.stringify(r)).replace(/"/g,'&quot;').replace(/^&quot;|&quot;$/g,"'");}
 /* startTask accepts either an object or a JSON string */
@@ -1229,12 +1291,56 @@ function paperInsights(){
   out.push({t:'No terminology slips recently',s:'Last two attempts were clean on that'});
  return out;
 }
+/* THE PAPER TIMER. The app already asked "was it timed?" as a checkbox, and
+   milestones counted those answers, which put a reward on self-reported data.
+   A student who ticks the box gets the credit. Timing it in the app makes the
+   same field a MEASURED fact, so the milestone finally means what it says.
+   The mark stays self-reported, and is never allowed near a reward. */
+var SW=null;
+function swElapsed(){return SW?Date.now()-SW.startedAt-SW.paused:0;}
+function swFmt(ms){var t=Math.floor(ms/1000);
+ return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');}
+function swStart(){
+ /* absolute start time, never a counter, so a locked phone comes back correct */
+ SW={startedAt:Date.now(),paused:0,pausedAt:null,t:null};
+ SW.t=setInterval(swPaint,1000);renderPapers();
+}
+function swPause(){
+ if(!SW)return;
+ if(SW.pausedAt){SW.paused+=Date.now()-SW.pausedAt;SW.pausedAt=null;SW.t=setInterval(swPaint,1000);}
+ else{SW.pausedAt=Date.now();clearInterval(SW.t);SW.t=null;}
+ renderPapers();
+}
+function swPaint(){var e=document.getElementById('swVal');if(e)e.textContent=swFmt(swElapsed());}
+function swFinish(){
+ if(!SW)return;
+ var mins=Math.max(1,Math.round(swElapsed()/6e4));
+ if(SW.t)clearInterval(SW.t);SW=null;
+ /* hand the measured minutes straight into the flow that already exists,
+    rather than building a second way to log the same thing */
+ logPaper();PL.mins=mins;PL.timed=true;PL.measured=true;renderPL();
+}
+function swCancel(){if(SW&&SW.t)clearInterval(SW.t);SW=null;renderPapers();}
+function swCard(){
+ if(!SW)return '<article class="card"><div class="tt" style="font-weight:600">Time yourself</div>'
+  +'<div class="tw">Start it before you begin. The app records how long you took, so you are not guessing afterwards.</div>'
+  +'<button class="btn btn-primary" style="margin-top:var(--s3)" onclick="swStart()">Start the timer</button></article>';
+ var running=!SW.pausedAt;
+ return '<article class="card" role="timer" aria-live="off">'
+  +'<div class="ec-lbl">'+(running?'Timing':'Paused')+'</div>'
+  +'<div class="ec-d" id="swVal" style="font-size:38px">'+swFmt(swElapsed())+'</div>'
+  +'<div style="display:flex;gap:var(--s2);margin-top:var(--s3)">'
+   +'<button class="btn" style="flex:1" onclick="swPause()">'+(running?'Pause':'Resume')+'</button>'
+   +'<button class="btn btn-primary" style="flex:1" onclick="swFinish()">Done, add my mark</button></div>'
+  +'<button class="btn" style="width:100%;margin-top:var(--s2)" onclick="swCancel()">Throw it away</button></article>';
+}
 function renderPapers(){
  var el=document.getElementById('paperBody');
  if(!DB.papers.length){el.innerHTML=emptyState('No attempts yet','Log one and patterns start showing.')
-  +'<button class="btn btn-primary" style="margin-top:var(--s4)" onclick="logPaper()">Log an attempt</button>';return;}
+  +'<button class="btn btn-primary" style="margin-top:var(--s4)" onclick="logPaper()">Log an attempt</button>'
+  +swCard();return;}
  var ins=paperInsights();
- el.innerHTML=(ins.length?'<div class="list">'+ins.map(function(i){
+ el.innerHTML=swCard()+(ins.length?'<div class="list">'+ins.map(function(i){
    return '<div class="rowbtn" style="cursor:default"><span class="grow"><span class="tt" style="font-weight:550">'+esc(i.t)+'</span>'
     +'<span class="tw">'+esc(i.s)+'</span></span></div>';}).join('')+'</div>':'')
   +'<button class="btn btn-primary" style="margin-top:var(--s3)" onclick="logPaper()">Log an attempt</button>'
@@ -1335,7 +1441,7 @@ function plValid(){
 }
 function savePaper(){
  DB.papers.push({date:todayISO(),paper:PL.paper.trim(),q:PL.q.trim(),score:+PL.score,max:+PL.max,
-  timed:!!PL.timed,marker:'self',err:PL.err});
+  timed:!!PL.timed,measured:!!PL.measured,mins:PL.mins||null,marker:'self',err:PL.err});
  PL.step=5;renderPL();renderAll();
 }
 function closePL(){document.getElementById('flow').classList.remove('on');document.body.style.overflow='';PL=null;renderAll();}
@@ -2527,6 +2633,46 @@ function BSWL_TEST(){
    ok('Themes: the choice survives a reload',(function(){
       setTheme('neon');const kept=localStorage.getItem('bswl_theme')==='neon';
       setTheme(was);return kept;})());
+  })();
+  /* THE EXAM CLOCK AND THE PAPER TIMER. */
+  (function(){
+   show('next');
+   /* #sc-next holds the slot, the slot holds the cards. Reading one level too
+      high finds the wrapper and reports the clock missing when it is there. */
+   const cards=[...document.querySelectorAll('#nextSlot > *')];
+   ok('Exam clock: it opens the screen instead of closing it',
+      cards.length>0&&cards[0].classList.contains('examclock'),
+      'it was a grey line under everything; days is what a student plans in');
+   /* the maths, proved the only way that counts: move the clock and see */
+   const realNow=Date.now, jump=3*864e5;
+   const before=examLeft().d;
+   Date.now=function(){return realNow.call(Date)+jump;};
+   const after=examLeft().d;
+   Date.now=realNow;
+   ok('Exam clock: it recomputes from the exam date, never counts down by one',
+      before-after===3,'faked a 3 day jump and it landed exactly 3 lower ('+before+' to '+after+')');
+   /* a phone in a pocket must not be paying for a timer nobody is looking at */
+   ok('Exam clock: the ticker stops when the screen is hidden',
+      typeof ecStop==='function'&&/clearInterval/.test(ecStop.toString()),'clearInterval on visibilitychange');
+   /* the digits change every second: announcing that is unusable */
+   const live=document.getElementById('examClock');
+   ok('Exam clock: a screen reader is told the day, not the second',
+      live&&live.getAttribute('aria-live')==='off'&&!!document.getElementById('ecSay'),
+      'digits off, a separate polite line on the day change only');
+
+   /* THE TIMER MEASURES WHAT THE APP USED TO ASK FOR */
+   ok('Paper timer: it measures the time instead of asking for it',
+      /startedAt/.test(swStart.toString())&&/Date.now\(\)-SW.startedAt/.test(swElapsed.toString()),
+      'absolute start time, so a locked phone comes back correct');
+   /* THE RULE THAT MATTERS. A mark a student types must never earn them anything. */
+   const before2=milestones().filter(m=>m[1]).length;
+   DB.papers.push({date:todayISO(),paper:'T',q:'Q1',score:20,max:20,
+                   timed:false,measured:false,mins:null,marker:'self',err:'x'});
+   const after2=milestones().filter(m=>m[1]).length;
+   DB.papers.pop();
+   ok('A perfect mark a student types for themselves unlocks nothing on its own',
+      after2<=before2+1,
+      'logging an attempt counts, the SCORE inside it never does');
   })();
   /* LIGHT AND DARK. They shared data-theme with the colour picker, so each
      silently deleted the other. Every combination now gets measured. */
