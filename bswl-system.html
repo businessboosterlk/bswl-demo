@@ -339,6 +339,11 @@ details.card>summary:hover{background:var(--surface-2)}
    sitting on the Enquiries page looking like body copy. A class that works in
    one container and silently does nothing in another is worse than no class. */
 .hint{font-size:12.5px;color:var(--muted)}
+/* A HINT THAT IS A PAGE-LEVEL BLOCK TAKES THE PAGE RHYTHM. 8px is correct when
+   it sits under the thing it labels, and wrong when it IS one of the page's
+   stacked blocks: "47 enquiries" left an 8px gap in a 20px column, which read
+   as the count belonging to the card below it. One value, chosen by position. */
+.page > .hint{margin-bottom:var(--sp-5)}
 /* chart hover: the value appears for the column you are pointing at. The
    highlighted month keeps its number permanently, so the chart is never blank. */
 .bcol .bval{opacity:0;transition:opacity .14s var(--ease)}
@@ -360,7 +365,12 @@ details.card>summary:hover{background:var(--surface-2)}
    ============================================================ */
 .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:var(--sp-5);flex-wrap:wrap}.toolbar .sp{flex:1}
 select.filter{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");background-repeat:no-repeat;background-position:right 12px center;background-size:12px;padding-right:34px}
-.filter{background-color:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 14px;font-size:12.5px;font-weight:500;color:var(--ink);outline:none;cursor:pointer;transition:border-color .15s}
+.filter{background-color:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 14px;font-size:12.5px;font-weight:500;color:var(--ink);outline:none;cursor:pointer;transition:border-color .15s;max-width:100%;min-width:0}
+/* A SELECT IS SIZED BY ITS LONGEST OPTION, NOT BY ITS BOX. Inside a grid cell
+   that means it pushes past the card, ~60px here, and only in states the first
+   pass never reaches, which is why three consecutive runs disagreed. min-width:0
+   lets the grid cell actually shrink it; without it a grid item refuses to go
+   below its content width and max-width alone does nothing. */
 .filter:hover{border-color:var(--faint)}
 .filter:focus{border-color:var(--brand)}
 .tabbar{display:flex;gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:var(--sp-5);width:fit-content;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
@@ -982,7 +992,7 @@ body.dark .stat-kpi .val{color:#fff}
           <button class="btn-ghost imp-btn" onclick="openImport('records')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import</button>
           <button class="btn-ghost" onclick="exportRecords()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export Excel</button>
         </div>
-        <div class="hint" id="enqCount" style="margin-bottom:8px"></div>
+        <div class="hint" id="enqCount"></div>
         <div id="enqTable"><div class="card"><table class="tbl"><thead><tr><th data-fl="name">Name</th><th data-fl="stage">Stage</th><th data-fl="owner">Owner</th><th data-fl="followUp">Follow-up</th><th class="tnum" data-fl="value">Value</th></tr></thead><tbody id="recBody"></tbody></table><div id="recEmpty"></div></div></div>
         <div id="enqBoard" style="display:none">
           <div class="hint" style="margin-bottom:10px">Drag a card to move a student through the stages.</div>
@@ -3416,6 +3426,15 @@ const RENDERERS={dashboard:renderDashboard,reports:renderReports,records:renderR
    ════════════════════════════════════════════════════════════════════ */
 async function runSelfTest(opts){
  opts=opts||{};
+ /* WAIT FOR THE REAL FONT BEFORE MEASURING ANYTHING.
+    This file pulls Inter and Poppins from Google Fonts with display=swap, so
+    text paints in a narrow system fallback and is replaced by a wider face a
+    moment later. Every width, every overflow and every gap in this harness was
+    therefore a race: run it early and the fallback fits, run it late and the
+    real font overflows. Identical bytes gave opposite verdicts on the same
+    screen at the same width, which is how a red build got called green.
+    A layout check that runs before the font lands is not measuring the page. */
+ try{ if(document.fonts&&document.fonts.ready)await document.fonts.ready; }catch(e){}
  const R=[];const ok=(name,pass,detail)=>{R.push({name:name,pass:!!pass,detail:String(detail==null?'':detail).slice(0,200)});};
  /* full snapshot — the harness must leave zero footprint */
  const snapData=JSON.stringify(DB._d);
@@ -3463,12 +3482,36 @@ async function runSelfTest(opts){
      if(CFG.modules[k]===false)return;
      try{go(k);}catch(e){return;}
      document.querySelectorAll('#page-'+k+' .card').forEach(function(card){
+      /* MEASURE THE PAGE AT REST. Earlier passes scroll regions sideways as
+         they drive the app, and a left-over scrollLeft moves every child in
+         that region without moving the card. That is why one build scored
+         128, 127, 127, 127 across four consecutive runs: not a layout that
+         changed, a viewport that had. Park every scroller before measuring. */
+      if(card.scrollLeft)card.scrollLeft=0;
+      card.querySelectorAll('*').forEach(function(n){if(n.scrollLeft)n.scrollLeft=0;});
       var cr=card.getBoundingClientRect(); if(cr.width<40)return;
+      /* THE CARD ITSELF IS OFTEN THE SCROLLER. This walked ancestors and gave
+         up ON REACHING the card, so when the card was the scroll region it
+         reported every child inside it. Worse, it only showed up on the SECOND
+         run: with scrollLeft at 0 nothing overflows, and once an earlier pass
+         had scrolled the region the same page measured differently. Four runs
+         of the same build gave 128, 127, 127, 127. Check the card too. */
+      function scrollsX(e){for(var n=e.parentElement;n&&n!==document.body;n=n.parentElement){
+       if(n.scrollWidth>n.clientWidth+4&&/auto|scroll/.test(getComputedStyle(n).overflowX))return true;
+       if(n===card)break;} return false;}
       card.querySelectorAll('*').forEach(function(el){
        var cls=(el.className&&el.className.baseVal!==undefined?el.className.baseVal:el.className)||'';
        if(PLUMBING[el.tagName])return;               /* structure, cells carry it */
        if(ownsInset(el)||delegates(el))return;      /* owns or hands down the inset */
        if(el.closest('svg'))return;                 /* svg marks fill by design */
+       /* A CONTAINER THAT SCROLLS SIDEWAYS OWNS ITS OWN OVERFLOW. The
+          enquiries table is 600px inside a 347px card that scrolls, which is
+          how a wide table is meant to behave on a phone. Its cells reported
+          44px past the card edge and looked identical to real content sitting
+          on a border. Without this the check cannot tell a scroll region from
+          a layout bug, and the honest fix is to teach it the difference, not
+          to shrink the table. */
+       if(scrollsX(el))return;
        if(!seen(el))return;                         /* hidden rects are stale */
        var r=el.getBoundingClientRect(); if(r.width<4||r.height<4)return;
        if(el.parentElement&&el.parentElement.closest('.card')!==card)return;
@@ -3704,7 +3747,13 @@ async function runSelfTest(opts){
    ok('Fees: the totals follow the filter',narrowMoney!==allMoney,
       narrowMoney===allMoney?'STILL SHOWING THE WHOLE BOOK over a filtered table':'they move together');
    ok('Fees: the header says the view is narrowed',
-      /these \d+ only/.test(document.getElementById('payHero').innerText),
+      /these \d+ only/i.test(document.getElementById('payHero').innerText),
+      /* CASE. The label is real and has been all along: the hero renders
+         "these 7 only" and CSS uppercases it, so innerText returns THESE 7
+         ONLY and a case-sensitive regex never matched. This check reported a
+         money-trust bug that did not exist, twice, to two different readers
+         who both believed it because it stated its own consequence so well.
+         innerText reflects text-transform. Never match it case-sensitively. */
       'a smaller number with no explanation reads as money going missing');
    /* and the arithmetic has to be real, not merely different */
    const st=recStats(RECUR.ym||ymNow());
