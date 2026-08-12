@@ -60,8 +60,12 @@
  --urgent-on-light:#8a5a00;   /* the same idea on the inverted primary card */
  --scrim:rgba(0,0,0,.62);
 }
+/* TWO ATTRIBUTES, TWO JOBS. data-mode is light or dark, data-theme is the
+   colour. They used to share data-theme, so picking Neon silently deleted the
+   student's light mode and picking light deleted their colour. One attribute
+   cannot hold two independent choices. */
 @media(prefers-color-scheme:light){
- :root:not([data-theme="dark"]){
+ :root:not([data-mode="dark"]){
   --bg:#f6f6f7; --surface:#ffffff; --surface-2:#f1f1f3; --surface-3:#e8e8ea;
   --text:#121212; --text-2:#5a5a5f; --text-3:#78787e;
   --line:#e3e3e6; --line-2:#d2d2d7;
@@ -69,12 +73,15 @@
   --scrim:rgba(0,0,0,.34);
  }
 }
-:root[data-theme="light"]{
+:root[data-mode="light"]{
  --bg:#f6f6f7; --surface:#ffffff; --surface-2:#f1f1f3; --surface-3:#e8e8ea;
  --text:#121212; --text-2:#5a5a5f; --text-3:#78787e;
  --line:#e3e3e6; --line-2:#d2d2d7;
  --accent:#121212; --on-accent:#ffffff;
  --scrim:rgba(0,0,0,.34);
+ /* amber reads 1.9:1 on white, so on a light screen urgency goes darker.
+    Same meaning, same hue family, legible in daylight. */
+ --urgent:#8a5a00;
 }
 
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -204,6 +211,29 @@ html[data-theme="sunset"]  {--accent:#ff8a3d;--on-accent:#241000;--theme2:#ffd16
 html[data-theme="neon"]    {--accent:#ff5fa2;--on-accent:#2b0016;--theme2:#f3ff5c}
 html[data-theme="electric"]{--accent:#4da3ff;--on-accent:#00182e;--theme2:#ff9f45}
 html[data-theme="mono"]    {--accent:#f7f7f7;--on-accent:#0d0d0d;--theme2:#f7f7f7}
+
+/* THE SAME COLOUR ON WHITE IS A DIFFERENT COLOUR. Pink at #ff5fa2 reads 2.4:1
+   on a white card, so it fails as text the moment a student turns on light
+   mode. Each theme keeps its identity and drops its lightness until it clears
+   the 4.5 floor. Mono simply inverts: white ink on black becomes black on white. */
+html[data-mode="light"][data-theme="mono"]    {--accent:#121212;--on-accent:#ffffff;--theme2:#121212}
+html[data-mode="light"][data-theme="sunset"]  {--accent:#b34700;--on-accent:#ffffff;--theme2:#8a5a00}
+html[data-mode="light"][data-theme="neon"]    {--accent:#b8185c;--on-accent:#ffffff;--theme2:#5f6b00}
+html[data-mode="light"][data-theme="electric"]{--accent:#0059b8;--on-accent:#ffffff;--theme2:#b34700}
+
+/* AND THE SAME AGAIN FOR AUTO, which is the default nobody chooses. A student
+   whose phone is on light and who has touched nothing gets here, and until now
+   got mono's WHITE accent on a white page: 3.16:1, the worst combination in
+   the app, on the most common setting. The block above only fires when light
+   is picked by hand. Duplicated rather than shared because CSS has no way to
+   say "this selector or that one" across a media query. Change both. */
+@media(prefers-color-scheme:light){
+ html:not([data-mode="dark"])[data-theme="mono"]    {--accent:#121212;--on-accent:#ffffff;--theme2:#121212}
+ html:not([data-mode="dark"])[data-theme="sunset"]  {--accent:#b34700;--on-accent:#ffffff;--theme2:#8a5a00}
+ html:not([data-mode="dark"])[data-theme="neon"]    {--accent:#b8185c;--on-accent:#ffffff;--theme2:#5f6b00}
+ html:not([data-mode="dark"])[data-theme="electric"]{--accent:#0059b8;--on-accent:#ffffff;--theme2:#b34700}
+ html:not([data-mode="dark"]){--urgent:#8a5a00}
+}
 .sw{width:100%;aspect-ratio:1;border-radius:var(--r-md);border:2px solid transparent;
  display:block;position:relative}
 .sw[aria-pressed="true"]{border-color:var(--text)}
@@ -1401,7 +1431,17 @@ function renderProgress(){
     return '<button class="sw" aria-pressed="'+(THEME_NOW()===t.k?'true':'false')+'" '
      +'aria-label="'+t.n+'" title="'+t.n+'" onclick="setTheme(\''+t.k+'\')" '
      +'style="background:'+t.a+'"><i style="background:'+t.b+'"></i></button>';
-   }).join('')+'</div></article>'
+   }).join('')+'</div>'
+  /* Light and dark sit in the SAME card as the colour, because a student
+     thinks of both as "how it looks". They were two controls in two places,
+     one of them buried under Sign out. */
+  +'<p class="lede" style="margin:var(--s3) 0 var(--s2)">And how bright.</p>'
+  +'<div class="seg" role="tablist" aria-label="Appearance">'
+   +[['','Auto'],['light','Light'],['dark','Dark']].map(function(m){
+     return '<button role="tab" aria-selected="'+(modeNow()===m[0]?'true':'false')+'" '
+      +'onclick="setMode(\''+m[0]+'\')">'+m[1]+'</button>';}).join('')
+  +'</div>'
+  +'<p class="meta" style="margin-top:var(--s2)">Auto follows your phone.</p></article>'
   +'<div class="sect-h"><h2>You</h2></div>'
   +'<div class="list">'
    +'<div class="rowbtn" style="cursor:default"><span class="grow"><span class="tt" style="font-weight:550">'+esc(ME.name)+'</span>'
@@ -1413,9 +1453,6 @@ function renderProgress(){
     +'<span class="tw">How the 2027 group is going</span></span><span class="chev">'+I.chev+'</span></button>'
    +'<button class="rowbtn" onclick="doLogout()"><span class="grow"><span class="tt">Sign out</span>'
    +'<span class="tw">'+esc(ME.name)+'</span></span><span class="chev">'+I.chev+'</span></button>'
-  +'<button class="rowbtn" onclick="toggleTheme()"><span class="grow"><span class="tt">Appearance</span>'
-    +'<span class="tw">'+(document.documentElement.getAttribute('data-theme')||'Match your phone')+'</span></span>'
-    +'<span class="chev">'+I.chev+'</span></button>'
   +'</div>'
   +'<p class="meta" style="margin:var(--s5) 0;text-align:center">Demo build. Sample data, resets on reload.</p>';
 }
@@ -1442,12 +1479,18 @@ function openBatch(){
   +row('Finished the current tute',DB.batch.tuteRate+'%')
   +row('Median paper score',DB.batch.median+' of 20')+'</div>');
 }
+function modeNow(){return document.documentElement.getAttribute('data-mode')||'';}
+function setMode(m){
+ if(m)document.documentElement.setAttribute('data-mode',m);
+ else document.documentElement.removeAttribute('data-mode');
+ try{localStorage.setItem('bswl_mode',m||'');}catch(e){}
+ if(typeof renderProgress==='function')renderProgress();
+}
 function toggleTheme(){
- var cur=document.documentElement.getAttribute('data-theme');
- var next=cur==='dark'?'light':cur==='light'?null:'dark';
- if(next)document.documentElement.setAttribute('data-theme',next);
- else document.documentElement.removeAttribute('data-theme');
- renderProgress();toast('Appearance: '+(next||'match your phone'));
+ var cur=modeNow();
+ var next=cur==='dark'?'light':cur==='light'?'':'dark';
+ setMode(next);
+ toast('Appearance: '+(next||'match your phone'));
 }
 
 /* ══ SCREEN: RECORDINGS (a segment of Learn, not a fourth tab) ══ */
@@ -1686,8 +1729,10 @@ function setTheme(k){
  if(typeof renderProgress==='function')renderProgress();
  toast(n+' it is.');
 }
-(function(){var k='mono';try{k=localStorage.getItem('bswl_theme')||'mono';}catch(e){}
- document.documentElement.setAttribute('data-theme',k);})();
+(function(){var k='mono',m='';
+ try{k=localStorage.getItem('bswl_theme')||'mono';m=localStorage.getItem('bswl_mode')||'';}catch(e){}
+ document.documentElement.setAttribute('data-theme',k);
+ if(m)document.documentElement.setAttribute('data-mode',m);})();
 
 /* ══ NAV ══ */
 function show(sc){
@@ -2483,11 +2528,53 @@ function BSWL_TEST(){
       setTheme('neon');const kept=localStorage.getItem('bswl_theme')==='neon';
       setTheme(was);return kept;})());
   })();
+  /* LIGHT AND DARK. They shared data-theme with the colour picker, so each
+     silently deleted the other. Every combination now gets measured. */
+  (function(){
+   /* THE HARNESS MUST LEAVE NO TRACE. setMode/setTheme persist to
+      localStorage, so running the tests once left the app in whatever
+      combination the last check happened to try, and the monochrome checks
+      further down then measured a pink app and failed. A test that changes
+      the thing it is testing is not a test. These set the attribute directly. */
+   const H=document.documentElement;
+   const wasT=H.getAttribute('data-theme'),wasM=H.getAttribute('data-mode'),thin=[],dead=[];
+   const put=(a,v)=>v?H.setAttribute(a,v):H.removeAttribute(a);
+   function rgb(x){x=(x||'').trim();
+    if(x[0]==='#'){var h=x.slice(1);if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+     return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+    return (x.match(/[\d.]+/g)||[]).map(Number);}
+   function lum(c){const f=c.slice(0,3).map(v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);});
+    return 0.2126*f[0]+0.7152*f[1]+0.0722*f[2];}
+   function ratio(a,b){const x=lum(rgb(a)),y=lum(rgb(b));
+    return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05);}
+   const cv=()=>getComputedStyle(document.documentElement);
+   ['dark','light'].forEach(m=>{put('data-mode',m);
+    THEMES.forEach(t=>{put('data-theme',t.k);
+     const v=cv(),tag=m+'/'+t.k;
+     /* the theme must survive the mode and the mode must survive the theme */
+     if(v.getPropertyValue('--bg').trim()===''||v.getPropertyValue('--accent').trim()==='')dead.push(tag);
+     /* accent is used as TEXT on the page background, so it owes 4.5 */
+     const r=ratio(v.getPropertyValue('--accent'),v.getPropertyValue('--bg'));
+     if(r<4.5)thin.push(tag+' '+r.toFixed(2));
+     /* and urgency owes it too, in both */
+     const u=ratio(v.getPropertyValue('--urgent'),v.getPropertyValue('--surface'));
+     if(u<4.5)thin.push(tag+' urgent '+u.toFixed(2));
+    });});
+   put('data-mode',wasM);put('data-theme',wasT);
+   ok('Appearance: every colour survives light and dark',dead.length===0,dead.join(', ')||'8 combinations');
+   ok('Appearance: every combination clears 4.5:1',thin.length===0,thin.join(', ')||'accent and urgent, all 8');
+   /* the two choices are independent, which is the whole point of the fix */
+   put('data-mode','light');put('data-theme','neon');
+   const kept=H.getAttribute('data-mode')==='light'&&H.getAttribute('data-theme')==='neon';
+   put('data-mode',wasM);put('data-theme',wasT);
+   ok('Appearance: picking a colour does not wipe light mode',kept,
+      'data-mode and data-theme are separate attributes');
+  })();
   /* THE ACTION BUTTON. It read background:var(--on-accent) on color:var(--accent),
      so it wore the theme: navy on blue in Electric, plum on pink in Neon. The
      one control a student has to hit is not where a colour choice belongs. */
   (function(){
-   const was=THEME_NOW(),bad=[];
+   const H2=document.documentElement,was=H2.getAttribute('data-theme'),bad=[];
    function rgb(x){x=(x||'').trim();
     if(x[0]==='#'){var h=x.slice(1);if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
      return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
@@ -2495,14 +2582,14 @@ function BSWL_TEST(){
    function lum(c){const f=c.slice(0,3).map(v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);});
     return 0.2126*f[0]+0.7152*f[1]+0.0722*f[2];}
    const seen=new Set();
-   THEMES.forEach(t=>{setTheme(t.k);show('next');
+   THEMES.forEach(t=>{H2.setAttribute('data-theme',t.k);show('next');
     const b=document.querySelector('.primary .btn');if(!b)return;
     const cs=getComputedStyle(b);
     seen.add(cs.backgroundColor+'|'+cs.color);
     const r=(Math.max(lum(rgb(cs.color)),lum(rgb(cs.backgroundColor)))+0.05)
            /(Math.min(lum(rgb(cs.color)),lum(rgb(cs.backgroundColor)))+0.05);
     if(r<7)bad.push(t.k+' '+r.toFixed(2));});
-   setTheme(was);
+   if(was)H2.setAttribute('data-theme',was);else H2.removeAttribute('data-theme');
    ok('Colour: the action button is the same in every theme',seen.size===1,
       [...seen].join(' / ')+' · a student must never have to hunt for the button');
    ok('Colour: the action button is high contrast in every theme',bad.length===0,
