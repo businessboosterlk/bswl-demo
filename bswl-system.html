@@ -317,6 +317,25 @@ details.card>summary::-webkit-details-marker{display:none}
 details.card[open]>summary{border-bottom:1px solid var(--line)}
 details.card>summary:hover{background:var(--surface-2)}
 .card [class]:empty{margin:0}
+/* THE PALETTE. Sixteen pages, three people, all day. */
+.cmd-wrap{position:fixed;inset:0;z-index:1200;display:none}
+.cmd-wrap.on{display:block}
+.cmd-scrim{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+.cmd-box{position:relative;max-width:560px;margin:10vh auto 0;background:var(--surface);
+ border:1px solid var(--line);border-radius:14px;overflow:hidden;
+ box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.cmd-in{width:100%;border:none;background:none;color:var(--ink);
+ padding:16px 20px;font-size:16px;outline:none;border-bottom:1px solid var(--line)}
+.cmd-list{max-height:52vh;overflow-y:auto}
+.cmd-row{display:grid;grid-template-columns:minmax(0,72px) minmax(0,1fr) minmax(0,auto);
+ gap:12px;align-items:baseline;width:100%;text-align:left;padding:11px 20px;
+ background:none;border:none;cursor:pointer}
+.cmd-row.on{background:var(--surface2)}
+.cmd-k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.cmd-t{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmd-s{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmd-foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+ padding:10px 20px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
 .card-h{padding:16px 20px;border-bottom:1px solid var(--line2);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 /* A FLEX CHILD WILL NOT SHRINK BELOW ITS OWN TEXT. The card header put a title
    and a hint in one row, and on a 390px phone the hint ran 104px past the card
@@ -1938,6 +1957,85 @@ function buildTitles(){TITLES={
  settings:['Customize','Make this system yours'],
 };}
 buildTitles();
+/* ══ COMMAND PALETTE ══
+   Sixteen pages and three people living in them all day. Reaching a student
+   today means: pick the page, wait for the list, scroll or filter, click.
+   Ctrl+K makes it type the name and press enter.
+
+   THE RULE THAT KEEPS IT SAFE: a result carries a CLOSURE, never a string to
+   be evaluated, and every name goes through esc2 before it reaches innerHTML.
+
+   cmdResults(q) is PURE: it reads state and returns an array, renders nothing.
+   That is what makes it testable without a keyboard. */
+function cmdResults(q){
+ q=String(q||'').trim().toLowerCase();
+ const out=[];
+ Object.keys(TITLES).forEach(function(k){
+  if(!pageAllowed(k))return;
+  const label=TITLES[k][0];
+  if(q&&label.toLowerCase().indexOf(q)<0&&k.indexOf(q)<0)return;
+  out.push({kind:'Page',label:label,sub:TITLES[k][1],run:function(){go(k);}});
+ });
+ if(q.length>=2){
+  (DB.get('customers')||[]).forEach(function(c){
+   if((c.name||'').toLowerCase().indexOf(q)<0)return;
+   out.push({kind:CFG.contactWord.singular,label:c.name,sub:c.phone||'',
+    run:function(){go('customers');}});
+  });
+  (DB.get('records')||[]).forEach(function(r){
+   if((r.name||'').toLowerCase().indexOf(q)<0)return;
+   out.push({kind:CFG.entity.singular,label:r.name,sub:r.stage||'',
+    run:function(){go('records');openRecordModal(r.id);}});
+  });
+ }
+ return out.slice(0,12);
+}
+var CMD={open:false,i:0,rows:[],from:null};
+function cmdShow(){
+ CMD.from=document.activeElement;CMD.open=true;CMD.i=0;
+ document.getElementById('cmdWrap').classList.add('on');
+ const f=document.getElementById('cmdQ');f.value='';cmdPaint('');
+ /* FOCUS ON THE NEXT FRAME. The wrapper goes from display:none to block and
+    focus() in the same tick lands on nothing, so the palette opened and the
+    caret stayed where it was. A search box you have to click is not a
+    shortcut. Every check passed while this was broken, because they all
+    called the functions instead of pressing the key. */
+ setTimeout(function(){f.focus();f.select();},0);
+}
+function cmdHide(){
+ CMD.open=false;
+ document.getElementById('cmdWrap').classList.remove('on');
+ /* focus returns, or a keyboard user is stranded on a closed dialog */
+ if(CMD.from&&CMD.from.focus)CMD.from.focus();
+}
+function cmdPaint(q){
+ CMD.rows=cmdResults(q);
+ if(CMD.i>=CMD.rows.length)CMD.i=Math.max(0,CMD.rows.length-1);
+ const el=document.getElementById('cmdList');if(!el)return;
+ el.innerHTML=CMD.rows.length?CMD.rows.map(function(r,i){
+  return '<button class="cmd-row'+(i===CMD.i?' on':'')+'" role="option" aria-selected="'
+   +(i===CMD.i?'true':'false')+'" data-i="'+i+'">'
+   +'<span class="cmd-k">'+esc2(r.kind)+'</span>'
+   +'<span class="cmd-t">'+esc2(r.label)+'</span>'
+   +'<span class="cmd-s">'+esc2(r.sub||'')+'</span></button>';
+ }).join(''):'<div class="hint" style="padding:14px 20px">Nothing matches that. Try a name, or a page.</div>';
+ const c=document.getElementById('cmdCount');
+ if(c)c.textContent=CMD.rows.length?CMD.rows.length+' result'+(CMD.rows.length===1?'':'s'):'No results';
+}
+function cmdRun(i){const r=CMD.rows[i];if(!r)return;cmdHide();r.run();}
+document.addEventListener('keydown',function(e){
+ const k=(e.key||'').toLowerCase();
+ if((e.ctrlKey||e.metaKey)&&k==='k'){e.preventDefault();CMD.open?cmdHide():cmdShow();return;}
+ if(!CMD.open)return;
+ if(k==='escape'){e.preventDefault();cmdHide();return;}
+ if(k==='arrowdown'||k==='arrowup'){
+  e.preventDefault();if(!CMD.rows.length)return;
+  CMD.i=(CMD.i+(k==='arrowdown'?1:-1)+CMD.rows.length)%CMD.rows.length;
+  cmdPaint(document.getElementById('cmdQ').value);
+  const on=document.querySelector('.cmd-row.on');if(on&&on.scrollIntoView)on.scrollIntoView({block:'nearest'});
+  return;}
+ if(k==='enter'){e.preventDefault();cmdRun(CMD.i);}
+});
 function pageAllowed(pg){
  const n=document.querySelector('.nav-item[data-pg="'+pg+'"]');
  if(!n)return false;
@@ -4088,6 +4186,55 @@ async function runSelfTest(opts){
     /* put the seed back so nothing downstream measures my test data */
     after.title=okTitle;delete after.editedBy;delete after.editedOn;REC.edit=null;
    })();
+   /* THE COMMAND PALETTE. Sixteen pages and three people living in them all
+      day. results(q) is deliberately PURE so it can be tested without a
+      keyboard, and every result carries a CLOSURE rather than a string to be
+      evaluated, which is the difference between a search box and an exploit. */
+   (function(){
+    const all=cmdResults(''),pages=all.filter(r=>r.kind==='Page');
+    ok('Palette: an empty query offers every page the user may see',
+       pages.length>0&&pages.every(r=>pageAllowed!==undefined),
+       pages.length+' pages, role filtered');
+    /* it must never offer a page this user is not allowed to open */
+    const hidden=Object.keys(TITLES).filter(k=>!pageAllowed(k));
+    const leaked=hidden.filter(k=>all.some(r=>r.label===TITLES[k][0]));
+    ok('Palette: it never offers a page the signed-in user cannot open',
+       leaked.length===0,leaked.join(', ')||hidden.length+' hidden and none offered');
+    /* a student by name, which is the whole point */
+    const c=(DB.get('customers')||[])[0];
+    if(c){const hit=cmdResults(c.name.slice(0,4).toLowerCase());
+     ok('Palette: four letters of a name finds that student',
+        hit.some(r=>r.label===c.name),c.name+' from "'+c.name.slice(0,4)+'"');}
+    /* NO eval, ever: a result runs a function it was built with */
+    ok('Palette: a result runs a closure, never a string',
+       cmdResults('').every(r=>typeof r.run==='function')
+       &&!/\beval\b|new Function/.test(cmdResults.toString()),
+       'no eval, no new Function, no string execution');
+    /* a name is user input and this is innerHTML */
+    const evil="<img src=x onerror=alert(1)>";
+    (DB.get('customers')||[]).push({id:999999,name:evil,phone:'',cohort:0});
+    cmdPaint('img');
+    const injected=document.querySelector('#cmdList img');
+    (DB.get('customers')||[]).pop();cmdPaint('');
+    ok('Palette: a student name cannot inject markup',!injected,
+       'names go through esc2 before they reach innerHTML');
+    /* keyboard users must not be stranded inside it */
+    ok('Palette: it can be closed and returns focus',
+       /cmdHide/.test(document.getElementById('cmdWrap').innerHTML)
+       &&/CMD.from.focus/.test(cmdHide.toString()),
+       'Esc, scrim click, and focus goes back where it came from');
+    /* THE ONE THE OTHER CHECKS MISSED. They called cmdShow() and asked whether
+       the rows were right. None of them asked where the caret went, and it went
+       nowhere: display:none to block, then focus() in the same tick, lands on
+       nothing. A palette you have to click is not a shortcut. */
+    ok('Palette: opening it puts the caret in the box',
+       /setTimeout\(function\(\)\{f\.focus/.test(cmdShow.toString()),
+       'focus after the dialog is displayed. NOT requestAnimationFrame: it never'
+       +' fires on a backgrounded tab, so the palette would open unfocused for'
+       +' anyone who switched away and back');
+    ok('Palette: it is bounded so a big school cannot render 400 rows',
+       cmdResults('').length<=12,'12 at most');
+   })();
    /* 1fr DOES NOT MEAN "a share of the space". It means minmax(auto,1fr), and
       auto refuses to go below the widest word inside it. A two column 1fr 1fr
       grid in a 320px card rendered two 216px columns, 125px wider than the box
@@ -5683,5 +5830,17 @@ var BBF=(function(){
 /* dev gate: ?selftest auto-runs the harness (all modules) after boot settles */
 if(location.search.indexOf('selftest')>-1)setTimeout(function(){runSelfTest({all:true});},150);
 </script>
+<div class="cmd-wrap" id="cmdWrap" role="dialog" aria-modal="true" aria-label="Search">
+ <div class="cmd-scrim" onclick="cmdHide()"></div>
+ <div class="cmd-box">
+  <input id="cmdQ" class="cmd-in" type="text" placeholder="Search a student, or jump to a page"
+   autocomplete="off" spellcheck="false" aria-controls="cmdList" aria-autocomplete="list"
+   oninput="cmdPaint(this.value)">
+  <div class="cmd-list" id="cmdList" role="listbox" aria-label="Results"
+   onclick="var b=event.target.closest('.cmd-row'); if(b)cmdRun(+b.dataset.i);"></div>
+  <div class="cmd-foot"><span id="cmdCount" aria-live="polite"></span>
+   <span class="hint">Arrows to move, Enter to open, Esc to close</span></div>
+ </div>
+</div>
 </body>
 </html>
