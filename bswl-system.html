@@ -317,6 +317,9 @@ details.card>summary::-webkit-details-marker{display:none}
 details.card[open]>summary{border-bottom:1px solid var(--line)}
 details.card>summary:hover{background:var(--surface-2)}
 .card [class]:empty{margin:0}
+.rc-price{font-size:15px;font-weight:650;padding:10px 0}
+/* a missing price must not read like a price */
+.rc-price-gap{font-size:12.5px;font-weight:500;color:var(--amber);line-height:1.45}
 /* THE AGEING BOARD. Four boxes, counts of students, the colour only ever
    carrying "how far behind". Taken from the gym finance aging row; the maths
    underneath is different because the unit is students, not rupees. */
@@ -1394,14 +1397,23 @@ body.dark .stat-kpi .val{color:#fff}
     <div class="modal-b">
       <div class="fld" id="f_name"><label for="rc_name" data-fl="name">Name</label><input id="rc_name" placeholder="e.g. Sunrise Traders"><div class="err">Please enter a name.</div></div>
       <div class="fld-grid2">
-        <div class="fld"><label for="rc_co" data-fl="co">Company / detail</label><input id="rc_co" placeholder="e.g. Retail · Colombo 04"></div>
+        <div class="fld"><label for="rc_batch">Batch</label><select id="rc_batch" onchange="rcPrice()"></select></div>
         <div class="fld" id="f_phone"><label for="rc_phone" data-fl="phone">Phone</label><input id="rc_phone" inputmode="tel" placeholder="07X XXX XXXX"><div class="err">Enter a valid Sri Lankan number.</div></div>
       </div>
       <div class="fld-grid3">
         <div class="fld"><label for="rc_stage" data-fl="stage">Stage</label><select id="rc_stage"></select></div>
         <div class="fld"><label for="rc_owner" data-fl="owner">Owner</label><select id="rc_owner"></select></div>
-        <div class="fld" id="f_value"><label for="rc_value" data-fl="value" data-fl-cur>Value (LKR)</label><input id="rc_value" inputmode="numeric" placeholder="e.g. 250,000"><div class="err">Numbers only.</div></div>
       </div>
+      <div class="fld-grid2">
+        <div class="fld"><label for="rc_prog">Class they want</label><select id="rc_prog" onchange="rcPrice()"></select></div>
+        <div class="fld"><label for="rc_school">School <span style="color:var(--faint);font-weight:400">(optional)</span></label><input id="rc_school" placeholder="e.g. Royal College"></div>
+      </div>
+      <!-- THE VALUE IS NO LONGER TYPED. Leon: "We don't need enrolment value for
+           new enquiries. Auto calculate based on batch and class selection." A
+           typed value is a guess that becomes a forecast. -->
+      <div class="fld" id="f_value"><label>Enrolment value</label>
+        <div class="rc-price" id="rc_priceLbl">Pick a batch and a class.</div>
+        <input id="rc_value" type="hidden"></div>
       <div class="fld"><label for="rc_follow">Follow-up date <span style="color:var(--faint);font-weight:400">(optional)</span></label><input id="rc_follow" type="date"></div>
     </div>
     <div class="modal-f"><button class="btn-ghost" onclick="closeRecordModal()">Cancel</button><button class="btn-primary" onclick="saveRecord()">Save</button></div>
@@ -1625,6 +1637,24 @@ function bswlFee(program,loc,cohort){
  if(!row)return null;
  var v=row[program];
  return (v==null)?null:v;
+}
+function dPlus(iso,n){var d=new Date(iso+'T09:00:00');d.setDate(d.getDate()+n);
+ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+/* THE ENROLMENT VALUE IS DERIVED, NEVER TYPED. A typed value is somebody's
+   guess, and it becomes a funnel total and then a forecast. Where Leon has not
+   given a price the field stays empty and says so, rather than carrying a
+   plausible number into a report. */
+function rcPrice(){
+ var lbl=document.getElementById('rc_priceLbl');if(!lbl)return;
+ var b=document.getElementById('rc_batch'),pr=document.getElementById('rc_prog');
+ if(!b||!pr)return;
+ var fee=bswlFee(pr.value,'Kings',b.value);
+ var hid=document.getElementById('rc_value');
+ if(fee==null){lbl.textContent=bswlFeeLabel(pr.value,'Kings',b.value);
+  lbl.classList.add('rc-price-gap');if(hid)hid.value='';return;}
+ lbl.classList.remove('rc-price-gap');
+ lbl.textContent=lkr(fee)+' a month, from Leon\'s price list.';
+ if(hid)hid.value=String(fee);
 }
 function bswlFeeLabel(program,loc,cohort){
  var v=bswlFee(program,loc,cohort);
@@ -2211,12 +2241,25 @@ function openRecordModal(id){
  ['f_name','f_phone','f_value'].forEach(f=>setInvalid(f,false));
  const r=EDIT_ID?DB.get('records').find(x=>x.id===EDIT_ID):null;
  document.getElementById('rc_name').value=r?r.name:'';
- document.getElementById('rc_co').value=r?r.co:'';
+ /* BATCH AND CLASS ARE NOW PICKED, NOT TYPED, so the value can be derived.
+    An existing record's free-text "co" is parsed back where it can be, and
+    left on the first option where it cannot, rather than silently mislabelling
+    somebody's batch. */
+ var bs=document.getElementById('rc_batch');
+ bs.innerHTML=CFG.cohorts.map(function(c,i){return '<option value="'+i+'">'+esc2(c)+'</option>';}).join('');
+ var ps=document.getElementById('rc_prog');
+ ps.innerHTML=BSWL_PROGRAMS.map(function(x){return '<option value="'+x+'">'+x+'</option>';}).join('');
+ bs.value=String(r?Math.max(0,CFG.cohorts.findIndex(function(c){return (r.co||'').indexOf(c.split(' ')[0])>-1;})):0);
+ ps.value=(r&&BSWL_PROGRAMS.indexOf(r.prog)>-1)?r.prog:BSWL_PROGRAMS[0];
+ document.getElementById('rc_school').value=r?(r.school||''):'';
  document.getElementById('rc_phone').value=r?r.phone:'';
  document.getElementById('rc_stage').value=r?r.stage:CFG.stages[0].k;
  document.getElementById('rc_owner').value=r?r.owner:(isMaster()?DB.get('staff')[0].id:CURRENT.id);
- document.getElementById('rc_value').value=r&&r.value?r.value.toLocaleString():'';
- document.getElementById('rc_follow').value=r?(r.followUp||''):'';
+ rcPrice();
+ /* FOLLOW-UP DEFAULTS TO TWO DAYS OUT. Leon: "No need to enter manually,
+    pls fix it to 2 days after enquiry is added." Still editable; a default is
+    not a lock. */
+ document.getElementById('rc_follow').value=r?(r.followUp||''):dPlus(todayISO(),2);
  document.getElementById('recordModal').classList.add('open');
  setTimeout(function(){document.getElementById('rc_name').focus();},60);
 }
@@ -2228,9 +2271,15 @@ function saveRecord(){
  let ok=true;
  ok=setInvalid('f_name',!name)&&ok;
  ok=setInvalid('f_phone',phone&&!/^(0\d{9}|(\+?94)\d{9})$/.test(phone.replace(/[\s-]/g,'')))&&ok;
- ok=setInvalid('f_value',document.getElementById('rc_value').value&&!valRaw)&&ok;
+ /* no value validation: it is derived, so it cannot be mistyped */
  if(!ok){const bad=document.querySelector('#recordModal .fld.invalid input');if(bad)bad.focus();return;}
- const data={name:name,co:document.getElementById('rc_co').value.trim(),phone:phone,
+ /* "co" is kept because the pipeline, the exports and the record panel all
+    read it. It is now COMPOSED from the two dropdowns rather than typed, so
+    there is still one string to display and one pair of fields to reason with. */
+ const bIdx=+document.getElementById('rc_batch').value||0;
+ const prog=document.getElementById('rc_prog').value;
+ const data={name:name,co:CFG.cohorts[bIdx]+' \u00b7 '+prog,
+  batch:bIdx,prog:prog,school:document.getElementById('rc_school').value.trim(),phone:phone,
   stage:document.getElementById('rc_stage').value,owner:+document.getElementById('rc_owner').value,
   value:parseInt(valRaw)||0,followUp:document.getElementById('rc_follow').value||''};
  if(EDIT_ID){const r=DB.get('records').find(x=>x.id===EDIT_ID);Object.assign(r,data);r.acts.unshift({t:'Updated',m:'Details edited',tm:'just now'});toast(I.check+' '+r.name+' updated');}
@@ -4336,6 +4385,39 @@ async function runSelfTest(opts){
        beforeAudience+' students and '+beforeViews+' views survived the edit');
     /* put the seed back so nothing downstream measures my test data */
     after.title=okTitle;delete after.editedBy;delete after.editedOn;REC.edit=null;
+   })();
+   /* THE NEW ENQUIRY FORM. Leon asked for Name, Batch, the class they want and
+      School, the follow-up set for him, and the enrolment value to stop being
+      typed: "We don't need enrolment value for new enquiries. Auto calculate
+      based on batch and class selection." */
+   (function(){
+    openRecordModal();
+    const miss=['rc_name','rc_batch','rc_prog','rc_school','rc_phone','rc_follow']
+      .filter(function(k){return !document.getElementById(k);});
+    ok('Enquiries: the form asks for what Leon asks for',miss.length===0,
+       miss.join(', ')||'name, batch, class, school, phone, follow-up');
+    /* THE VALUE IS NOT TYPEABLE. Not "defaulted", not "pre-filled": there is no
+       box to put a guess in, because a guess becomes a funnel total. */
+    const v=document.getElementById('rc_value');
+    ok('Enquiries: the enrolment value cannot be typed at all',
+       !!v&&v.type==='hidden','it is derived from batch and class, not entered');
+    document.getElementById('rc_batch').value='0';
+    document.getElementById('rc_prog').value='Theory';rcPrice();
+    ok('Enquiries: the value comes from the price list',
+       v.value==='2900',v.value+' for 2027 Theory');
+    document.getElementById('rc_batch').value='1';
+    document.getElementById('rc_prog').value='Combined';rcPrice();
+    ok('Enquiries: a price Leon never gave leaves the value EMPTY',
+       v.value===''&&/Ask Leon/.test(document.getElementById('rc_priceLbl').textContent),
+       'no number, and the form says who to ask');
+    /* FOLLOW-UP IS SET FOR HIM, two days out, and still editable */
+    const f=document.getElementById('rc_follow').value;
+    ok('Enquiries: the follow-up date is already two days out',
+       f===dPlus(todayISO(),2),f+' from '+todayISO());
+    ok('Enquiries: the follow-up is a default, not a lock',
+       !document.getElementById('rc_follow').disabled
+       &&!document.getElementById('rc_follow').readOnly,'still editable');
+    closeRecordModal();
    })();
    /* THE PRICE LIST. Leon's real fees, from the feedback form of 13 Aug 2026.
       This used to invent a number for every combination out of the location,
