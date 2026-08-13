@@ -1603,10 +1603,36 @@ const COHORT_SHORT=['2027','2028'];
    typed, so nobody enrolling a student is making a money decision. */
 const BSWL_PROGRAMS=['Theory','Revision','Combined'];
 function locClass(loc){return (loc==='Kings'||loc==='JMC'||loc==='Sasik')?'inst':(loc==='Residence'?'res':'online');}
-function bswlFee(program,loc){const c=locClass(loc);
- if(program==='Combined')return c==='online'?5500:7000;
- if(program==='Revision')return c==='online'?3000:4000;
- return c==='res'?6000:(c==='online'?3000:4000);
+/* ══ THE PRICE LIST ══
+   Leon's real monthly fees, from his feedback form of 13 Aug 2026. Until now
+   this function invented a number for every combination from the location,
+   which is not how he prices at all: he prices by BATCH and PROGRAMME.
+
+   FOUR PRICES WERE GIVEN. Two combinations were not, and they are left UNSET
+   rather than guessed, because a made-up fee is worse than a blank one. It
+   becomes an enrolment value, then a forecast, then a number in a report Leon
+   reads back to himself as fact. When a price is missing the form says so and
+   asks for it instead of quietly filling the gap. */
+const BSWL_PRICES={
+ '2027 Batch':{Theory:2900,Revision:3200,Combined:5500},
+ '2028 Batch':{Theory:3000}      /* Revision and Combined: NOT GIVEN, ask Leon */
+};
+function bswlFee(program,loc,cohort){
+ /* cohort may arrive as an index into CFG.cohorts or as the label itself */
+ var key=(typeof cohort==='number'||/^\d+$/.test(String(cohort)))
+   ? CFG.cohorts[+cohort] : cohort;
+ var row=BSWL_PRICES[key];
+ if(!row)return null;
+ var v=row[program];
+ return (v==null)?null:v;
+}
+function bswlFeeLabel(program,loc,cohort){
+ var v=bswlFee(program,loc,cohort);
+ if(v!=null)return 'Monthly fee '+lkr(v)+', from Leon\'s price list.';
+ var key=(typeof cohort==='number'||/^\d+$/.test(String(cohort)))
+   ? CFG.cohorts[+cohort] : cohort;
+ return 'No price set for '+esc2(program)+' in the '+esc2(key||'this')
+   +'. Ask Leon before you enrol, so the enrolment value is not a guess.';
 }
 const monthLbl=ym=>{const p=ym.split('-');return MN_FULL[+p[1]-1]+' '+p[0];};
 const monthShort=ym=>{const p=ym.split('-');return MN[+p[1]-1]+' '+p[0].slice(2);};
@@ -1667,7 +1693,10 @@ function seedData(){
  ROSTER.forEach(function(row){const cohort=row[0],loc=row[1],n=row[2];
   for(let k=0;k<n;k++){
    const program=pickProgram(loc);
-   const fee=bswlFee(program,loc);
+   /* the seed prices from the student's OWN batch, so seeded fees and the
+      form agree. Where Leon has not given a price the seed leaves the
+      previous behaviour rather than inventing one. */
+   const fee=bswlFee(program,loc,cohort)||3000;
    const back=Math.floor(Math.pow(rnd(),1.7)*15);
    const joined=ymShift(ym,-back)+'-'+pad(iRnd(1,28));
    let status='active';
@@ -2317,7 +2346,8 @@ var ENROL={rec:null,
  preview:function(){
   var el=document.getElementById('enFee');if(!el)return;
   var prog=document.getElementById('enProg').value,loc=document.getElementById('enLoc').value;
-  el.textContent='Monthly fee '+lkr(bswlFee(prog,loc))+', from your price list. '
+  var coh=(document.getElementById('enCohort')||{}).value;
+  el.textContent=bswlFeeLabel(prog,loc,coh)+' '
    +'They appear in Students straight away and in Fees from this month.';
  },
  save:function(){
@@ -2326,7 +2356,7 @@ var ENROL={rec:null,
   if(!nm){toast(I.warn+' A student needs a name.');return;}
   var loc=document.getElementById('enLoc').value,prog=document.getElementById('enProg').value;
   var cohort=+document.getElementById('enCohort').value;
-  var fee=bswlFee(prog,loc);
+  var fee=bswlFee(prog,loc,(document.getElementById('enCohort')||{}).value);
   var dup=DB.get('customers').find(function(c){return c.name.toLowerCase()===nm.toLowerCase()&&c.status==='active';});
   if(dup&&!confirm(nm+' is already an active student. Add a second record anyway?'))return;
   var c={id:DB.nextId('customers'),name:nm,co:LOC_LABEL[loc]||loc,program:prog,
@@ -4231,7 +4261,7 @@ async function runSelfTest(opts){
       c?c.name:'no student created');
    ok('Enrolment: the enquiry remembers who it became',r.studentId===(c||{}).id);
    ok('Enrolment: the fee comes from the price list, never typed',
-      !!c&&c.fee===bswlFee('Combined','Kings'),c?c.fee:'');
+      !!c&&c.fee===bswlFee('Combined','Kings','2027 Batch'),c?c.fee:'');
    /* the one that would have hurt most: a student on the roster and not in Fees */
    const plan=DB.get('recurringPlans').find(x=>x.id===(c||{}).id);
    ok('Enrolment: the student is billable, not just listed',
@@ -4306,6 +4336,33 @@ async function runSelfTest(opts){
        beforeAudience+' students and '+beforeViews+' views survived the edit');
     /* put the seed back so nothing downstream measures my test data */
     after.title=okTitle;delete after.editedBy;delete after.editedOn;REC.edit=null;
+   })();
+   /* THE PRICE LIST. Leon's real fees, from the feedback form of 13 Aug 2026.
+      This used to invent a number for every combination out of the location,
+      which is not how he prices. A wrong fee becomes an enrolment value, then a
+      forecast, then a figure he reads back to himself as fact. */
+   (function(){
+    const want=[['2027 Batch','Theory',2900],['2027 Batch','Revision',3200],
+                ['2027 Batch','Combined',5500],['2028 Batch','Theory',3000]];
+    const bad=want.filter(function(w){return bswlFee(w[1],'Kings',w[0])!==w[2];})
+                  .map(function(w){return w[0]+' '+w[1];});
+    ok('Fees: the price list is exactly what Leon gave us',bad.length===0,
+       bad.join(', ')||'2900, 3200, 5500, 3000');
+    /* THE ONE THAT MATTERS MORE THAN THE FOUR. He gave four prices and there
+       are six combinations. The two he did not give must come back EMPTY and
+       say so, never a plausible number nobody chose. */
+    const guessed=[['2028 Batch','Revision'],['2028 Batch','Combined']]
+      .filter(function(w){return bswlFee(w[1],'Kings',w[0])!=null;})
+      .map(function(w){return w[0]+' '+w[1];});
+    ok('Fees: a price Leon never gave stays empty instead of being invented',
+       guessed.length===0,guessed.join(', ')||'2 combinations unset and admitted');
+    ok('Fees: an unset price tells the user to ask, rather than showing nothing',
+       /Ask Leon/.test(bswlFeeLabel('Revision','Kings','2028 Batch')),
+       bswlFeeLabel('Revision','Kings','2028 Batch').slice(0,60));
+    /* the price must follow the BATCH, which is the whole point of the change */
+    ok('Fees: the same programme costs different amounts in different batches',
+       bswlFee('Theory','Kings','2027 Batch')!==bswlFee('Theory','Kings','2028 Batch'),
+       '2900 for 2027, 3000 for 2028');
    })();
    /* FEE AGEING. The one thing on Leon's feedback form he marked critical
       twice, and the only thing he still does by hand against a Google Form. */
