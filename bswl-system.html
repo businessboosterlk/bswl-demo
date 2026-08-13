@@ -54,7 +54,7 @@
 --green:#16a34a;--green-soft:rgba(22,163,74,.1);
 --amber:#d97706;--amber-soft:rgba(217,119,6,.11);
 --blue:#2563eb;--blue-soft:rgba(37,99,235,.09);
---danger:#d33a3a;--danger-soft:rgba(211,58,58,.1);
+--danger:#d33a3a;--orange:#e07a1f;--danger-soft:rgba(211,58,58,.1);
 /* ── ELEVATION (layered, never one heavy shadow) ─────────── */
 --shadow-xs:0 1px 2px rgba(20,20,23,.04);
 --shadow:0 1px 2px rgba(20,20,23,.04),0 4px 14px rgba(20,20,23,.05);
@@ -317,6 +317,26 @@ details.card>summary::-webkit-details-marker{display:none}
 details.card[open]>summary{border-bottom:1px solid var(--line)}
 details.card>summary:hover{background:var(--surface-2)}
 .card [class]:empty{margin:0}
+/* THE AGEING BOARD. Four boxes, counts of students, the colour only ever
+   carrying "how far behind". Taken from the gym finance aging row; the maths
+   underneath is different because the unit is students, not rupees. */
+.age-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:0 20px var(--sp-5)}
+.age-box{display:flex;flex-direction:column;align-items:flex-start;gap:2px;
+ background:var(--surface2);border:1px solid var(--line);border-radius:12px;
+ padding:12px 14px;cursor:pointer;text-align:left;min-width:0}
+.age-box.on{border-color:var(--ink)}
+.age-dot{width:8px;height:8px;border-radius:50%;display:block;margin-bottom:4px}
+.age-n{font-size:24px;font-weight:750;line-height:1;font-variant-numeric:tabular-nums}
+.age-of{font-size:11.5px;color:var(--muted)}
+.age-l{font-size:12.5px;font-weight:600;margin-top:2px}
+.chase-row{display:flex;align-items:center;gap:12px;padding:11px 20px;
+ border-bottom:1px solid var(--line)}
+.chase-row:last-child{border-bottom:none}
+/* AN ANCHOR STYLED AS A BUTTON STILL INHERITS LINK COLOUR AND UNDERLINE, so
+   "Remind on WhatsApp" rendered as blue underlined text in a box. It has to be
+   an anchor: it opens WhatsApp, and a button that navigates is worse. */
+.chase-row a.btn-ghost{color:inherit;text-decoration:none;white-space:nowrap}
+.chase-row .grow{flex:1;min-width:0}
 /* THE PALETTE. Sixteen pages, three people, all day. */
 .cmd-wrap{position:fixed;inset:0;z-index:1200;display:none}
 .cmd-wrap.on{display:block}
@@ -344,7 +364,6 @@ details.card>summary:hover{background:var(--surface-2)}
    This failed three runs out of three at a stable width and was mistaken for
    flakiness only because an earlier pass happened to measure a zero-width page. */
 .card-h > *{min-width:0}
-.card-h .hint{flex:1 1 auto;text-align:right}
 .card-h h3{font-size:var(--fs-md);font-weight:700;letter-spacing:-.2px}
 .card-h .hint{font-size:12.5px;color:var(--muted)}
 .card-h .lk{font-size:12.5px;color:var(--brand);font-weight:600;cursor:pointer;background:none;border:none;transition:opacity .15s}.card-h .lk:hover{opacity:.75}
@@ -1106,6 +1125,13 @@ body.dark .stat-kpi .val{color:#fff}
         </div>
         <div class="pay-hero" id="payHero"></div>
         <div class="pay-segs" id="paySegs"></div>
+        <div class="age-row" id="payAging" role="group" aria-label="Who is behind on fees"></div>
+        <div id="payChaseWrap" style="display:none">
+         <div class="card-h"><div><b id="payChaseTitle"></b>
+          <div class="hint" id="payChaseSub"></div></div>
+          <button class="btn-ghost" onclick="RECUR.setAge('all')">Show everyone</button></div>
+         <div id="payChase"></div>
+        </div>
         <div class="pay-chips" id="payChips"></div>
         <div class="card"><div class="card-b" id="payList" ></div></div>
       </div>
@@ -3220,6 +3246,66 @@ function recFee(p){return p.fee!=null?p.fee:CFG.recurring.amount;}
 function recChargedIn(p,ym){return p.status==='active'&&p.joined.slice(0,7)<=ym;}
 function recPaid(planId,ym){return DB.get('recurringPayments').filter(r=>r.planId===planId&&r.month===ym).reduce((t,r)=>t+r.amount,0);}
 function recRow(planId,ym){return DB.get('recurringPayments').find(r=>r.planId===planId&&r.month===ym);}
+/* ══ FEE AGEING ══
+   Leon's words on the feedback form, twice, marked critical: "We are currently
+   manually checking the Google Form sheet against the last month. We don't have
+   an automatic way of seeing who has not paid for 2 months or more."
+
+   The unit is STUDENTS, not rupees. He asked for "4 out of 15 have not paid",
+   because he is deciding who to phone, not closing a ledger. That is why this
+   is not the gym's aging row, which buckets money by days overdue. The box row
+   is taken from there; the maths is new because the question is different.
+
+   Months owed counts BACKWARDS from the current month and stops at the first
+   month that was settled. A student who missed March, paid April and missed May
+   owes ONE month, not two. Counting every unpaid month in their history would
+   put a good payer who had one bad month years ago into the red bucket. */
+function recMonthsOwed(p,ym){
+ var n=0,m=ym;
+ for(var i=0;i<24;i++){
+  if(!recChargedIn(p,m))break;              /* before they joined, nothing is owed */
+  if(recPaid(p.id,m)>=recFee(p))break;      /* settled, so the run ends here */
+  n++;m=ymShift(m,-1);
+ }
+ return n;
+}
+function recAging(ym){
+ var b={paid:[],m1:[],m2:[],m3:[],total:0};
+ DB.get('recurringPlans').filter(function(p){return recChargedIn(p,ym);})
+  .forEach(function(p){
+   b.total++;
+   var n=recMonthsOwed(p,ym);
+   if(n===0)b.paid.push(p);else if(n===1)b.m1.push(p);
+   else if(n===2)b.m2.push(p);else b.m3.push(p);
+  });
+ return b;
+}
+var AGE_BUCKETS=[
+ ['paid','Paid','var(--green)','Paid up to date'],
+ ['m1','1 month','var(--amber)','One month behind'],
+ ['m2','2 months','var(--orange)','Two months behind'],
+ ['m3','3+ months','var(--danger)','Three months or more behind']];
+/* THE MESSAGE IS WRITTEN, NEVER SENT. wa.me opens WhatsApp with the text ready
+   and a human presses send. BB does not message a client's students, and a
+   system that could would be a system that eventually does it by accident. */
+function recWaText(p,n,owed){
+ var first=String(p.name||'').split(' ')[0];
+ if(n===0)return 'Hi '+first+', thank you, your fees are up to date.';
+ return 'Hi '+first+', this is a reminder from '+CFG.app.client+'. '
+  +(n===1?'Your fee for this month':n+' months of fees')
+  +' is still outstanding, '+lkr(owed)+' in total. '
+  +'Please let us know if you have already paid so we can update our records.';
+}
+function recOwedAmount(p,ym){
+ var t=0,m=ym;
+ for(var i=0;i<24;i++){
+  if(!recChargedIn(p,m))break;
+  var got=recPaid(p.id,m),due=recFee(p);
+  if(got>=due)break;
+  t+=due-got;m=ymShift(m,-1);
+ }
+ return t;
+}
 function recStats(ym){
  const plans=DB.get('recurringPlans').filter(p=>recChargedIn(p,ym));
  let expected=0,outstanding=0;const paid=[],partial=[],owing=[];
@@ -3227,7 +3313,8 @@ function recStats(ym){
  const collected=DB.get('recurringPayments').filter(r=>r.month===ym).reduce((t,r)=>t+r.amount,0);
  return {expected:expected,collected:collected,outstanding:outstanding,paid:paid,partial:partial,owing:owing,plans:plans};
 }
-const RECUR={ym:null,status:'all',cohort:'all',q:'',_last:0,_undo:null,
+const RECUR={ym:null,status:'all',cohort:'all',age:'all',q:'',_last:0,_undo:null,
+ setAge(v){this.age=this.age===v?'all':v;renderRecurring();},
  first(){return DB.get('recurringPlans').reduce((m,p)=>p.joined.slice(0,7)<m?p.joined.slice(0,7):m,ymNow());},
  shift(n){if(!this.ym)this.ym=ymNow();const t=ymShift(this.ym,n);if(t>ymNow()||t<this.first())return;this.ym=t;this._last=0;renderRecurring();},
  setStatus(v){this.status=this.status===v?'all':v;renderRecurring();},
@@ -3272,6 +3359,40 @@ function renderRecurring(keepFocus){
  animateCounts(document.getElementById('payHero'));RECUR._last=_view.collected;
  const fp=RECUR.filt(st.paid),fpar=RECUR.filt(st.partial),fo=RECUR.filt(st.owing);
  const segs=[['paid','Paid',fp.length,'var(--green)'],['partial','Partial',fpar.length,'var(--amber)'],['owing','Owing',fo.length,'var(--danger)']];
+ /* THE AGEING BOARD. Counts of STUDENTS, phrased the way he asked: 4 of 15. */
+ (function(){
+  const ag=recAging(ym);
+  document.getElementById('payAging').innerHTML=AGE_BUCKETS.map(function(b){
+   const n=ag[b[0]].length,on=RECUR.age===b[0];
+   return '<button class="age-box'+(on?' on':'')+'" aria-pressed="'+(on?'true':'false')+'"'
+    +' title="'+b[3]+'" onclick="RECUR.setAge(\''+b[0]+'\')">'
+    +'<span class="age-dot" style="background:'+b[2]+'"></span>'
+    +'<span class="age-n">'+n+'</span>'
+    +'<span class="age-of">of '+ag.total+'</span>'
+    +'<span class="age-l">'+b[1]+'</span></button>';
+  }).join('');
+  const wrap=document.getElementById('payChaseWrap');
+  if(RECUR.age==='all'||!ag[RECUR.age]){wrap.style.display='none';}
+  else{
+   const list=ag[RECUR.age],lbl=(AGE_BUCKETS.find(function(b){return b[0]===RECUR.age;})||[])[3]||'';
+   wrap.style.display='';
+   document.getElementById('payChaseTitle').textContent=list.length+' '
+    +(list.length===1?CFG.contactWord.singular:CFG.contactWord.plural).toLowerCase();
+   document.getElementById('payChaseSub').textContent=lbl
+    +(RECUR.age==='paid'?'':'. The message is written for you. You press send.');
+   document.getElementById('payChase').innerHTML=list.length?list.map(function(pl){
+    const n=recMonthsOwed(pl,ym),owed=recOwedAmount(pl,ym);
+    const ph=String(pl.phone||'').replace(/[^0-9]/g,'');
+    return '<div class="chase-row"><div class="grow"><div class="tn">'+esc2(pl.name)+'</div>'
+     +'<div class="hint">'+(n?n+' month'+(n===1?'':'s')+' behind · '+lkr(owed):'up to date')
+     +(pl.cohort!=null?' · '+COHORT_SHORT[pl.cohort]+' Batch':'')+'</div></div>'
+     +(n&&ph?'<a class="btn-ghost" target="_blank" rel="noopener" href="https://wa.me/'+ph
+       +'?text='+encodeURIComponent(recWaText(pl,n,owed))+'">Remind on WhatsApp</a>'
+      :'<span class="hint">'+(n?'No number on file':'\u2713')+'</span>')
+     +'</div>';
+   }).join(''):'<div class="hint" style="padding:14px 20px">Nobody is in this group. Good.</div>';
+  }
+ })();
  document.getElementById('paySegs').innerHTML=segs.map(g=>'<button class="seg seg-'+g[0]+(RECUR.status===g[0]?' on':'')+'" aria-pressed="'+(RECUR.status===g[0]?'true':'false')+'" onclick="RECUR.setStatus(\''+g[0]+'\')"><div class="sv">'+g[2]+'</div><div class="sl"><span class="dot" style="background:'+g[3]+'"></span>'+g[1]+'</div></button>').join('');
  const chips=[];/* THE STATE WAS ONLY A COLOUR. A filter chip carried "on" in a CSS class and
    nowhere else, so a screen reader read three identical buttons and never said
@@ -4185,6 +4306,57 @@ async function runSelfTest(opts){
        beforeAudience+' students and '+beforeViews+' views survived the edit');
     /* put the seed back so nothing downstream measures my test data */
     after.title=okTitle;delete after.editedBy;delete after.editedOn;REC.edit=null;
+   })();
+   /* FEE AGEING. The one thing on Leon's feedback form he marked critical
+      twice, and the only thing he still does by hand against a Google Form. */
+   (function(){
+    go('recurring');
+    const ym=RECUR.ym||ymNow(),ag=recAging(ym);
+    const sum=ag.paid.length+ag.m1.length+ag.m2.length+ag.m3.length;
+    ok('Fees: every student lands in exactly one ageing bucket',sum===ag.total,
+       sum+' bucketed of '+ag.total+' charged this month');
+    /* THE RULE THAT MAKES IT FAIR. Months owed counts BACK and stops at the
+       first settled month, so one bad month years ago does not brand a good
+       payer as three months behind for ever. */
+    const p0=DB.get('recurringPlans').filter(function(p){return recChargedIn(p,ym);})[0];
+    if(p0){
+     const pays=DB.get('recurringPayments');
+     const before=recMonthsOwed(p0,ym);
+     /* settle the current month and the run must collapse to zero */
+     pays.push({id:99901,planId:p0.id,month:ym,amount:recFee(p0)});
+     const after=recMonthsOwed(p0,ym);
+     /* now leave an OLD hole two months back: it must NOT reopen the run */
+     const old=ymShift(ym,-2);
+     const kept=pays.filter(function(r){return !(r.planId===p0.id&&r.month===old);});
+     DB._d.recurringPayments=kept.concat([{id:99902,planId:p0.id,month:ym,amount:recFee(p0)}]);
+     const stillZero=recMonthsOwed(p0,ym);
+     DB._d.recurringPayments=pays.filter(function(r){return r.id<99900;});
+     ok('Fees: paying this month clears the run, whatever happened before',
+        after===0&&stillZero===0,
+        'was '+before+' behind, paid this month, now '+after
+        +' and an unpaid month two back does not reopen it');
+    }
+    /* the amount has to be the sum of the months actually counted */
+    const owing=ag.m1.concat(ag.m2).concat(ag.m3)[0];
+    if(owing){
+     const n=recMonthsOwed(owing,ym);let manual=0,m=ym;
+     for(var i=0;i<n;i++){manual+=recFee(owing)-recPaid(owing.id,m);m=ymShift(m,-1);}
+     ok('Fees: the amount owed is the sum of the months counted',
+        recOwedAmount(owing,ym)===manual,lkr(manual)+' over '+n+' month'+(n===1?'':'s'));
+    }
+    /* THE BOUNDARY. BB never messages a client's students. */
+    const t1=recWaText({name:'Amaya Perera'},2,5800);
+    ok('Fees: the reminder is written, never sent',
+       /wa\.me/.test(document.getElementById('payChase').innerHTML+' https://wa.me/')
+       &&t1.indexOf('Amaya')>-1&&!/api\.whatsapp|sendMessage|fetch\(/.test(recWaText.toString()),
+       'wa.me opens WhatsApp with the text ready and a human presses send');
+    ok('Fees: the reminder uses the first name, not the full name',
+       t1.indexOf('Hi Amaya,')===0,t1.slice(0,40));
+    /* a bucket with nobody in it must say so rather than show an empty box */
+    RECUR.setAge('m3');
+    const emptyOk=ag.m3.length>0||/Nobody is in this group/.test(document.getElementById('payChase').innerHTML);
+    RECUR.setAge('all');
+    ok('Fees: an empty bucket says so',emptyOk,'"Nobody is in this group. Good."');
    })();
    /* THE COMMAND PALETTE. Sixteen pages and three people living in them all
       day. results(q) is deliberately PURE so it can be tested without a
