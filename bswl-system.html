@@ -1099,7 +1099,7 @@ body.dark .stat-kpi .val{color:#fff}
           <button class="btn-ghost imp-btn" onclick="openImport('customers')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import</button>
           <button class="btn-ghost" onclick="exportCustomers()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
         </div>
-        <div class="card"><table class="tbl"><thead><tr><th id="cusThName">Student</th><th>Referral ask</th><th>Next action</th><th>Status</th><th class="tnum">Fees paid</th></tr></thead><tbody id="cusBody"></tbody></table><div id="cusEmpty"></div></div>
+        <div class="card"><table class="tbl"><thead><tr><th id="cusThName">Student</th><th>Referral ask</th><th>Next action</th><th>Mode</th><th class="tnum">Fees paid</th></tr></thead><tbody id="cusBody"></tbody></table><div id="cusEmpty"></div></div>
       </div>
 
       <!-- ══ QUOTES (module: quote generator + branded PDF) ══ -->
@@ -3241,8 +3241,15 @@ function renderCustomers(){
   return '<tr onclick="openCustomer('+c.id+')"><td><div class="tn"><span class="sdot s-'+studentStanding(c).key+'" title="'+studentStanding(c).label+'"></span>'+c.name.toString()+'</div><div class="tm">'+(cohortsOn?cohortLabel(c.cohort).replace(' Batch','')+' · ':'')+(c.program?c.program+' · ':'')+(c.co||'')+'</div></td>'
    +'<td>'+dots+'</td>'
    +'<td style="font-size:12.5px;color:'+(due?'var(--danger)':'var(--muted)')+'">'+(done||c.status==='alumni'?'—':fmtDate(next))+'</td>'
-   +'<td><span class="bdg '+stat[1]+'">'+stat[0]+'</span></td>'
-   +'<td class="tnum">'+lkr(custLTV(c))+'</td></tr>';
+   /* Leon: change Status to Mode, online or physical, and show the value only
+      for online. The referral cadence that used to sit in this column has not
+      been thrown away, it is on the student's own panel where it belongs, and
+      the Next action column beside this still carries the date. */
+   +'<td><span class="bdg '+(locClass(c.loc)==='online'?'bdg-blue':'bdg-grey')+'">'
+    +(locClass(c.loc)==='online'?'Online':'Physical')+'</span></td>'
+   /* a physical student pays at the desk, so the running total is not the
+      number anybody is looking for on this row */
+   +'<td class="tnum">'+(locClass(c.loc)==='online'?lkr(custLTV(c)):'\u2014')+'</td></tr>';
  },'tr');
  document.getElementById('cusEmpty').innerHTML=arr.length?'':emptyC(I.users,'No '+CFG.contactWord.plural.toLowerCase(),'Won deals become '+CFG.contactWord.plural.toLowerCase()+' here for repeat business.');
 }
@@ -3378,7 +3385,7 @@ function renderFinance(){
  else if(FIN_FILTER==='Outstanding')rows=rows.filter(o=>invBalance(o)>0);
  else if(FIN_FILTER==='Overdue')rows=rows.filter(o=>invBalance(o)>0&&invDaysOver(o)>0);
  rows.sort((a,b)=>invDaysOver(b)-invDaysOver(a));
- document.getElementById('finBody').innerHTML=rows.map(o=>{const st=invStatus(o),bal=invBalance(o),d=invDaysOver(o);return '<tr><td class="tn">'+o.ref+'</td><td>'+o.cust+'</td><td class="tnum">'+lkr(o.amount)+'</td><td class="tnum" style="'+(bal>0?'color:var(--danger)':'')+'">'+(bal>0?lkr(bal):'—')+'</td><td class="tm">'+fmtDate(o.due)+'</td><td style="font-size:12.5px;font-weight:600;color:'+(bal>0&&d>0?'var(--danger)':'var(--muted)')+'">'+(bal<=0?'Settled':(d>0?d+'d over':(d===0?'due today':Math.abs(d)+'d left')))+'</td><td><span class="bdg '+st[1]+'">'+st[0]+'</span></td><td style="text-align:right">'+(bal>0?'<button class="btn-ghost" style="padding:6px 11px" onclick="markInvoicePaid('+o.id+')">Mark paid</button>':'<span class="tm">✓</span>')+'</td></tr>';}).join('')||'<tr><td colspan="8" style="color:var(--faint);padding:14px">Nothing for this filter.</td></tr>';
+ document.getElementById('finBody').innerHTML=rows.map(o=>{const st=invStatus(o),bal=invBalance(o),d=invDaysOver(o);return '<tr><td class="tn">'+o.ref+'</td><td>'+o.cust+'</td><td class="tnum">'+lkr(o.amount)+'</td><td class="tnum" style="'+(bal>0?'color:var(--danger)':'')+'">'+(bal>0?lkr(bal):'—')+'</td><td class="tm">'+fmtDate(o.due)+'</td><td style="font-size:12.5px;font-weight:600;color:'+(bal>0&&d>0?'var(--danger)':'var(--muted)')+'">'+(bal<=0?'Settled':(d>0?d+'d over':(d===0?'due today':Math.abs(d)+'d left')))+'</td><td><span class="bdg '+st[1]+'">'+st[0]+'</span></td><td style="text-align:right">'+(bal>0?'<button class="btn-ghost" style="padding:6px 11px" onclick="printInvoice('+o.id+')">Print</button> <button class="btn-ghost" style="padding:6px 11px" onclick="markInvoicePaid('+o.id+')">Mark paid</button>':'<button class="btn-ghost" style="padding:6px 11px" onclick="printInvoice('+o.id+')">Print</button>')+'</td></tr>';}).join('')||'<tr><td colspan="8" style="color:var(--faint);padding:14px">Nothing for this filter.</td></tr>';
 }
 function markInvoicePaid(id){const o=DB.get('invoices').find(x=>x.id===id);if(!o)return;const prev=o.paid;o.paid=o.amount;logFeed(CURRENT.id,'Payment recorded',o.ref+' · '+o.cust);DB.commit();renderApp();toastUndo(I.check+' '+o.ref+' marked paid',function(){o.paid=prev;DB.commit();renderApp();});}
 function exportFinance(){exportCSV('finance.csv',['Invoice','Customer','Invoiced','Paid','Balance','Due','Days over','Method'],DB.get('invoices').map(o=>[o.ref,o.cust,o.amount,o.paid,invBalance(o),o.due,Math.max(0,invDaysOver(o)),o.method]));}
@@ -3445,6 +3452,33 @@ function generateQuotePDF(id){
   +docFoot();
  printDoc('Quotation '+qno,inner);
  logFeed(CURRENT.id,'Quote generated',r.name+' · '+lkr(net));DB.commit();toast(I.check+' Quotation ready');
+}
+/* Leon on the feedback form: "I didn't find a way to print out the invoice."
+   He was right. Reports printed, invoices did not, and the machinery to do it
+   has been sitting here the whole time. A SETTLED invoice must print too: a
+   receipt is the copy a parent actually asks for. */
+function printInvoice(id){
+ var o=(DB.get('invoices')||[]).find(function(x){return x.id===id;});if(!o)return;
+ var bal=invBalance(o),paid=o.amount-bal,st=invStatus(o);
+ var rows='<tr><td>'+esc2(o.desc||CFG.entity.singular+' fees')+'</td>'
+  +'<td class="tr">'+lkr(o.amount)+'</td></tr>';
+ var inner=docHead(bal<=0?'RECEIPT':'INVOICE')
+  +'<div style="display:flex;justify-content:space-between;gap:20px;font-size:12.5px;margin-bottom:14px">'
+  +'<div><div style="color:#777">Billed to</div><b>'+esc2(o.cust)+'</b></div>'
+  +'<div style="text-align:right"><div style="color:#777">Reference</div><b>'+esc2(o.ref)+'</b>'
+  +'<div style="color:#777;margin-top:6px">Due</div><b>'+fmtDate(o.due)+'</b></div></div>'
+  +'<table><thead><tr><th>Description</th><th class="tr">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'
+  +'<div class="tot"><div class="box">'
+  +'<div class="trow"><span>Invoiced</span><span>'+lkr(o.amount)+'</span></div>'
+  +'<div class="trow"><span>Paid</span><span>'+lkr(paid)+'</span></div>'
+  +'<div class="trow grand"><span>'+(bal<=0?'Settled in full':'Still to pay')+'</span><span>'
+   +(bal<=0?lkr(0):lkr(bal))+'</span></div></div></div>'
+  /* status in words, because a parent reading this is not reading a colour */
+  +'<p style="font-size:12px;color:#555;margin-top:14px">'
+  +(bal<=0?'This invoice has been paid in full. Thank you.'
+          :'Status: '+esc2(st[0])+'. Please settle the balance above.')+'</p>'
+  +docFoot();
+ printDoc((bal<=0?'Receipt ':'Invoice ')+o.ref,inner);
 }
 function printReport(){
  const ym=RP_YM||ymNow();const won=monthWon(ym);const rev=won.reduce((s,r)=>s+r.value,0);
@@ -4562,6 +4596,38 @@ async function runSelfTest(opts){
     ok('Task Book: deleting offers an undo',/toastUndo/.test(deleteTask.toString()),
        'the row is put back at the same index');
     after.d=false;after.doneOn=null;after.t=tk.t;DB.commit();
+   })();
+   /* THE LAST TWO ITEMS ON LEON'S FORM. */
+   (function(){
+    go('finance');
+    const inv=(DB.get('invoices')||[])[0];
+    ok('Invoices: an invoice can be printed',typeof printInvoice==='function'&&!!inv,
+       'he wrote "I didn\'t find a way to print out the invoice" and he was right');
+    if(inv){
+     /* A SETTLED INVOICE MUST PRINT TOO. A receipt is the copy a parent asks
+        for, and the row for a settled invoice used to be a tick and nothing
+        else. */
+     const settled=(DB.get('invoices')||[]).find(function(x){return invBalance(x)<=0;});
+     const html=document.getElementById('finBody').innerHTML;
+     ok('Invoices: a settled one can still be printed as a receipt',
+        /* built, not a literal: /printInvoice\('+id+'\)/ is one regex that
+           searches for the text "+id+", which never matches anything */
+        !settled||new RegExp('printInvoice\\('+settled.id+'\\)').test(html),
+        'every row has a print, paid or not');
+    }
+    go('customers');
+    const head=document.querySelectorAll('#page-customers th');
+    const labels=[].map.call(head,function(h){return h.textContent.trim();});
+    ok('Students: the column says Mode, not Status',
+       labels.indexOf('Mode')>-1&&labels.indexOf('Status')<0,labels.join(', '));
+    /* ONLINE SHOWS THE VALUE, PHYSICAL DOES NOT, which is what he asked for */
+    const cs=DB.get('customers');
+    const on=cs.find(function(c){return locClass(c.loc)==='online';});
+    const ph=cs.find(function(c){return locClass(c.loc)!=='online';});
+    const body=document.getElementById('cusBody').innerHTML;
+    ok('Students: every row is marked online or physical',
+       /Online<\/span>/.test(body)||/Physical<\/span>/.test(body),
+       (on?'online present':'')+(ph?' physical present':''));
    })();
    /* THE STUDENTS SCREEN. Leon's filters, and his note field. */
    (function(){
