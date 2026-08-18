@@ -317,6 +317,10 @@ details.card>summary::-webkit-details-marker{display:none}
 details.card[open]>summary{border-bottom:1px solid var(--line)}
 details.card>summary:hover{background:var(--surface-2)}
 .card [class]:empty{margin:0}
+.tk-note{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.45}
+.tk-act{display:flex;gap:6px;flex-shrink:0}
+.tk-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,110px);gap:8px}
+.task-edit{align-items:flex-start}
 .rc-price{font-size:15px;font-weight:650;padding:10px 0}
 /* a missing price must not read like a price */
 .rc-price-gap{font-size:12.5px;font-weight:500;color:var(--amber);line-height:1.45}
@@ -1079,6 +1083,17 @@ body.dark .stat-kpi .val{color:#fff}
         <div class="toolbar">
           <div class="seg-toggle" id="cusStatusSeg" style="display:none"><button class="segt active" data-cs="active" onclick="cusStatus('active')">Active</button><button class="segt" data-cs="alumni" onclick="cusStatus('alumni')">Alumni</button></div>
           <select class="filter" id="cusCohort" style="display:none" onchange="renderCustomers()"></select>
+          <!-- Leon: "Add additional dropdowns to filter students by the class they
+               attend. Mode: Online / Physical. Class: Theory / Revision / Both.
+               Institute: show this dropdown only when Physical is selected." -->
+          <select class="filter" id="cusMode" onchange="renderCustomers()" aria-label="Mode">
+            <option value="all">Online and physical</option>
+            <option value="online">Online</option>
+            <option value="physical">Physical</option></select>
+          <select class="filter" id="cusProg" onchange="renderCustomers()" aria-label="Class">
+            <option value="all">Every class</option></select>
+          <select class="filter" id="cusInst" onchange="renderCustomers()" aria-label="Institute" style="display:none">
+            <option value="all">Every institute</option></select>
           <div class="sp"></div>
           <button class="btn-primary" onclick="ENROL.open(null)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add student</button>
           <button class="btn-ghost imp-btn" onclick="openImport('customers')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import</button>
@@ -2304,8 +2319,51 @@ function saveTask(){
 }
 function toggleTask(id){
  const tk=DB.get('tasks').find(x=>x.id===id);if(!tk)return;
- tk.d=!tk.d;DB.commit();renderApp();
- if(tk.d)toastUndo(I.check+' Task done',function(){tk.d=false;DB.commit();renderApp();});
+ tk.d=!tk.d;
+ /* WHEN it was finished, so the four day clock has something to count from.
+    Without this the archive would either never fire or fire on everything. */
+ tk.doneOn=tk.d?todayISO():null;
+ DB.commit();renderApp();
+ if(tk.d)toastUndo(I.check+' Task done',function(){tk.d=false;tk.doneOn=null;DB.commit();renderApp();});
+}
+/* ══ THE FOUR DAY RULE ══
+   Leon: "Once the assigned person marks a task as Complete, it should be
+   automatically deleted after 4 days."
+
+   ARCHIVED, NOT DELETED, and that was a deliberate departure from the words.
+   Destroying a record of work somebody did is the one change here that cannot
+   be undone, and the Activity log would then point at tasks that no longer
+   exist. Hidden gives him the clean list he actually wants; gone loses the
+   only proof the job was done. Flagged to Thulaib and agreed before building. */
+const TASK_ARCHIVE_DAYS=4;
+function taskArchived(t){
+ if(!t.d||!t.doneOn)return false;
+ return daysBetween(t.doneOn,todayISO())>=TASK_ARCHIVE_DAYS;
+}
+function editTask(id){
+ const tk=DB.get('tasks').find(x=>x.id===id);if(!tk)return;
+ TASK_EDIT=(TASK_EDIT===id)?null:id;renderApp();
+}
+var TASK_EDIT=null;
+/* saveTaskEdit, not saveTask: the add-task modal already owns that name, and
+   the second declaration silently replaced the first. Caught by the duplicate
+   global check, which is the only reason the Add button still works. */
+function saveTaskEdit(id){
+ const tk=DB.get('tasks').find(x=>x.id===id);if(!tk)return;
+ const g=k=>{const e=document.getElementById(k+id);return e?e.value:'';};
+ const t=g('tkT').trim();
+ if(!t){toast(I.warn+' A task needs to say what to do.');return;}
+ tk.t=t;tk.who=+g('tkWho')||tk.who;tk.due=g('tkDue')||tk.due;
+ tk.dueTime=g('tkTime')||'';tk.note=g('tkNote').trim();
+ DB.commit();TASK_EDIT=null;renderApp();toast(I.ok+' Saved.');
+}
+function deleteTask(id){
+ const arr=DB.get('tasks'),i=arr.findIndex(x=>x.id===id);if(i<0)return;
+ const tk=arr[i];arr.splice(i,1);DB.commit();renderApp();
+ /* a delete somebody meant to be a complete is the expensive mistake, so it is
+    reversible for as long as the toast is up */
+ toastUndo(I.check+' Task deleted',function(){arr.splice(i,0,tk);DB.commit();renderApp();});
+ appAudit('Task deleted',tk.t+' · by '+CURRENT.name);
 }
 
 /* ── Detail side-panel ── */
@@ -2587,13 +2645,39 @@ function mapSafe(arr,fn,rowWrap){
  const html=arr.map(function(x,i){try{return fn(x,i);}catch(e){skipped++;console.warn('row skipped',e&&e.message);return '';}}).join('');
  return html+(skipped?(rowWrap==='tr'?'<tr><td colspan="9" style="color:var(--faint);font-size:11px;padding:8px 15px">'+skipped+' record'+(skipped===1?'':'s')+' could not be displayed</td></tr>':'<div style="color:var(--faint);font-size:11px;padding:8px 0">'+skipped+' record'+(skipped===1?'':'s')+' could not be displayed</div>'):'');
 }
+/* Leon's fields, in his order: what to do, who, when, and anything else. */
+function taskEditRow(tk){
+ return '<div class="task task-edit">'
+  +'<div class="tk-main" style="width:100%">'
+  +'<input class="filter" id="tkT'+tk.id+'" style="width:100%;margin-bottom:8px" value="'+esc2(tk.t)+'" placeholder="What needs to be done">'
+  +'<div class="tk-grid">'
+   +'<select class="filter" id="tkWho'+tk.id+'">'+DB.get('staff').filter(function(x){return x.active;})
+     .map(function(x){return '<option value="'+x.id+'"'+(x.id===tk.who?' selected':'')+'>'+esc2(x.name)+'</option>';}).join('')+'</select>'
+   +'<input class="filter" id="tkDue'+tk.id+'" type="date" value="'+esc2(tk.due||'')+'">'
+   +'<input class="filter" id="tkTime'+tk.id+'" type="time" value="'+esc2(tk.dueTime||'')+'">'
+  +'</div>'
+  +'<input class="filter" id="tkNote'+tk.id+'" style="width:100%;margin-top:8px" value="'+esc2(tk.note||'')+'" placeholder="Notes (optional)">'
+  +'<div class="tk-act" style="margin-top:10px">'
+   +'<button class="btn-primary" onclick="saveTaskEdit('+tk.id+')">Save</button>'
+   +'<button class="btn-ghost" onclick="editTask('+tk.id+')">Cancel</button></div>'
+  +'</div></div>';
+}
 function taskRows(list){
  if(!list.length)return emptyC(I.check,'No tasks','Add the first task to get the team moving.','<button class="btn-ghost" onclick="openTaskModal()">Add a task</button>');
  return list.map(tk=>{
   const late=!tk.d&&tk.due&&tk.due<todayISO();
+  if(TASK_EDIT===tk.id)return taskEditRow(tk);
   return '<div class="task'+(tk.d?' done':'')+'"><button class="cb" aria-label="Toggle task" onclick="toggleTask('+tk.id+')">'+I.check+'</button>'
-  +'<div class="tk-main"><div class="tk-t">'+tk.t+'</div><div class="tk-m">'+staffById(tk.who).name+(tk.due?' · '+tk.due:'')+'</div></div>'
-  +(late?'<span class="bdg bdg-action">Overdue</span>':'')+'</div>';}).join('');
+  +'<div class="tk-main"><div class="tk-t">'+esc2(tk.t)+'</div><div class="tk-m">'+esc2(staffById(tk.who).name)
+   +(tk.due?' \u00b7 '+tk.due:'')+(tk.dueTime?' at '+esc2(tk.dueTime):'')
+   +(tk.d&&tk.doneOn?' \u00b7 done '+tk.doneOn:'')+'</div>'
+   /* the note lives on the row, not behind a click. A note nobody sees is a
+      note nobody wrote. */
+   +(tk.note?'<div class="tk-note">'+esc2(tk.note)+'</div>':'')+'</div>'
+  +(late?'<span class="bdg bdg-action">Overdue</span>':'')
+  +'<div class="tk-act"><button class="btn-ghost" onclick="editTask('+tk.id+')">Edit</button>'
+  +'<button class="btn-ghost" onclick="deleteTask('+tk.id+')">Delete</button></div>'
+  +'</div>';}).join('');
 }
 
 /* ── Pipeline board ── */
@@ -2680,10 +2764,16 @@ function renderRecordsTable(){
 /* ── Tasks page ── */
 function renderTasks(){
  const list=scopeTasks();
- const openT=list.filter(t=>!t.d),doneT=list.filter(t=>t.d);
+ /* archived tasks leave the screen and stay in the data */
+ const live=list.filter(function(t){return !taskArchived(t);});
+ const openT=live.filter(t=>!t.d),doneT=live.filter(t=>t.d);
+ const gone=list.length-live.length;
  document.getElementById('taskList').innerHTML=
   (openT.length?'<div class="sec-t" style="margin-top:12px">Open <span class="bdg bdg-grey">'+openT.length+'</span></div>'+taskRows(openT):taskRows([]))
-  +(doneT.length?'<div class="sec-t" style="margin-top:20px">Done <span class="bdg bdg-grey">'+doneT.length+'</span></div>'+taskRows(doneT):'');
+  +(doneT.length?'<div class="sec-t" style="margin-top:20px">Done <span class="bdg bdg-grey">'+doneT.length+'</span></div>'+taskRows(doneT):'')
+  /* SAY WHAT WAS HIDDEN. A list that quietly shrinks reads as lost work. */
+  +(gone?'<div class="hint" style="margin-top:14px">'+gone+' finished task'+(gone===1?'':'s')
+    +' moved out of the way after '+TASK_ARCHIVE_DAYS+' days. Nothing was deleted.</div>':'');
 }
 
 /* ── Money: month view + month-by-month grid ── */
@@ -3105,6 +3195,33 @@ function renderCustomers(){
  let list=all;
  if(cohortsOn)list=list.filter(c=>CUS_STATUS==='alumni'?c.status==='alumni':c.status!=='alumni');
  if(cohortsOn&&cohortVal!=='all')list=list.filter(c=>String(c.cohort)===cohortVal);
+ /* MODE, CLASS AND INSTITUTE. Institute only appears once Physical is chosen,
+    because "which building" is a meaningless question about an online student
+    and a dropdown that can never match anything is worse than no dropdown. */
+ (function(){
+  var mSel=document.getElementById('cusMode'),pSel=document.getElementById('cusProg'),
+      iSel=document.getElementById('cusInst');
+  if(!mSel)return;
+  if(pSel.dataset.built!=='1'){
+   pSel.innerHTML='<option value="all">Every class</option>'
+    +BSWL_PROGRAMS.map(function(x){return '<option value="'+x+'">'
+      +(x==='Combined'?'Theory and Revision':x)+'</option>';}).join('');
+   pSel.dataset.built='1';}
+  if(iSel.dataset.built!=='1'){
+   iSel.innerHTML='<option value="all">Every institute</option>'
+    +Object.keys(LOC_LABEL).filter(function(k){return locClass(k)!=='online';})
+      .map(function(k){return '<option value="'+k+'">'+LOC_LABEL[k]+'</option>';}).join('');
+   iSel.dataset.built='1';}
+  var mode=mSel.value;
+  iSel.style.display=(mode==='physical')?'':'none';
+  /* a hidden filter must not keep filtering, or the list silently disagrees
+     with every control the user can see */
+  if(mode!=='physical')iSel.value='all';
+  if(mode!=='all')list=list.filter(function(c){
+    return (locClass(c.loc)==='online')===(mode==='online');});
+  if(pSel.value!=='all')list=list.filter(function(c){return c.program===pSel.value;});
+  if(iSel.value!=='all')list=list.filter(function(c){return c.loc===iSel.value;});
+ })();
  const totLTV=all.reduce((s,c)=>s+custLTV(c),0);
  const orders=all.reduce((s,c)=>s+(c.history?c.history.length:0),0);
  const dueN=dueCustomers();
@@ -3133,6 +3250,17 @@ function custWA(c,msg){const ph=(c.phone||'').replace(/\D/g,'').replace(/^0/,'94
 function custSend(id){const c=DB.get('customers').find(x=>x.id===id);if(!c||c.sent>=3)return;custWA(c,'Hi '+c.name.split(' ')[0]+', checking in from '+CFG.company.name+'. We would love to help you again.');custDone(id,true);}
 function custDone(id,silent){const c=DB.get('customers').find(x=>x.id===id);if(!c||c.sent>=3)return;const label=cadLabel(c.sent);c.sent++;c.last=todayISO();delete c.snooze;logFeed(c.owner,label+' sent','to '+c.name);DB.commit();renderApp();if(document.getElementById('panel').classList.contains('open'))openCustomer(id);if(!silent)toast(I.check+' '+label+' done for '+c.name.split(' ')[0]);}
 function custSnooze(id){const c=DB.get('customers').find(x=>x.id===id);if(!c||c.sent>=3)return;c.snooze=addDaysStr(todayISO(),7);DB.commit();renderApp();if(document.getElementById('panel').classList.contains('open'))openCustomer(id);toast(I.check+' Snoozed 7 days');}
+/* saved on blur, and it says so, because a note that vanished is worse than a
+   note that was never offered */
+function custNote(id,v){
+ var c=DB.get('customers').find(function(x){return x.id===id;});if(!c)return;
+ var was=c.note||'';v=String(v||'').trim();
+ if(was===v)return;
+ c.note=v;DB.commit();
+ var el=document.getElementById('cusNoteSaved');
+ if(el)el.textContent=v?'Saved.':'Note cleared.';
+ appAudit('Student note',c.name+' \u00b7 by '+CURRENT.name);
+}
 function openCustomer(id){
  const c=DB.get('customers').find(x=>x.id===id);if(!c)return;
  const done=c.sent>=3,due=custDue(c)&&c.status!=='alumni',ltv=custLTV(c);
@@ -3150,6 +3278,15 @@ function openCustomer(id){
   +'<div class="pn-body">'
   +'<div class="sec"><div class="sec-t">Knowledge level</div><div class="lvl-set"><button class="lvl-btn lv-good'+(c.level==='good'?' on':'')+'" onclick="setLevel('+id+',\'good\')">Strong</button><button class="lvl-btn lv-okay'+((c.level||'okay')==='okay'?' on':'')+'" onclick="setLevel('+id+',\'okay\')">Okay</button><button class="lvl-btn lv-bad'+(c.level==='bad'?' on':'')+'" onclick="setLevel('+id+',\'bad\')">Needs work</button></div></div>'
   +'<div class="sec"><div class="sec-t">Summary</div><div class="info-grid"><div class="info"><div class="il">Fees paid to date</div><div class="iv" style="color:var(--green)">'+lkr(ltv)+'</div></div><div class="info"><div class="il">Months paid</div><div class="iv">'+(c.history?c.history.length:0)+'</div></div><div class="info"><div class="il">First payment</div><div class="iv">'+fmtDate(custFirst(c))+'</div></div><div class="info"><div class="il">Last contact</div><div class="iv">'+fmtDate(c.last)+'</div></div></div></div>'
+  +/* Leon: "Add an optional Comment field for each student. This can be used for
+   any special notes when needed, e.g. Paid Rs. 300 extra in June." It saves on
+   blur rather than behind a button, because a note somebody typed and did not
+   press save on is a note that was never written. */
+  +'<div class="sec"><div class="sec-t">Note</div>'
+  +'<textarea class="filter" id="cusNote" rows="2" style="width:100%;resize:vertical"'
+  +' placeholder="Anything worth remembering. Paid 300 extra in June, sits at the front, sibling in the 2028 batch."'
+  +' onblur="custNote('+id+',this.value)">'+esc2(c.note||'')+'</textarea>'
+  +'<div class="hint" id="cusNoteSaved" style="margin-top:6px"></div></div>'
   +'<div class="sec"><div class="sec-t">Fee history</div><table class="tbl" style="font-size:12.5px"><thead><tr><th>Item</th><th>Date</th><th class="tnum">Value</th></tr></thead><tbody>'+(hist||'<tr><td colspan="3" style="color:var(--faint)">No purchases yet</td></tr>')+'</tbody></table></div>'
   +'<div class="sec"><div class="sec-t">Re-engage cadence</div>'+steps+'</div></div>';
  document.getElementById('overlay').classList.add('open');panel.classList.add('open');
@@ -4385,6 +4522,85 @@ async function runSelfTest(opts){
        beforeAudience+' students and '+beforeViews+' views survived the edit');
     /* put the seed back so nothing downstream measures my test data */
     after.title=okTitle;delete after.editedBy;delete after.editedOn;REC.edit=null;
+   })();
+   /* THE TASK BOOK. Leon's fields, and the four day rule. */
+   (function(){
+    go('tasks');
+    const tk=DB.get('tasks').find(function(t){return !t.d;});
+    if(!tk){ok('Task Book: a task can be edited',false,'no open task in the seed');return;}
+    editTask(tk.id);
+    const miss=['tkT','tkWho','tkDue','tkTime','tkNote']
+      .filter(function(k){return !document.getElementById(k+tk.id);});
+    ok('Task Book: it asks for what Leon asked for',miss.length===0,
+       miss.join(', ')||'task, assigned to, due date, due TIME, notes');
+    document.getElementById('tkT'+tk.id).value='Edited by the harness';
+    document.getElementById('tkNote'+tk.id).value='and a note';
+    document.getElementById('tkTime'+tk.id).value='16:30';
+    saveTaskEdit(tk.id);
+    const after=DB.get('tasks').find(function(t){return t.id===tk.id;});
+    ok('Task Book: an edit is kept, including the time and the note',
+       after.t==='Edited by the harness'&&after.note==='and a note'&&after.dueTime==='16:30',
+       after.dueTime+' \u00b7 '+after.note);
+    /* THE FOUR DAY RULE, and the reason it is an archive. Leon asked for
+       "automatically deleted after 4 days". Destroying the record of work
+       somebody did cannot be undone and would leave the Activity log pointing
+       at tasks that no longer exist. */
+    after.d=true;after.doneOn=todayISO();
+    ok('Task Book: a task finished today stays on the list',!taskArchived(after),
+       'day 0 of '+TASK_ARCHIVE_DAYS);
+    after.doneOn=dPlus(todayISO(),-TASK_ARCHIVE_DAYS);
+    const hidden=taskArchived(after);
+    const stillThere=!!DB.get('tasks').find(function(t){return t.id===tk.id;});
+    ok('Task Book: after four days it leaves the screen and stays in the data',
+       hidden&&stillThere,'archived, not deleted');
+    renderTasks();
+    ok('Task Book: the list says what it hid, rather than quietly shrinking',
+       /moved out of the way/.test(document.getElementById('taskList').innerHTML),
+       'a list that silently shrinks reads as lost work');
+    /* DELETE IS REVERSIBLE, because a delete meant as a complete is the
+       expensive mistake. */
+    ok('Task Book: deleting offers an undo',/toastUndo/.test(deleteTask.toString()),
+       'the row is put back at the same index');
+    after.d=false;after.doneOn=null;after.t=tk.t;DB.commit();
+   })();
+   /* THE STUDENTS SCREEN. Leon's filters, and his note field. */
+   (function(){
+    go('customers');
+    const m=document.getElementById('cusMode'),pr=document.getElementById('cusProg'),
+          iq=document.getElementById('cusInst');
+    ok('Students: it can be filtered by mode, class and institute',
+       !!m&&!!pr&&!!iq,'Online/Physical, Theory/Revision/Both, and the institute');
+    /* INSTITUTE ONLY WHEN PHYSICAL. "Which building" is a meaningless question
+       about an online student, and a dropdown that can never match is worse
+       than no dropdown. */
+    m.value='online';renderCustomers();
+    const hiddenOnline=getComputedStyle(iq).display==='none';
+    m.value='physical';renderCustomers();
+    const shownPhysical=getComputedStyle(iq).display!=='none';
+    ok('Students: the institute filter appears only for physical classes',
+       hiddenOnline&&shownPhysical,'hidden for online, shown for physical');
+    /* A HIDDEN FILTER MUST STOP FILTERING, or the list disagrees with every
+       control the user can see and nobody can work out why. */
+    iq.value=Object.keys(LOC_LABEL).filter(function(k){return locClass(k)!=='online';})[0];
+    renderCustomers();
+    m.value='all';renderCustomers();
+    ok('Students: a filter that is hidden stops narrowing the list',
+       iq.value==='all','institute reset when it left the screen');
+    /* the filters must actually cut the list, not merely exist */
+    const wide=document.querySelectorAll('#cusBody .cus-row, #cusBody tr').length;
+    m.value='online';renderCustomers();
+    const narrow=document.querySelectorAll('#cusBody .cus-row, #cusBody tr').length;
+    m.value='all';renderCustomers();
+    ok('Students: the mode filter really narrows the list',narrow<wide||narrow===0,
+       wide+' down to '+narrow+' online');
+    /* THE NOTE. It saves on blur: a note somebody typed and did not press save
+       on is a note that was never written. */
+    const c0=DB.get('customers')[0],was=c0.note;
+    custNote(c0.id,'Paid 300 extra in June');
+    const kept=DB.get('customers').find(function(x){return x.id===c0.id;}).note;
+    c0.note=was;
+    ok('Students: a note about a student is kept',kept==='Paid 300 extra in June',
+       'saved on blur, no save button to forget');
    })();
    /* THE NEW ENQUIRY FORM. Leon asked for Name, Batch, the class they want and
       School, the follow-up set for him, and the enrolment value to stop being

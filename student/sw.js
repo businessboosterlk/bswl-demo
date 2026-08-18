@@ -11,7 +11,7 @@
      Static assets        : cache first, refreshed quietly in the background,
                             so icons and the manifest stay instant.
    Bump CACHE whenever the asset list changes. */
-var CACHE='bswl-student-v7';
+var CACHE='bswl-student-v8';
 var ASSETS=['./','index.html','manifest.json','mark.png',
  'icon-192.png','icon-512.png','icon-maskable-512.png','apple-touch-icon.png'];
 /* mark.png is precached because it is on the LOGIN screen: the first thing a

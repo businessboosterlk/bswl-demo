@@ -106,6 +106,44 @@
 .ec-say{font-size:var(--t-lg);font-weight:650;line-height:var(--lh-snug)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
+/* THE WALKTHROUGH. Full screen on a phone, because a modal a student can see
+   past is a modal they dismiss without reading. Skip is always there and always
+   in the same place. */
+.wt-wrap{position:fixed;inset:0;z-index:1400;display:none;background:var(--bg)}
+.wt-wrap.on{display:flex;align-items:stretch}
+.wt-card{display:flex;flex-direction:column;width:100%;
+ padding:calc(env(safe-area-inset-top,0px) + var(--s6)) var(--s5)
+         calc(env(safe-area-inset-bottom,0px) + var(--s5))}
+.wt-skip{position:absolute;top:calc(env(safe-area-inset-top,0px) + var(--s4));right:var(--s5);
+ background:none;border:none;color:var(--text-3);font-size:var(--t-sm);font-weight:600;
+ padding:var(--s2);min-height:44px;min-width:44px}
+.wt-body{flex:1;display:flex;flex-direction:column;justify-content:center;overflow-y:auto}
+.wt-step{font-size:var(--t-xs);color:var(--text-3);text-transform:uppercase;
+ letter-spacing:.08em;font-weight:700;margin-bottom:var(--s3)}
+.wt-h{font-size:var(--t-2xl);font-weight:750;letter-spacing:-.02em;
+ line-height:var(--lh-tight);margin-bottom:var(--s4)}
+.wt-p{font-size:var(--t-md);line-height:var(--lh);color:var(--text-2);margin-bottom:var(--s3)}
+.wt-p b{color:var(--text);font-weight:650}
+.wt-inst{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
+ padding:var(--s4);margin-top:var(--s4);font-size:var(--t-md)}
+.wt-ol{list-style:none;margin-top:var(--s3);display:flex;flex-direction:column;gap:var(--s3)}
+.wt-ol li{display:flex;align-items:center;gap:var(--s3);font-size:var(--t-base);color:var(--text-2)}
+.wt-n{width:22px;height:22px;border-radius:50%;background:var(--surface-2);
+ display:flex;align-items:center;justify-content:center;font-size:var(--t-xs);
+ font-weight:700;color:var(--text);flex-shrink:0}
+.wt-ic{width:18px;height:18px;flex-shrink:0}
+/* 140px, not 120: "Start using it" wrapped to two lines and a button that
+   changes height between cards makes the whole footer jump. */
+.wt-foot{display:grid;grid-template-columns:96px minmax(0,1fr) 140px;
+ align-items:center;gap:var(--s3);padding-top:var(--s5)}
+/* .btn carries width:100%, which beat flex:0 0 auto and made every control a
+   full width row that wrapped, so the footer looked empty with one dot adrift
+   in the corner. A grid sizes the tracks and the buttons fill the track they
+   are given. */
+.wt-foot .btn{width:100%;min-width:0;white-space:nowrap;padding-left:0;padding-right:0}
+.wt-dots{flex:1;display:flex;justify-content:center;gap:6px}
+.wt-dot{width:6px;height:6px;border-radius:50%;background:var(--line-2)}
+.wt-dot.on{background:var(--accent)}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 
 /* ══ BB APP FOUNDATIONS ══════════════════════════════════════════════════
@@ -1609,6 +1647,11 @@ function renderProgress(){
       +'onclick="setMode(\''+m[0]+'\')">'+m[1]+'</button>';}).join('')
   +'</div>'
   +'<p class="meta" style="margin-top:var(--s2)">Auto follows your phone.</p></article>'
+  /* REOPENABLE FOREVER. The students who skip on day one are exactly the ones
+     asking how it works in week two, so this is half the feature. */
+  +'<article class="card"><div class="tt" style="font-weight:600">How this app works</div>'
+  +'<div class="tw">A minute, five cards, and how to put it on your home screen.</div>'
+  +'<button class="btn btn-secondary" style="margin-top:var(--s3);width:100%" onclick="wtShow(true)">Show me again</button></article>'
   +'<div class="sect-h"><h2>You</h2></div>'
   +'<div class="list">'
    +'<div class="rowbtn" style="cursor:default"><span class="grow"><span class="tt" style="font-weight:550">'+esc(ME.name)+'</span>'
@@ -2264,6 +2307,105 @@ function applyStudent(st){
  if(st.user==='Amaya')DB.checkins=[];
  DB.progressTask=null;
 }
+/* ══ WALKTHROUGH AND INSTALL ══
+   Cast from the Total Uplift member app, which is the only onboarding BB owns.
+   TWO THINGS, NOT ONE. The walkthrough TEACHES and is forgotten by tomorrow.
+   The install sheet CHANGES SOMETHING, because a student who never puts it on
+   their home screen opens it once and never again.
+
+   Triggered from the SIGN-IN DOOR, never a boot timer. In the gym it first
+   opened over the login screen and greeted somebody by name before they had
+   proved who they were.
+
+   Reopenable forever from Progress, which is half the feature: the students who
+   skip on day one are exactly the ones asking in week two. */
+var WT={i:0,open:false};
+function wtSeen(){try{return localStorage.getItem('bswl_wt')==='1';}catch(e){return false;}}
+function wtCards(){
+ var first=String(ME.name||'there').split(' ')[0];
+ return [
+  {h:'Hello '+first,
+   p:['This app has one job: <b>tell you what to do next</b>, so you are never sitting there wondering where to start.',
+      /* COUNTED, NOT TYPED. Written as "three screens" this would be wrong the
+         day a fourth is added, and a number that contradicts the thing it is
+         describing is the fastest way to lose a student's trust. */
+      String(document.querySelectorAll('.tabs button').length||3)+' screens, about a minute. You can skip this, it stays in Progress.']},
+  {h:'Today is the whole app',
+   p:['Open it and the next thing is already there: a class you missed, a tute that is due, a topic that needs another look.',
+      'The clock at the top counts to your exam. <b>Nothing on this screen is a guess</b>, it all comes from what Leon has marked.']},
+  {h:'Miss a class, watch it back',
+   p:['If you are marked absent, the recording appears on Today by itself. Nobody has to send it to you.',
+      '<b>They do not stay open forever.</b> When you see days left, that is real, so watch it before it closes.']},
+  {h:'Time yourself on a paper',
+   p:['In <b>Learn</b>, start the timer before you begin a past paper. The app records how long you took, so you are not guessing afterwards.',
+      'When you finish, put in what you got. That is yours, and it is how the app spots the questions that keep costing you marks.']},
+  {h:'Make it yours',
+   p:['<b>Progress</b> has colours and a light or dark switch. Pick whatever you will actually look at every morning.',
+      'And put it on your home screen, so it opens like a proper app with no address bar. Here is how.']}
+ ];
+}
+function wtShow(reopen){
+ WT.i=0;WT.open=true;
+ document.getElementById('wtWrap').classList.add('on');
+ document.body.style.overflow='hidden';
+ wtPaint();
+ if(!reopen){try{localStorage.setItem('bswl_wt','1');}catch(e){}}
+}
+function wtClose(){
+ WT.open=false;
+ document.getElementById('wtWrap').classList.remove('on');
+ document.body.style.overflow='';
+ try{localStorage.setItem('bswl_wt','1');}catch(e){}
+}
+function wtGo(n){
+ var c=wtCards();
+ WT.i+=n;
+ if(WT.i>=c.length){wtClose();return;}
+ if(WT.i<0)WT.i=0;
+ wtPaint();
+}
+function wtPaint(){
+ var c=wtCards(),card=c[WT.i],last=WT.i===c.length-1;
+ document.getElementById('wtBody').innerHTML=
+  '<div class="wt-step">'+(WT.i+1)+' of '+c.length+'</div>'
+  +'<h2 class="wt-h">'+esc(card.h)+'</h2>'
+  +card.p.map(function(t){return '<p class="wt-p">'+t+'</p>';}).join('')
+  +(last?installBlock():'');
+ document.getElementById('wtDots').innerHTML=c.map(function(x,i){
+  return '<span class="wt-dot'+(i===WT.i?' on':'')+'"></span>';}).join('');
+ document.getElementById('wtNext').textContent=last?'Start using it':'Next';
+ document.getElementById('wtBack').style.visibility=WT.i?'visible':'hidden';
+}
+/* THE INSTALL STEPS. iOS cannot be prompted, so it is told, with the share
+   glyph DRAWN, because "tap the share button" means nothing until you can see
+   which button it is. */
+var INSTALL_EVT=null;
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();INSTALL_EVT=e;});
+function isInstalled(){
+ return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)
+  ||window.navigator.standalone===true;
+}
+var SHARE_IC='<svg class="wt-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V3"/><path d="m8 7 4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
+var PLUS_IC='<svg class="wt-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
+function installBlock(){
+ if(isInstalled())return '<div class="wt-inst"><b>It is already on your home screen.</b> Nothing to do.</div>';
+ var iOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+ if(INSTALL_EVT)return '<div class="wt-inst"><b>Put it on your home screen</b>'
+  +'<p class="wt-p">Its own icon, no address bar, and it still opens when you have no signal.</p>'
+  +'<button class="btn btn-primary" style="width:100%;margin-top:var(--s3)" onclick="doInstall()">Add it to my phone</button></div>';
+ if(iOS)return '<div class="wt-inst"><b>Put it on your home screen</b>'
+  +'<p class="wt-p">Two taps and the address bar is gone for good.</p><ol class="wt-ol">'
+  +'<li><span class="wt-n">1</span>'+SHARE_IC+'<span>Tap Share, at the bottom of Safari</span></li>'
+  +'<li><span class="wt-n">2</span>'+PLUS_IC+'<span>Choose "Add to Home Screen"</span></li>'
+  +'<li><span class="wt-n">3</span><span style="width:18px"></span><span>Open it from your home screen, not Safari</span></li></ol></div>';
+ return '<div class="wt-inst"><b>Put it on your home screen</b>'
+  +'<p class="wt-p">In your browser menu choose Install, or Add to Home screen. It gets its own icon and no address bar.</p></div>';
+}
+function doInstall(){
+ if(!INSTALL_EVT)return;
+ INSTALL_EVT.prompt();INSTALL_EVT=null;
+ wtPaint();
+}
 function doLogin(e){
  if(e)e.preventDefault();
  var u=(document.getElementById('lgUser').value||'').trim().toLowerCase();
@@ -2278,6 +2420,8 @@ function doLogin(e){
  document.getElementById('login').classList.add('gone');
  renderAll();seg('syllabus');show('next');
  showSplash();
+ /* from the DOOR, so nobody is greeted by name before they have signed in */
+ if(!wtSeen())setTimeout(function(){wtShow(false);},900);
  say('Signed in as '+hit.name);
  return false;
 }
@@ -2695,6 +2839,53 @@ function BSWL_TEST(){
       setTheme('neon');const kept=localStorage.getItem('bswl_theme')==='neon';
       setTheme(was);return kept;})());
   })();
+  /* THE WALKTHROUGH AND THE INSTALL STEPS, cast from the gym member app. */
+  (function(){
+   const H=document.documentElement;
+   /* IT MUST COME FROM THE SIGN-IN DOOR, NOT A TIMER. In the gym it first
+      opened over the login screen and greeted somebody by name before they had
+      proved who they were. */
+   ok('Walkthrough: it is triggered by signing in, not by a boot timer',
+      /wtShow\(false\)/.test(doLogin.toString()),
+      'inside doLogin, after the student is known');
+   const cards=wtCards();
+   ok('Walkthrough: it is short enough that somebody finishes it',
+      cards.length>=3&&cards.length<=6,cards.length+' cards');
+   ok('Walkthrough: it greets the student by their own first name',
+      cards[0].h.indexOf(String(ME.name).split(' ')[0])>-1,cards[0].h);
+   /* A NUMBER IN ONBOARDING COPY MUST BE READ, NEVER TYPED. The gym card said
+      "four screens" while the app had five. */
+   const navN=document.querySelectorAll('.tabs button').length;
+   ok('Walkthrough: the screen count is counted, not written down',
+      cards[0].p.join(' ').indexOf(String(navN)+' screens')>-1,
+      navN+' on the nav and '+navN+' in the copy');
+   /* SKIPPABLE, ALWAYS, and reopenable forever */
+   wtShow(true);
+   const skip=document.querySelector('.wt-skip');
+   ok('Walkthrough: skip is on every card, in the same place',
+      !!skip&&getComputedStyle(skip).display!=='none','one Skip, top right, all five');
+   let sawInstall=false;
+   for(let i=0;i<cards.length;i++){
+    if(/home screen|already on your home/i.test(document.getElementById('wtBody').innerHTML))sawInstall=true;
+    wtGo(1);
+   }
+   ok('Walkthrough: it ends by showing how to install it',sawInstall,
+      'the last card carries the home screen steps');
+   ok('Walkthrough: finishing it closes it',!WT.open,'no card left over the app');
+   /* iOS CANNOT BE PROMPTED, so it must be TOLD, with the glyph drawn */
+   const ios=installBlock.toString();
+   ok('Install: the iOS steps draw the share icon rather than naming it',
+      /SHARE_IC/.test(ios)&&/Add to Home Screen/.test(ios),
+      '"tap Share" means nothing until you can see which button it is');
+   ok('Install: an already installed app is told there is nothing to do',
+      /isInstalled\(\)/.test(ios),'no instructions for a job already done');
+   /* REOPENABLE, which is half the feature */
+   show('progress');
+   ok('Walkthrough: it can be reopened from Progress forever',
+      /wtShow\(true\)/.test(document.getElementById('sc-progress').innerHTML),
+      'the ones who skip on day one are the ones asking in week two');
+   wtClose();
+  })();
   /* THE EXAM CLOCK AND THE PAPER TIMER. */
   (function(){
    show('next');
@@ -2928,5 +3119,16 @@ function BSWL_TEST(){
  return {pass:P,fail:F,lines:out};
 }
 </script>
+<div class="wt-wrap" id="wtWrap" role="dialog" aria-modal="true" aria-label="How this app works">
+ <div class="wt-card">
+  <button class="wt-skip" onclick="wtClose()">Skip</button>
+  <div class="wt-body" id="wtBody"></div>
+  <div class="wt-foot">
+   <button class="btn btn-secondary" id="wtBack" onclick="wtGo(-1)">Back</button>
+   <div class="wt-dots" id="wtDots" aria-hidden="true"></div>
+   <button class="btn btn-primary" id="wtNext" onclick="wtGo(1)">Next</button>
+  </div>
+ </div>
+</div>
 </body>
 </html>
