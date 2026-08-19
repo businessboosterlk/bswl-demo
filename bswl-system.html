@@ -317,6 +317,14 @@ details.card>summary::-webkit-details-marker{display:none}
 details.card[open]>summary{border-bottom:1px solid var(--line)}
 details.card>summary:hover{background:var(--surface-2)}
 .card [class]:empty{margin:0}
+/* AN ELEMENT CAN BE EMPTY ON PURPOSE. The rule above collapses stray empty
+   divs, which is right, but a coloured dot, a bar and a swatch all carry no
+   text by design and it was flattening their spacing too. Thulaib spotted the
+   standing dots touching the student names.
+   Anything given a width is deliberate, so it keeps its margin. */
+.card [class]:empty[class*="dot"],
+.card [class]:empty[class*="bar"],
+.card [class]:empty[class*="sw"]{margin-right:7px}
 .tk-note{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.45}
 .tk-act{display:flex;gap:6px;flex-shrink:0}
 .tk-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,110px);gap:8px}
@@ -380,6 +388,10 @@ details.card>summary:hover{background:var(--surface-2)}
    genuinely different says so in its own rule, never inline. */
 .tbl{width:100%;border-collapse:collapse}
 .tbl th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--faint);font-weight:700;padding:13px 15px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+/* A NUMERIC HEADER MUST SIT OVER ITS NUMBERS. .tbl th sets text-align:left and
+   out-specifies .tnum, so every count column had a left header above right
+   numbers. Thulaib spotted it on Sent to and Opened. */
+.tbl th.tnum{text-align:right}
 .tbl td{padding:13.5px 15px;border-bottom:1px solid var(--line2);font-size:12.5px}
 .tbl tbody tr{cursor:pointer;transition:background .1s}
 .tbl tbody tr:hover{background:var(--surface-2)}
@@ -3307,10 +3319,14 @@ function openCustomer(id){
   +'<div class="pn-body">'
   +'<div class="sec"><div class="sec-t">Knowledge level</div><div class="lvl-set"><button class="lvl-btn lv-good'+(c.level==='good'?' on':'')+'" onclick="setLevel('+id+',\'good\')">Strong</button><button class="lvl-btn lv-okay'+((c.level||'okay')==='okay'?' on':'')+'" onclick="setLevel('+id+',\'okay\')">Okay</button><button class="lvl-btn lv-bad'+(c.level==='bad'?' on':'')+'" onclick="setLevel('+id+',\'bad\')">Needs work</button></div></div>'
   +'<div class="sec"><div class="sec-t">Summary</div><div class="info-grid"><div class="info"><div class="il">Fees paid to date</div><div class="iv" style="color:var(--green)">'+lkr(ltv)+'</div></div><div class="info"><div class="il">Months paid</div><div class="iv">'+(c.history?c.history.length:0)+'</div></div><div class="info"><div class="il">First payment</div><div class="iv">'+fmtDate(custFirst(c))+'</div></div><div class="info"><div class="il">Last contact</div><div class="iv">'+fmtDate(c.last)+'</div></div></div></div>'
-  +/* Leon: "Add an optional Comment field for each student. This can be used for
-   any special notes when needed, e.g. Paid Rs. 300 extra in June." It saves on
-   blur rather than behind a button, because a note somebody typed and did not
-   press save on is a note that was never written. */
+  /* Leon: "Add an optional Comment field for each student, e.g. Paid Rs. 300
+     extra in June." It saves on blur, because a note somebody typed and did not
+     press save on is a note that was never written.
+
+     THE + WAS THE BUG. This read "+ /* comment *​/ + '<div...'", and the SECOND
+     plus became a UNARY plus applied to a string, which is NaN. The word NaN
+     rendered above the note on every student panel and nothing threw. A comment
+     between two plus signs turns the second one into an operator on nothing. */
   +'<div class="sec"><div class="sec-t">Note</div>'
   +'<textarea class="filter" id="cusNote" rows="2" style="width:100%;resize:vertical"'
   +' placeholder="Anything worth remembering. Paid 300 extra in June, sits at the front, sibling in the 2028 batch."'
@@ -4650,6 +4666,30 @@ async function runSelfTest(opts){
     ok('Task Book: deleting offers an undo',/toastUndo/.test(deleteTask.toString()),
        'the row is put back at the same index');
     after.d=false;after.doneOn=null;after.t=tk.t;DB.commit();
+   })();
+   /* TWO THINGS THULAIB FOUND BY LOOKING, ON A LIVE SCREEN, THAT 176 CHECKS
+      DID NOT. Both are now measured. */
+   (function(){
+    const c=DB.get('customers')[0];
+    openCustomer(c.id);
+    const txt=document.getElementById('panel').innerText;
+    /* "+ /* comment *\/ + '<div...'" makes the SECOND plus a UNARY plus on a
+       string, which is NaN. The word rendered on every student panel and
+       nothing threw. */
+    ok('No screen prints NaN, Infinity or undefined at a person',
+       !/\bNaN\b|\bInfinity\b|\bundefined\b/.test(txt),
+       (txt.match(/\bNaN\b|\bInfinity\b|\bundefined\b/)||['clean'])[0]);
+    closePanel();
+    /* an element can be empty ON PURPOSE: a dot, a bar, a swatch. The rule that
+       collapses stray empty divs was flattening their spacing too. */
+    go('customers');
+    const bad=[];
+    document.querySelectorAll('#page-customers .sdot').forEach(function(d,i){
+     if(i>6)return;
+     if((parseFloat(getComputedStyle(d).marginRight)||0)<4)bad.push('sdot');
+    });
+    ok('A dot that marks a name is not touching the name',bad.length===0,
+       bad.length?bad.length+' flattened':'7px clear');
    })();
    /* THE PROMISE WE MADE ON HIS OWN FORM. We wrote "Reports currently compares
       a part-finished month against a full one, which makes the percentages look
