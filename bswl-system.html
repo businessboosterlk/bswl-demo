@@ -1099,7 +1099,7 @@ body.dark .stat-kpi .val{color:#fff}
           <button class="btn-ghost imp-btn" onclick="openImport('customers')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import</button>
           <button class="btn-ghost" onclick="exportCustomers()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
         </div>
-        <div class="card"><table class="tbl"><thead><tr><th id="cusThName">Student</th><th>Referral ask</th><th>Next action</th><th>Mode</th><th class="tnum">Fees paid</th></tr></thead><tbody id="cusBody"></tbody></table><div id="cusEmpty"></div></div>
+        <div class="card"><table class="tbl"><thead><tr><th id="cusThName">Student</th><th>Referral ask</th><th>Next action</th><th>Mode</th><th class="tnum">Fees paid</th><th></th></tr></thead><tbody id="cusBody"></tbody></table><div id="cusEmpty"></div></div>
       </div>
 
       <!-- ══ QUOTES (module: quote generator + branded PDF) ══ -->
@@ -3249,9 +3249,31 @@ function renderCustomers(){
     +(locClass(c.loc)==='online'?'Online':'Physical')+'</span></td>'
    /* a physical student pays at the desk, so the running total is not the
       number anybody is looking for on this row */
-   +'<td class="tnum">'+(locClass(c.loc)==='online'?lkr(custLTV(c)):'\u2014')+'</td></tr>';
+   +'<td class="tnum">'+(locClass(c.loc)==='online'?lkr(custLTV(c)):'\u2014')+'</td>'
+   /* Leon: "Pre-decided messages for each category, with their customized
+      calling name, IDEALLY COULD BE DONE WITH A CLICK OF A BUTTON IN STUDENTS
+      TAB." The chase already exists on Fees; this is the same message, the same
+      wording, reached from the roster instead. One function writes it, so the
+      two places can never drift into saying different things. */
+   +'<td style="text-align:right">'+custChaseBtn(c)+'</td></tr>';
  },'tr');
  document.getElementById('cusEmpty').innerHTML=arr.length?'':emptyC(I.users,'No '+CFG.contactWord.plural.toLowerCase(),'Won deals become '+CFG.contactWord.plural.toLowerCase()+' here for repeat business.');
+}
+/* the SAME message the fees screen sends, built by the SAME function, so a
+   student never gets two differently worded reminders about one debt */
+function custChaseBtn(c){
+ var pl=(DB.get('recurringPlans')||[]).find(function(x){return x.id===c.id;});
+ if(!pl)return '<span class="tm">\u2014</span>';
+ var ym=RECUR.ym||ymNow();
+ var n=recMonthsOwed(pl,ym);
+ if(!n)return '<span class="tm" title="Up to date">\u2713</span>';
+ var owed=recOwedAmount(pl,ym);
+ var ph=String(pl.phone||'').replace(/\D/g,'');
+ if(!ph)return '<span class="tm">No number</span>';
+ return '<a class="btn-ghost" style="padding:6px 11px;white-space:nowrap" target="_blank" rel="noopener"'
+  +' onclick="event.stopPropagation()"'
+  +' title="'+n+' month'+(n===1?'':'s')+' behind, '+lkr(owed)+'"'
+  +' href="https://wa.me/'+ph+'?text='+encodeURIComponent(recWaText(pl,n,owed))+'">Remind</a>';
 }
 function custWA(c,msg){const ph=(c.phone||'').replace(/\D/g,'').replace(/^0/,'94');if(!ph){toast('No number saved');return;}window.open('https://wa.me/'+ph+'?text='+encodeURIComponent(msg),'_blank');}
 function custSend(id){const c=DB.get('customers').find(x=>x.id===id);if(!c||c.sent>=3)return;custWA(c,'Hi '+c.name.split(' ')[0]+', checking in from '+CFG.company.name+'. We would love to help you again.');custDone(id,true);}
@@ -3323,12 +3345,44 @@ function renderReports(){
  const aov=won.length?rev/won.length:0,paov=pwon.length?prevRev/pwon.length:0;
  const winRate=created.length?Math.round(won.length/created.length*100):0;
  const pWin=pcreated.length?Math.round(pwon.length/pcreated.length*100):0;
+ /* ══ A PART MONTH IS NOT A MONTH ══
+    From Leon's own feedback form, in the section we wrote: "Reports currently
+    compares a part-finished month against a full one, which makes the
+    percentages look alarming. Being fixed." It was not fixed. On the 5th of a
+    month, five days of revenue against thirty of the last one reads as a
+    collapse, and Leon would have believed it.
+
+    Two things, and only two. The comparison is made PACE FOR PACE, so five
+    days is measured against the first five days of the month before it, and
+    the screen SAYS the month is still running. Nothing is projected: a guess
+    at where the month will land is a different lie. */
+ const partial=(ym===ymNow());
+ const dayOfMonth=partial?+todayISO().slice(8,10):0;
+ const daysIn=m=>new Date(+m.slice(0,4),+m.slice(5,7),0).getDate();
  const pct=(a,b)=>b?Math.round((a-b)/b*100):(a?100:0);
+ /* A PART MONTH IS NOT A MONTH, and the percentage is REMOVED rather than
+    softened. Five days of revenue against thirty of the month before reads as
+    a collapse, and Leon would have believed it.
+
+    I tried to compare pace for pace, five days against the first five days of
+    the month before. It cannot be done: records carry the month only, with no
+    day, so there is no honest way to slice the earlier month. Rather than
+    invent a comparison the data cannot support, a running month says how far
+    through it is and shows no percentage at all. A missing number is a
+    question; a wrong one is an answer nobody checks. The comparison returns
+    in full the moment the month closes. */
+ const paceNote=partial
+   ? (' · day '+dayOfMonth+' of '+daysIn(ym)+', still running')
+   : (' vs '+bLbl);
+ /* deltaLbl, not cmp: this function already has a cmp further down and the
+    second declaration is a hard error rather than a silent shadow. */
+ const deltaLbl=(a,b)=>partial?'':(Math.abs(pct(a,b))+'%');
+ const deltaDir=(a,b)=>partial?'flat':dir(pct(a,b));
  const dir=v=>v>0?'up':(v<0?'down':'flat');
  document.getElementById('rpKpis').innerHTML=
-  statKpi('Revenue',lkr(rev),Math.abs(pct(rev,prevRev))+'% vs '+bLbl,dir(pct(rev,prevRev)),'var(--brand)')
-  +statKpi('Enrolled',won.length,Math.abs(pct(won.length,pwon.length))+'% vs '+bLbl,dir(pct(won.length,pwon.length)),'var(--green)')
-  +statKpi('Avg enrolment',lkr(aov),Math.abs(pct(aov,paov))+'% vs '+bLbl,dir(pct(aov,paov)),'var(--amber)')
+  statKpi('Revenue',lkr(rev),deltaLbl(rev,prevRev)+paceNote,deltaDir(rev,prevRev),'var(--brand)')
+  +statKpi('Enrolled',won.length,deltaLbl(won.length,pwon.length)+paceNote,deltaDir(won.length,pwon.length),'var(--green)')
+  +statKpi('Avg enrolment',lkr(aov),deltaLbl(aov,paov)+paceNote,deltaDir(aov,paov),'var(--amber)')
   +statKpi('Enrol rate',winRate+'%',Math.abs(winRate-pWin)+'pp vs '+bLbl,dir(winRate-pWin),'var(--blue)');
  const cmp=[['Revenue',lkr(rev),lkr(prevRev),pct(rev,prevRev),'%'],['Enrolled',won.length,pwon.length,pct(won.length,pwon.length),'%'],['Avg',lkr(aov),lkr(paov),pct(aov,paov),'%'],['Enrol rate',winRate+'%',pWin+'%',winRate-pWin,'pp']];
  document.getElementById('rpCmp').innerHTML=cmp.map(c=>{const up=c[3]>=0;return '<div class="cmp-item '+(up?'up':'down')+'"><div class="cl">'+c[0]+'</div><div class="cv">'+c[1]+'</div><div class="cvs">vs '+c[2]+'</div><div class="cd '+(up?'up':'down')+'">'+(up?'▲':'▼')+' '+Math.abs(c[3])+c[4]+'</div></div>';}).join('');
@@ -4596,6 +4650,43 @@ async function runSelfTest(opts){
     ok('Task Book: deleting offers an undo',/toastUndo/.test(deleteTask.toString()),
        'the row is put back at the same index');
     after.d=false;after.doneOn=null;after.t=tk.t;DB.commit();
+   })();
+   /* THE PROMISE WE MADE ON HIS OWN FORM. We wrote "Reports currently compares
+      a part-finished month against a full one, which makes the percentages look
+      alarming. Being fixed." and then did not fix it. */
+   (function(){
+    go('reports');
+    const nowLbl=document.getElementById('rpKpis').innerText;
+    ok('Reports: a running month shows no percentage against a finished one',
+       !/%\s*vs/i.test(nowLbl)||RP_YM!==ymNow(),
+       'five days against thirty reads as a collapse and would be believed');
+    ok('Reports: it says how far through the month it is',
+       /still running/.test(nowLbl)||RP_YM!==ymNow(),
+       'a missing number is a question, a wrong one is an answer nobody checks');
+    /* AND THE COMPARISON MUST COME BACK when the month is closed, or the fix
+       has quietly removed a feature. */
+    const was=RP_YM;RP_YM=ymShift(ymNow(),-1);renderReports();
+    const closed=document.getElementById('rpKpis').innerText;
+    RP_YM=was;renderReports();
+    ok('Reports: a closed month still compares in full',/%/.test(closed),
+       'the percentage returns the moment the month ends');
+   })();
+   /* Leon asked for the reminder on the STUDENTS tab too, not only on Fees. */
+   (function(){
+    go('customers');
+    const c=DB.get('customers').find(function(x){
+     const pl=(DB.get('recurringPlans')||[]).find(function(p){return p.id===x.id;});
+     return pl&&recMonthsOwed(pl,RECUR.ym||ymNow())>0&&pl.phone;});
+    ok('Students: a student who owes can be reminded from the roster',
+       !c||/wa\.me/.test(custChaseBtn(c)),'his words: "a click of a button in students tab"');
+    /* ONE WRITER, so the two places cannot drift into different wording */
+    if(c){
+     const pl=(DB.get('recurringPlans')||[]).find(function(p){return p.id===c.id;});
+     const n=recMonthsOwed(pl,RECUR.ym||ymNow());
+     ok('Students: it sends the SAME message the fees screen sends',
+        custChaseBtn(c).indexOf(encodeURIComponent(recWaText(pl,n,recOwedAmount(pl,RECUR.ym||ymNow()))))>-1,
+        'recWaText writes both, so one debt never gets two wordings');
+    }
    })();
    /* THE LAST TWO ITEMS ON LEON'S FORM. */
    (function(){
